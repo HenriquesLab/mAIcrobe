@@ -11,12 +11,9 @@ contributions:
     - id: napari-mAIcrobe.dna_example
       python_name: napari_mAIcrobe._sample_data:dna_example
       title: Load DNA dye S.aureus sample data 
-    - id: napari-mAIcrobe.compute_mask
-      python_name: napari_mAIcrobe._computemask:compute_mask
-      title: Compute base mask
-    - id: napari-mAIcrobe.compute_features
-      python_name: napari_mAIcrobe._computefeatures:compute_features
-      title: Compute features
+    - id: napari-mAIcrobe.compute_label
+      python_name: napari_mAIcrobe._computelabel:compute_label
+      title: Compute label
     - id: napari-mAIcrobe.compute_cells
       python_name: napari_mAIcrobe._computecells:compute_cells
       title: Compute cells
@@ -34,10 +31,8 @@ contributions:
       display_name: DNA dye S.aureus
       key: unique_id.3
   widgets:
-    - command: napari-mAIcrobe.compute_mask
-      display_name: Compute base mask
-    - command: napari-mAIcrobe.compute_features
-      display_name: Compute features
+    - command: napari-mAIcrobe.compute_label
+      display_name: Compute label
     - command: napari-mAIcrobe.compute_cells
       display_name: Compute cells
     - command: napari-mAIcrobe.filter_cells

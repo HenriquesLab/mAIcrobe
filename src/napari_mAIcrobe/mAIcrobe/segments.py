@@ -41,7 +41,7 @@ class SegmentsManager(object):
         Returns a list of the centers of the different identified regions,
         which should be used in the compute_features method"""
 
-        distance = ndimage.morphology.distance_transform_edt(mask)
+        distance = ndimage.distance_transform_edt(mask)
 
         mindist = params['peak_min_distance']
         minmargin = params['peak_min_distance_from_edge']
@@ -115,7 +115,7 @@ class SegmentsManager(object):
 
         markers = self.features
 
-        distance = - ndimage.morphology.distance_transform_edt(mask)
+        distance = - ndimage.distance_transform_edt(mask)
         mindist = np.min(distance)
         markpoints = markers > 0
         distance[markpoints] = mindist

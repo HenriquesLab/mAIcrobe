@@ -22,8 +22,10 @@ import numpy as np
 from math import ceil
 
 from skimage.morphology import binary_erosion
+from skimage.morphology import binary_closing, binary_dilation
 from skimage.segmentation import watershed
 from scipy.ndimage import label as lbl
+from scipy import ndimage
 
 
 # Normalization functions from Martin Weigert
@@ -199,10 +201,24 @@ class compute_label(Container):
             mask = prediction>0
             #edges = prediction==1
             insides = prediction==2
-            for _ in range(3):
+            for _ in range(0): # TODO 
                 insides = binary_erosion(insides)
             insides = insides.astype(np.uint16)
             insides, _ = lbl(insides)
+ 
+            if _binary_closing > 0:
+                # removes small white spots and then small dark spots
+                closing_matrix = np.ones((int(_binary_closing), int(_binary_closing)))
+                mask = binary_closing(mask, closing_matrix)
+                mask = 1 - binary_closing(1 - mask, closing_matrix)
+
+            # dilation
+            for f in range(_binary_dilation):
+                mask = binary_dilation(mask, np.ones((3, 3)))
+
+            # binary fill holes
+            if _binary_fillholes:
+                mask = ndimage.binary_fill_holes(mask)
 
             labels = watershed(~mask,markers=insides,mask=mask)
 

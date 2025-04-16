@@ -27,8 +27,10 @@ from skimage.segmentation import watershed
 from scipy.ndimage import label as lbl
 from scipy import ndimage
 
-
-# Normalization functions from Martin Weigert
+# TODO move this 3 function to the maicrobe folder
+############################################################################
+## THIS FUNCTION ARE COPIED FROM THE ZEROCOSTDL4MIC UNET JUPYTER NOTEBOOK ##
+############################################################################
 def normalizePercentile(x, pmin=1, pmax=99.8, axis=None, clip=False, eps=1e-20, dtype=np.float32):
     """This function is adapted from Martin Weigert"""
     """Percentile-based image normalization."""
@@ -37,7 +39,9 @@ def normalizePercentile(x, pmin=1, pmax=99.8, axis=None, clip=False, eps=1e-20, 
     ma = np.percentile(x,pmax,axis=axis,keepdims=True)
     return normalize_mi_ma(x, mi, ma, clip=clip, eps=eps, dtype=dtype)
 
-
+############################################################################
+## THIS FUNCTION ARE COPIED FROM THE ZEROCOSTDL4MIC UNET JUPYTER NOTEBOOK ##
+############################################################################
 def normalize_mi_ma(x, mi, ma, clip=False, eps=1e-20, dtype=np.float32):#dtype=np.float32
     """This function is adapted from Martin Weigert"""
     if dtype is not None:
@@ -57,6 +61,9 @@ def normalize_mi_ma(x, mi, ma, clip=False, eps=1e-20, dtype=np.float32):#dtype=n
 
     return x
 
+############################################################################
+## THIS FUNCTION ARE COPIED FROM THE ZEROCOSTDL4MIC UNET JUPYTER NOTEBOOK ##
+############################################################################
 def predict_as_tiles(img, model):
 
   # Read the data in and normalize

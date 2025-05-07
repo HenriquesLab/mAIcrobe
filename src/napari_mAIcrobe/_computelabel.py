@@ -22,10 +22,20 @@ import numpy as np
 from math import ceil
 
 from skimage.morphology import binary_erosion
-from skimage.morphology import binary_closing, binary_dilation
+from skimage.morphology import binary_closing, binary_dilation, binary_opening
 from skimage.segmentation import watershed
 from scipy.ndimage import label as lbl
 from scipy import ndimage
+
+import os
+# force classification to happen on CPU to avoid CUDA problems
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+# Remove some extraneous log outputs
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+import tensorflow as tf 
+tf.config.set_visible_devices([], 'GPU')
+
 
 # TODO move this 3 function to the maicrobe folder
 ############################################################################
@@ -206,6 +216,9 @@ class compute_label(Container):
             prediction = predict_as_tiles(_baseimg.data, model) 
 
             mask = prediction>0
+
+            mask = binary_opening(mask, np.ones((3, 3)))
+
             #edges = prediction==1
             insides = prediction==2
             for _ in range(0): # TODO 

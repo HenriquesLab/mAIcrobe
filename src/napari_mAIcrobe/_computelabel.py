@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 from .mAIcrobe.mask import mask_computation, mask_alignment
 from .mAIcrobe.segments import SegmentsManager
-from .mAIcrobe.unet import computelabel_unet
+from .mAIcrobe.unet import computelabel_unet, normalizePercentile
 
 from magicgui.widgets import Container, create_widget, SpinBox, ComboBox, FileEdit, Label, PushButton, CheckBox
 
@@ -25,6 +25,9 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import tensorflow as tf 
 tf.config.set_visible_devices([], 'GPU')
+
+
+from stardist.models import StarDist2D
 
 class compute_label(Container):
 
@@ -43,7 +46,7 @@ class compute_label(Container):
         self._autoaligninput = CheckBox(label='Auto Align')
 
         # MASK ALGORITHM
-        self._algorithm_combo = cast(ComboBox, create_widget(options={"choices":["Isodata","Local Average","Unet"]},label='Mask algorithm'))
+        self._algorithm_combo = cast(ComboBox, create_widget(options={"choices":["Isodata","Local Average","Unet","StarDist"]},label='Mask algorithm'))
         self._algorithm_combo.changed.connect(self._on_algorithm_changed)
 
         self._titlemasklabel = Label(value='Parameters for Mask computation')
@@ -58,6 +61,7 @@ class compute_label(Container):
         self._blocksizeinput = SpinBox(min=0, max=1000, step=1, value=151, label='Blocksize', visible=False)
         self._offsetinput =  SpinBox(min=0, max=1, step=0.001, value=0.02, label='Offset',visible=False)
         self._path2unet = FileEdit(mode='r',label='Path to UnetModel',visible=False)
+        self._path2stardist = FileEdit(mode='d',label='Path to StarDistModel',visible=False)
 
         # WATERSHED ALGORITHM
         self._titlewatershedlabel = Label(value='Parameters for Watershed Algorithm')
@@ -75,7 +79,7 @@ class compute_label(Container):
         self._run_button.clicked.connect(self.compute)
 
 
-        super().__init__(widgets=[self._baseimg_combo, self._fluor1_combo, self._fluor2_combo, self._closinginput, self._dilationinput, self._fillholesinput, self._autoaligninput, self._algorithm_combo, self._titlemasklabel, self._placeholder, self._blocksizeinput, self._offsetinput, self._path2unet, self._titlewatershedlabel, self._peak_min_distance_from_edge,self._peak_min_distance, self._peak_min_height, self._max_peaks, self._run_button], labels=True)
+        super().__init__(widgets=[self._baseimg_combo, self._fluor1_combo, self._fluor2_combo, self._closinginput, self._dilationinput, self._fillholesinput, self._autoaligninput, self._algorithm_combo, self._titlemasklabel, self._placeholder, self._blocksizeinput, self._offsetinput, self._path2unet, self._path2stardist, self._titlewatershedlabel, self._peak_min_distance_from_edge,self._peak_min_distance, self._peak_min_height, self._max_peaks, self._run_button], labels=True)
 
     def _on_algorithm_changed(self, new_algorithm: str):
 
@@ -84,16 +88,25 @@ class compute_label(Container):
             self[10].visible = False
             self[11].visible = False
             self[12].visible = False
+            self[13].visible = False
         elif new_algorithm=='Local Average':
             self[9].visible = False
             self[10].visible = True
             self[11].visible = True
             self[12].visible = False
+            self[13].visible = False
         elif new_algorithm=='Unet':
             self[9].visible = False
             self[10].visible = False
             self[11].visible = False
             self[12].visible = True
+            self[13].visible = False
+        elif new_algorithm=='StarDist':
+            self[9].visible = False
+            self[10].visible = False
+            self[11].visible = False
+            self[12].visible = False
+            self[13].visible = True
 
         return
     
@@ -118,6 +131,15 @@ class compute_label(Container):
         if _algorithm == "Unet":
 
             mask, labels = computelabel_unet(path2model=self._path2unet.value, base_image=_baseimg.data, closing=_binary_closing, dilation=_binary_dilation, fillholes=_binary_fillholes)
+            
+        elif _algorithm == "StarDist":
+            
+            basedir,name = os.path.split(self._path2stardist.value)
+            model = StarDist2D(None, name = name, basedir= basedir) 
+
+            labels, _ = model.predict_instances(normalizePercentile(_baseimg.data))
+            mask = labels > 0
+            mask = mask.astype('uint16')
 
         else:
             mask = mask_computation(base_image=_baseimg.data,algorithm=_algorithm,blocksize=_LAblocksize,

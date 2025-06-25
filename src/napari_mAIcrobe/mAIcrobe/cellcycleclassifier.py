@@ -29,7 +29,7 @@ class CellCycleClassifier:
         "S.aureus Membrane SIM": {"max_dim": 100, "model_input": "Membrane",'model_path':'https://github.com/HenriquesLab/napari-mAIcrobe/blob/main/docs/membrane_only_cellcycle_model.keras?raw=true'},
         }
 
-        depth = 5
+        depth = 11
         self.model = Sequential()
         self.model.add(Input(shape=(100,100,1)))
 

@@ -1,26 +1,19 @@
 # This workflows will upload a Python Package using Twine when a release is created
 # For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
 
-name: tests
+name: Build, test and deploy to PyPI
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
   test:
-    name: ${{ matrix.platform }} py${{ matrix.python-version }}
-    runs-on: ${{ matrix.platform }}
+    name: Build ${{ matrix.platform }} py${{ matrix.python-version }}
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
         platform: [ubuntu-latest, windows-latest, macos-latest]
+        runner: [[self-hosted, Ubuntu, Native], [self-hosted, Windows], [self-hosted, macOS, ARM64]]
         python-version: ['3.10', '3.11']
 
     steps:
@@ -62,12 +55,10 @@ jobs:
         uses: codecov/codecov-action@v3
 
   deploy:
-    # this will run when you have tagged a commit, starting with "v*"
-    # and requires that you have put your twine API key in your
+    # requires that you have put your twine API key in your
     # github secrets (see readme for details)
     needs: [test]
     runs-on: ubuntu-latest
-    if: contains(github.ref, 'tags')
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
@@ -81,7 +72,7 @@ jobs:
       - name: Build and publish
         env:
           TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.TWINE_API_KEY }}
+          TWINE_PASSWORD: ${{ secrets.AB_TWINE_API_KEY }}
         run: |
           git tag
           python -m build .

@@ -44,9 +44,9 @@ jobs:
 
       # this runs the platform-specific tests declared in tox.ini
       - name: Test with tox
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          run: python -m tox
+        #uses: GabrielBB/xvfb-action@v1
+        run: 
+            python -m tox
         env:
           PLATFORM: ubuntu-latest
 

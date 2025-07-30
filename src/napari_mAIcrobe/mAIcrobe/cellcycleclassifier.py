@@ -25,65 +25,66 @@ class CellCycleClassifier:
         "S.aureus DNA Epi": {"max_dim": 50, "model_input": "DNA",'model_path':'https://github.com/HenriquesLab/napari-mAIcrobe/blob/main/docs/dna_only_cellcycle_model.keras?raw=true'},
         "S.aureus DNA SIM": {"max_dim": 100, "model_input": "DNA",'model_path':'https://github.com/HenriquesLab/napari-mAIcrobe/blob/main/docs/dna_only_cellcycle_model.keras?raw=true'},
         
-        "S.aureus Membrane Epi": {"max_dim": 50, "model_input": "Membrane",'model_path':'https://github.com/HenriquesLab/napari-mAIcrobe/blob/main/docs/membrane_only_cellcycle_model.keras?raw=true'},
-        "S.aureus Membrane SIM": {"max_dim": 100, "model_input": "Membrane",'model_path':'https://github.com/HenriquesLab/napari-mAIcrobe/blob/main/docs/membrane_only_cellcycle_model.keras?raw=true'},
+        "S.aureus Membrane Epi": {"max_dim": 50, "model_input": "Membrane",'model_path':'https://github.com/antmsbrito/napari-eHooke/blob/main/docs/membrane_only_cellcycle_model.keras?raw=true'},
+        "S.aureus Membrane SIM": {"max_dim": 100, "model_input": "Membrane",'model_path':'https://github.com/antmsbrito/napari-eHooke/blob/main/docs/membrane_only_cellcycle_model.keras?raw=true'},
         }
 
-        depth = 11
-        self.model = Sequential()
-        self.model.add(Input(shape=(100,100,1)))
+        # depth = 11
+        # self.model = Sequential()
+        # self.model.add(Input(shape=(100,100,1)))
 
-        self.model.add(Conv2D(16, (3, 3), padding='same'))
-        self.model.add(Activation('relu'))
+        # self.model.add(Conv2D(16, (3, 3), padding='same'))
+        # self.model.add(Activation('relu'))
 
-        if depth > 1:
-            self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        # if depth > 1:
+        #     self.model.add(MaxPooling2D(pool_size=(2, 2)))
 
-            if depth > 2:
-                self.model.add(Conv2D(16, (3, 3), padding='same'))
-                self.model.add(Activation('relu'))
+        #     if depth > 2:
+        #         self.model.add(Conv2D(16, (3, 3), padding='same'))
+        #         self.model.add(Activation('relu'))
 
-                if depth > 3:
-                    self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        #         if depth > 3:
+        #             self.model.add(MaxPooling2D(pool_size=(2, 2)))
 
-                    if depth > 4:
-                        self.model.add(Conv2D(16, (3, 3), padding='same'))
-                        self.model.add(Activation('relu'))
+        #             if depth > 4:
+        #                 self.model.add(Conv2D(16, (3, 3), padding='same'))
+        #                 self.model.add(Activation('relu'))
 
-                        if depth > 5:
-                            self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        #                 if depth > 5:
+        #                     self.model.add(MaxPooling2D(pool_size=(2, 2)))
 
-                            if depth > 6:
-                                self.model.add(Conv2D(32, (3, 3), padding='same'))
-                                self.model.add(Activation('relu'))
+        #                     if depth > 6:
+        #                         self.model.add(Conv2D(32, (3, 3), padding='same'))
+        #                         self.model.add(Activation('relu'))
 
-                                if depth > 7:
-                                    self.model.add(Conv2D(32, (3, 3), padding='same'))
-                                    self.model.add(Activation('relu'))
+        #                         if depth > 7:
+        #                             self.model.add(Conv2D(32, (3, 3), padding='same'))
+        #                             self.model.add(Activation('relu'))
 
-                                    if depth > 8:
-                                        self.model.add(Conv2D(32, (3, 3), padding='same'))
-                                        self.model.add(Activation('relu'))
+        #                             if depth > 8:
+        #                                 self.model.add(Conv2D(32, (3, 3), padding='same'))
+        #                                 self.model.add(Activation('relu'))
 
-                                        if depth > 9:
-                                            self.model.add(Conv2D(32, (3, 3), padding='same'))
-                                            self.model.add(Activation('relu'))
+        #                                 if depth > 9:
+        #                                     self.model.add(Conv2D(32, (3, 3), padding='same'))
+        #                                     self.model.add(Activation('relu'))
 
-                                            if depth > 10:
-                                                self.model.add(Flatten())
-                                                self.model.add(Dense(100))
-                                                self.model.add(Activation('relu'))
-        if depth <= 10:
-            self.model.add(Flatten())
-            pass
+        #                                     if depth > 10:
+        #                                         self.model.add(Flatten())
+        #                                         self.model.add(Dense(100))
+        #                                         self.model.add(Activation('relu'))
+        # if depth <= 10:
+        #     self.model.add(Flatten())
+        #     pass
 
-        self.model.add(Dense(1))
-        self.model.add(Activation('sigmoid'))
+        # self.model.add(Dense(1))
+        # self.model.add(Activation('sigmoid'))
 
         if model == "custom":
             self.custom = True
-            #self.model = load_model(model_path)
-            self.model.load_weights(model_path)
+            self.model = load_model(model_path)
+            #print(self.model.summary())
+            #self.model.load_weights(model_path)
             self.max_dim = max_dim
             self.model_input = model_input
         else:

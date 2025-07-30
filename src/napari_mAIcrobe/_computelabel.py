@@ -5,12 +5,15 @@ Module responsible for GUI to do label computation and channel alignment.
 from typing import TYPE_CHECKING
 from typing import cast
 
+import numpy as np
+
 if TYPE_CHECKING:
     import napari
 
 from .mAIcrobe.mask import mask_computation, mask_alignment
 from .mAIcrobe.segments import SegmentsManager
 from .mAIcrobe.unet import computelabel_unet, normalizePercentile
+from cellpose import models
 
 from magicgui.widgets import Container, create_widget, SpinBox, ComboBox, FileEdit, Label, PushButton, CheckBox
 
@@ -46,7 +49,7 @@ class compute_label(Container):
         self._autoaligninput = CheckBox(label='Auto Align')
 
         # MASK ALGORITHM
-        self._algorithm_combo = cast(ComboBox, create_widget(options={"choices":["Isodata","Local Average","Unet","StarDist"]},label='Mask algorithm'))
+        self._algorithm_combo = cast(ComboBox, create_widget(options={"choices":["Isodata","Local Average","Unet","StarDist","CellPose cyto3"]},label='Mask algorithm'))
         self._algorithm_combo.changed.connect(self._on_algorithm_changed)
 
         self._titlemasklabel = Label(value='Parameters for Mask computation')
@@ -107,6 +110,12 @@ class compute_label(Container):
             self[11].visible = False
             self[12].visible = False
             self[13].visible = True
+        elif new_algorithm=='CellPose cyto3':
+            self[9].visible = False
+            self[10].visible = False
+            self[11].visible = False
+            self[12].visible = False
+            self[13].visible = False
 
         return
     
@@ -141,6 +150,12 @@ class compute_label(Container):
             mask = labels > 0
             mask = mask.astype('uint16')
 
+        elif _algorithm == "CellPose cyto3":
+            model = models.Cellpose(gpu=True, model_type='cyto3')
+            labels, flows, styles, diams = model.eval(_baseimg.data, diameter=None)
+            mask = labels > 0
+            mask = mask.astype('uint16')
+   
         else:
             mask = mask_computation(base_image=_baseimg.data,algorithm=_algorithm,blocksize=_LAblocksize,
                             offset=_LAoffset,closing=_binary_closing,dilation=_binary_dilation,fillholes=_binary_fillholes)

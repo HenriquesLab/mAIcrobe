@@ -672,6 +672,7 @@ class CellManager:
         self.properties = None
         self.heatmap_model = None
 
+        self.all_cells = None
 
     def compute_cell_properties(self):
 
@@ -771,6 +772,7 @@ class CellManager:
             self.heatmap_model = ca.model
 
         if self.params['generate_report']:
+            self.all_cells=All_Cells
             rm = ReportManager(parameters=self.params,properties=self.properties,allcells=All_Cells)
             rm.generate_report(self.params['report_path'], report_id=self.params.get('report_id',None))
             if self.params['coloc']:

@@ -25,7 +25,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       # these libraries enable testing on Qt on linux
-      - uses: tlambert03/setup-qt-libs@v1
+      # - uses: tlambert03/setup-qt-libs@v1
 
       # strategy borrowed from vispy for installing opengl libs on windows
       - name: Install Windows OpenGL
@@ -45,9 +45,9 @@ jobs:
 
       # this runs the platform-specific tests declared in tox.ini
       - name: Test with tox
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          run: python -m tox
+        #uses: GabrielBB/xvfb-action@v1
+        run: 
+          python -m tox
         env:
           PLATFORM: ${{ matrix.platform }}
 

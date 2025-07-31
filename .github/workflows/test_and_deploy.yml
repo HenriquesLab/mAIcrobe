@@ -13,9 +13,15 @@ jobs:
     strategy:
       matrix:
         platform: [ubuntu-latest, windows-latest, macos-latest]
-        runner: [[self-hosted, Ubuntu, Native], [self-hosted, Windows], [self-hosted, macOS, ARM64]]
         python-version: ['3.10', '3.11']
-
+        include:
+          - runner: [self-hosted, Ubuntu, Native]
+            platform: ubuntu-latest
+          - runner: [self-hosted, Windows]
+            platform: windows-latest
+          - runner: [self-hosted, macOS, ARM64]
+            platform: macos-latest
+                  
     steps:
       - uses: actions/checkout@v3
 

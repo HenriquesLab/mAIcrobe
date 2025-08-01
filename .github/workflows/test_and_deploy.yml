@@ -15,9 +15,9 @@ jobs:
         platform: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ['3.10', '3.11']
         include:
-          - runner: [self-hosted, Ubuntu, Native]
+          - runner: [self-hosted, Ubuntu, Docker]
             platform: ubuntu-latest
-          - runner: [self-hosted, Windows]
+          - runner: windows-latest
             platform: windows-latest
           - runner: [self-hosted, macOS, ARM64]
             platform: macos-latest

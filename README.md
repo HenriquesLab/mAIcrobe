@@ -1,8 +1,10 @@
 # napari-mAIcrobe
 
-ADD BADGES # TODO
-
-mAIcrobe napari plugin
+[![License BSD-3](https://img.shields.io/pypi/l/napari-mAIcrobe.svg?color=green)](https://github.com/HenriquesLab/napari-mAIcrobe/raw/main/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/napari-mAIcrobe.svg?color=green)](https://pypi.org/project/napari-mAIcrobe)
+[![Python Version](https://img.shields.io/pypi/pyversions/napari-mAIcrobe.svg?color=green)](https://python.org)
+[![tests](https://github.com/HenriquesLab/napari-mAIcrobe/actions/workflows/test_oncall.yml/badge.svg)](https://github.com/HenriquesLab/napari-mAIcrobe/actions/workflows/test_oncall.yml)
+[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-mAIcrobe)](https://napari-hub.org/plugins/napari-mAIcrobe)
 
 ----------------------------------
 

@@ -1,1 +1,8 @@
 CLAUDE.md
+
+.DS_Store
+
+__pycache__/
+
+*.egg
+*.egg-info/

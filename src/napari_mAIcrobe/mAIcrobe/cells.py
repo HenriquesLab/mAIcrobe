@@ -3,67 +3,115 @@
 import math
 
 import numpy as np
-
 import pandas as pd
-
-from scipy import ndimage
-
-from skimage.measure import regionprops_table, label, regionprops
-from skimage.filters import threshold_isodata
-from skimage.util import img_as_float, img_as_int
+from skimage import exposure, morphology
 from skimage.draw import line
-from skimage.transform import resize, rotate
-from skimage import morphology, color, exposure
+from skimage.filters import threshold_isodata
+from skimage.measure import label, regionprops_table
+from skimage.util import img_as_float
 
-from .cellprocessing import rotation_matrices, bound_rectangle, bounded_point
-from .cellcycleclassifier import CellCycleClassifier
 from .cellaverager import CellAverager
+from .cellcycleclassifier import CellCycleClassifier
+from .cellprocessing import bound_rectangle, bounded_point, rotation_matrices
 from .colocmanager import ColocManager
 from .reports import ReportManager
+
 
 class Cell:
     """Template for each cell object."""
 
-    def __init__(self, label, regionmask, properties, intensity, params, optional=None):
-        
-        self.label = label 
+    def __init__(
+        self, label, regionmask, properties, intensity, params, optional=None
+    ):
+
+        self.label = label
 
         # THESE 3 PARAMETERS HAVE TO GO
-        #self.mask = regionmask.astype(int)
-        #self.fluor = intensity
-        #self.optional = optional
+        # self.mask = regionmask.astype(int)
+        # self.fluor = intensity
+        # self.optional = optional
 
         self.params = params
 
         self.box_margin = 5
 
-        #properties = regionprops(regionmask, intensity)[0]
+        # properties = regionprops(regionmask, intensity)[0]
 
-        self.box = (properties['bbox-0'].item(),properties['bbox-1'].item(),properties['bbox-2'].item(),properties['bbox-3'].item()) # (min_row, min_col, max_row, max_col)
-       
-        w,h = intensity.shape
+        self.box = (
+            properties["bbox-0"].item(),
+            properties["bbox-1"].item(),
+            properties["bbox-2"].item(),
+            properties["bbox-3"].item(),
+        )  # (min_row, min_col, max_row, max_col)
+
+        w, h = intensity.shape
         self.img_shape = intensity.shape
-        self.box = (max(self.box[0] - self.box_margin, 0),
-                    max(self.box[1] - self.box_margin, 0),
-                    min(self.box[2] + self.box_margin, w - 1),
-                    min(self.box[3] + self.box_margin, h - 1))
-        
-        y0, x0 = (properties['centroid-0'].item(),properties['centroid-1'].item())
-        x1 = x0 + math.cos(properties['orientation'].item()) * 0.5 * properties['axis_minor_length'].item()
-        y1 = y0 - math.sin(properties['orientation'].item()) * 0.5 * properties['axis_minor_length'].item()
-        x2 = x0 - math.cos(properties['orientation'].item()) * 0.5 * properties['axis_minor_length'].item()
-        y2 = y0 + math.sin(properties['orientation'].item()) * 0.5 * properties['axis_minor_length'].item()
+        self.box = (
+            max(self.box[0] - self.box_margin, 0),
+            max(self.box[1] - self.box_margin, 0),
+            min(self.box[2] + self.box_margin, w - 1),
+            min(self.box[3] + self.box_margin, h - 1),
+        )
 
-        # NOTE THE SWAP ON X AND Y 
-        self.long_axis = np.rint(np.array([[y1,x1],[y2,x2]])).astype(int)
-        
-        x1 = x0 - math.sin(properties['orientation'].item()) * 0.5 * properties['axis_major_length'].item()
-        y1 = y0 - math.cos(properties['orientation'].item()) * 0.5 * properties['axis_major_length'].item()
-        x2 = x0 + math.sin(properties['orientation'].item()) * 0.5 * properties['axis_major_length'].item()
-        y2 = y0 + math.cos(properties['orientation'].item()) * 0.5 * properties['axis_major_length'].item()
-        
-        # NOTE THE SWAP ON X AND Y 
-        self.short_axis = np.rint(np.array([[y1,x1],[y2,x2]])).astype(int)
+        y0, x0 = (
+            properties["centroid-0"].item(),
+            properties["centroid-1"].item(),
+        )
+        x1 = (
+            x0
+            + math.cos(properties["orientation"].item())
+            * 0.5
+            * properties["axis_minor_length"].item()
+        )
+        y1 = (
+            y0
+            - math.sin(properties["orientation"].item())
+            * 0.5
+            * properties["axis_minor_length"].item()
+        )
+        x2 = (
+            x0
+            - math.cos(properties["orientation"].item())
+            * 0.5
+            * properties["axis_minor_length"].item()
+        )
+        y2 = (
+            y0
+            + math.sin(properties["orientation"].item())
+            * 0.5
+            * properties["axis_minor_length"].item()
+        )
+
+        # NOTE THE SWAP ON X AND Y
+        self.long_axis = np.rint(np.array([[y1, x1], [y2, x2]])).astype(int)
+
+        x1 = (
+            x0
+            - math.sin(properties["orientation"].item())
+            * 0.5
+            * properties["axis_major_length"].item()
+        )
+        y1 = (
+            y0
+            - math.cos(properties["orientation"].item())
+            * 0.5
+            * properties["axis_major_length"].item()
+        )
+        x2 = (
+            x0
+            + math.sin(properties["orientation"].item())
+            * 0.5
+            * properties["axis_major_length"].item()
+        )
+        y2 = (
+            y0
+            + math.cos(properties["orientation"].item())
+            * 0.5
+            * properties["axis_major_length"].item()
+        )
+
+        # NOTE THE SWAP ON X AND Y
+        self.short_axis = np.rint(np.array([[y1, x1], [y2, x2]])).astype(int)
 
         # CHECK IF SHORT AXIS AND LONG AXIS ARE OUTSIDE OF BOX TODO
 
@@ -76,52 +124,55 @@ class Cell:
         self.cyto_mask = None
         self.membsept_mask = None
 
-        self.stats = dict([("Baseline", 0),
-                           ("Cell Median", 0),
-                           ("Membrane Median", 0),
-                           ("Septum Median", 0),
-                           ("Cytoplasm Median", 0),
-                           ("Fluor Ratio", 0),
-                           ("Fluor Ratio 75%", 0),
-                           ("Fluor Ratio 25%", 0),
-                           ("Fluor Ratio 10%", 0),
-                           ("Cell Cycle Phase", 0),
-                           ("Area",properties['area'].item()),
-                           ("Perimeter",properties['perimeter'].item()),
-                           ("Eccentricity",properties['eccentricity'].item()),
-                           ])
-        
+        self.stats = dict(
+            [
+                ("Baseline", 0),
+                ("Cell Median", 0),
+                ("Membrane Median", 0),
+                ("Septum Median", 0),
+                ("Cytoplasm Median", 0),
+                ("Fluor Ratio", 0),
+                ("Fluor Ratio 75%", 0),
+                ("Fluor Ratio 25%", 0),
+                ("Fluor Ratio 10%", 0),
+                ("Cell Cycle Phase", 0),
+                ("Area", properties["area"].item()),
+                ("Perimeter", properties["perimeter"].item()),
+                ("Eccentricity", properties["eccentricity"].item()),
+            ]
+        )
+
         self.selection_state = 1
         self.compute_regions(self.params)
         self.compute_fluor_stats(self.params, regionmask, intensity)
 
         self.image = None
-        self.set_image(intensity,optional)
-
+        self.set_image(intensity, optional)
 
     def image_box(self, image):
-        """ returns box """
+        """returns box"""
 
         x0, y0, x1, y1 = self.box
         try:
-            return image[x0:x1+1, y0:y1+1]
+            return image[x0 : x1 + 1, y0 : y1 + 1]
         except TypeError:
             return None
 
     def compute_perim_mask(self, thick):
         """returns mask for perimeter
-            needs cell mask
+        needs cell mask
         """
         mask = self.cell_mask
 
-        eroded = morphology.binary_erosion(mask, np.ones(
-            (thick * 2 - 1, thick - 1))).astype(float)
+        eroded = morphology.binary_erosion(
+            mask, np.ones((thick * 2 - 1, thick - 1))
+        ).astype(float)
         perim = mask - eroded
 
         return perim
 
     def compute_sept_mask(self, thick, algorithm):
-        """ returns mask for axis.
+        """returns mask for axis.
         needs cell mask
         """
 
@@ -137,7 +188,7 @@ class Cell:
             print("Not a a valid algorithm")
 
     def compute_opensept_mask(self, thick, algorithm):
-        """ 
+        """
         returns mask for axis.
         needs cell mask
         """
@@ -169,10 +220,14 @@ class Cell:
         interest_label_sum = 0
 
         for l in range(np.max(label_matrix)):
-            if np.sum(img_as_float(label_matrix == l + 1)) > interest_label_sum:
+            if (
+                np.sum(img_as_float(label_matrix == l + 1))
+                > interest_label_sum
+            ):
                 interest_label = l + 1
                 interest_label_sum = np.sum(
-                    img_as_float(label_matrix == l + 1))
+                    img_as_float(label_matrix == l + 1)
+                )
 
         return img_as_float(label_matrix == interest_label)
 
@@ -214,9 +269,11 @@ class Cell:
                 break
 
         if second_label != 0:
-            return img_as_float((label_matrix == first_label) + (label_matrix == second_label))
+            return img_as_float(
+                (label_matrix == first_label) + (label_matrix == second_label)
+            )
         else:
-            return img_as_float((label_matrix == first_label))
+            return img_as_float(label_matrix == first_label)
 
     def compute_sept_box(self, thick):
         """Method used to create a mask of the septum based on creating a box
@@ -233,7 +290,8 @@ class Cell:
         linmask = np.zeros((x1 - x0 + 1, y1 - y0 + 1))
         linmask[x, y] = 1
         linmask = morphology.binary_dilation(
-            linmask, np.ones((thick, thick))).astype(float)
+            linmask, np.ones((thick, thick))
+        ).astype(float)
 
         if mask is not None:
             linmask = mask * linmask
@@ -247,36 +305,81 @@ class Cell:
             for y in range(0, len(data[x])):
                 if data[x, y] == 1:
                     if x == 0 and y == 0:
-                        neighs_sum = data[x, y] + data[x + 1, y] + \
-                                     data[x + 1, y + 1] + data[x, y + 1]
+                        neighs_sum = (
+                            data[x, y]
+                            + data[x + 1, y]
+                            + data[x + 1, y + 1]
+                            + data[x, y + 1]
+                        )
                     elif x == len(data) - 1 and y == len(data[x]) - 1:
-                        neighs_sum = data[x, y] + data[x, y - 1] + \
-                                     data[x - 1, y - 1] + data[x - 1, y]
+                        neighs_sum = (
+                            data[x, y]
+                            + data[x, y - 1]
+                            + data[x - 1, y - 1]
+                            + data[x - 1, y]
+                        )
                     elif x == 0 and y == len(data[x]) - 1:
-                        neighs_sum = data[x, y] + data[x, y - 1] + \
-                                     data[x + 1, y - 1] + data[x + 1, y]
+                        neighs_sum = (
+                            data[x, y]
+                            + data[x, y - 1]
+                            + data[x + 1, y - 1]
+                            + data[x + 1, y]
+                        )
                     elif x == len(data) - 1 and y == 0:
-                        neighs_sum = data[x, y] + data[x - 1, y] + \
-                                     data[x - 1, y + 1] + data[x, y + 1]
+                        neighs_sum = (
+                            data[x, y]
+                            + data[x - 1, y]
+                            + data[x - 1, y + 1]
+                            + data[x, y + 1]
+                        )
                     elif x == 0:
-                        neighs_sum = data[x, y] + data[x, y - 1] + data[x, y + 1] + \
-                                     data[x + 1, y - 1] + \
-                                     data[x + 1, y] + data[x + 1, y + 1]
+                        neighs_sum = (
+                            data[x, y]
+                            + data[x, y - 1]
+                            + data[x, y + 1]
+                            + data[x + 1, y - 1]
+                            + data[x + 1, y]
+                            + data[x + 1, y + 1]
+                        )
                     elif x == len(data) - 1:
-                        neighs_sum = data[x, y] + data[x, y - 1] + data[x, y + 1] + \
-                                     data[x - 1, y - 1] + \
-                                     data[x - 1, y] + data[x - 1, y + 1]
+                        neighs_sum = (
+                            data[x, y]
+                            + data[x, y - 1]
+                            + data[x, y + 1]
+                            + data[x - 1, y - 1]
+                            + data[x - 1, y]
+                            + data[x - 1, y + 1]
+                        )
                     elif y == 0:
-                        neighs_sum = data[x, y] + data[x - 1, y] + data[x + 1, y] + \
-                                     data[x - 1, y + 1] + \
-                                     data[x, y + 1] + data[x + 1, y + 1]
+                        neighs_sum = (
+                            data[x, y]
+                            + data[x - 1, y]
+                            + data[x + 1, y]
+                            + data[x - 1, y + 1]
+                            + data[x, y + 1]
+                            + data[x + 1, y + 1]
+                        )
                     elif y == len(data[x]) - 1:
-                        neighs_sum = data[x, y] + data[x - 1, y] + data[x + 1, y] + \
-                                     data[x - 1, y - 1] + \
-                                     data[x, y - 1] + data[x + 1, y - 1]
+                        neighs_sum = (
+                            data[x, y]
+                            + data[x - 1, y]
+                            + data[x + 1, y]
+                            + data[x - 1, y - 1]
+                            + data[x, y - 1]
+                            + data[x + 1, y - 1]
+                        )
                     else:
-                        neighs_sum = data[x, y] + data[x - 1, y] + data[x + 1, y] + data[x - 1, y - 1] + data[
-                            x, y - 1] + data[x + 1, y - 1] + data[x - 1, y + 1] + data[x, y + 1] + data[x + 1, y + 1]
+                        neighs_sum = (
+                            data[x, y]
+                            + data[x - 1, y]
+                            + data[x + 1, y]
+                            + data[x - 1, y - 1]
+                            + data[x, y - 1]
+                            + data[x + 1, y - 1]
+                            + data[x - 1, y + 1]
+                            + data[x, y + 1]
+                            + data[x + 1, y + 1]
+                        )
                     if neighs_sum != 9:
                         outline.append((x, y))
         return outline
@@ -288,10 +391,12 @@ class Cell:
         points = np.asarray(outline)  # in two columns, x, y
         bm = self.box_margin
         w, h = maskshape
-        box = (max(min(points[:, 0]) - bm, 0),
-               max(min(points[:, 1]) - bm, 0),
-               min(max(points[:, 0]) + bm, w - 1),
-               min(max(points[:, 1]) + bm, h - 1))
+        box = (
+            max(min(points[:, 0]) - bm, 0),
+            max(min(points[:, 1]) - bm, 0),
+            min(max(points[:, 0]) + bm, w - 1),
+            min(max(points[:, 1]) + bm, h - 1),
+        )
 
         return box
 
@@ -316,7 +421,8 @@ class Cell:
         for rix in range(int(len(rotations) / 2) + 1):
             r = rotations[rix]
             nx0, ny0, nx1, ny1, nwidth = bound_rectangle(
-                np.asarray(np.dot(points, r)))
+                np.asarray(np.dot(points, r))
+            )
 
             if nwidth < width:
                 width = nwidth
@@ -372,14 +478,16 @@ class Cell:
             linmask[x, y] = 1
             try:
                 linmask = morphology.binary_dilation(
-                    linmask, np.ones((bin_factor, bin_factor))).astype(float)
+                    linmask, np.ones((bin_factor, bin_factor))
+                ).astype(float)
             except RuntimeError:
                 bin_factor = 4
                 linmask = morphology.binary_dilation(
-                    linmask, np.ones((bin_factor, bin_factor))).astype(float)
+                    linmask, np.ones((bin_factor, bin_factor))
+                ).astype(float)
 
         else:
-            m = ((by1 - by0) / (bx1 - bx0))
+            m = (by1 - by0) / (bx1 - bx0)
             b = by0 - m * bx0
 
             if b < 0:
@@ -434,74 +542,110 @@ class Cell:
             linmask[x, y] = 1
             try:
                 linmask = morphology.binary_dilation(
-                    linmask, np.ones((bin_factor, bin_factor))).astype(float)
+                    linmask, np.ones((bin_factor, bin_factor))
+                ).astype(float)
             except RuntimeError:
                 bin_factor = 4
                 linmask = morphology.binary_dilation(
-                    linmask, np.ones((bin_factor, bin_factor))).astype(float)
+                    linmask, np.ones((bin_factor, bin_factor))
+                ).astype(float)
         return img_as_float(linmask)
 
-    def recursive_compute_sept(self, inner_mask_thickness,algorithm):
+    def recursive_compute_sept(self, inner_mask_thickness, algorithm):
         try:
-            self.sept_mask = self.compute_sept_mask(inner_mask_thickness,algorithm)
+            self.sept_mask = self.compute_sept_mask(
+                inner_mask_thickness, algorithm
+            )
         except IndexError:
             try:
-                self.recursive_compute_sept(inner_mask_thickness - 1, algorithm)
+                self.recursive_compute_sept(
+                    inner_mask_thickness - 1, algorithm
+                )
             except RuntimeError:
                 self.recursive_compute_sept(inner_mask_thickness - 1, "Box")
 
-    def recursive_compute_opensept(self, inner_mask_thickness,algorithm):
+    def recursive_compute_opensept(self, inner_mask_thickness, algorithm):
         try:
-            self.sept_mask = self.compute_opensept_mask(inner_mask_thickness,algorithm)
+            self.sept_mask = self.compute_opensept_mask(
+                inner_mask_thickness, algorithm
+            )
         except IndexError:
             try:
-                self.recursive_compute_opensept(inner_mask_thickness - 1,algorithm)
+                self.recursive_compute_opensept(
+                    inner_mask_thickness - 1, algorithm
+                )
             except RuntimeError:
-                self.recursive_compute_opensept(inner_mask_thickness - 1, "Box")
+                self.recursive_compute_opensept(
+                    inner_mask_thickness - 1, "Box"
+                )
 
     def compute_regions(self, params):
         """Computes each different region of the cell (whole cell, membrane,
         septum, cytoplasm) and creates their respectives masks."""
 
         if params["find_septum"]:
-            self.recursive_compute_sept(params["inner_mask_thickness"],params["septum_algorithm"])
+            self.recursive_compute_sept(
+                params["inner_mask_thickness"], params["septum_algorithm"]
+            )
 
             if params["septum_algorithm"] == "Isodata":
-                self.perim_mask = self.compute_perim_mask(params["inner_mask_thickness"])
+                self.perim_mask = self.compute_perim_mask(
+                    params["inner_mask_thickness"]
+                )
                 self.membsept_mask = (self.perim_mask + self.sept_mask) > 0
                 linmask = self.remove_sept_from_membrane(self.img_shape)
-                self.cyto_mask = (self.cell_mask - self.perim_mask - self.sept_mask) > 0
+                self.cyto_mask = (
+                    self.cell_mask - self.perim_mask - self.sept_mask
+                ) > 0
                 if linmask is not None:
                     old_membrane = self.perim_mask
                     self.perim_mask = (old_membrane - linmask) > 0
             else:
-                self.perim_mask = (self.compute_perim_mask(params["inner_mask_thickness"]) - self.sept_mask) > 0
+                self.perim_mask = (
+                    self.compute_perim_mask(params["inner_mask_thickness"])
+                    - self.sept_mask
+                ) > 0
                 self.membsept_mask = (self.perim_mask + self.sept_mask) > 0
-                self.cyto_mask = (self.cell_mask - self.perim_mask - self.sept_mask) > 0
+                self.cyto_mask = (
+                    self.cell_mask - self.perim_mask - self.sept_mask
+                ) > 0
         elif params["find_openseptum"]:
-            self.recursive_compute_opensept(params["inner_mask_thickness"],params["septum_algorithm"])
+            self.recursive_compute_opensept(
+                params["inner_mask_thickness"], params["septum_algorithm"]
+            )
 
             if params["septum_algorithm"] == "Isodata":
-                self.perim_mask = self.compute_perim_mask(params["inner_mask_thickness"])
+                self.perim_mask = self.compute_perim_mask(
+                    params["inner_mask_thickness"]
+                )
 
                 self.membsept_mask = (self.perim_mask + self.sept_mask) > 0
                 linmask = self.remove_sept_from_membrane(self.img_shape)
-                self.cyto_mask = (self.cell_mask - self.perim_mask - self.sept_mask) > 0
+                self.cyto_mask = (
+                    self.cell_mask - self.perim_mask - self.sept_mask
+                ) > 0
                 if linmask is not None:
                     old_membrane = self.perim_mask
                     self.perim_mask = (old_membrane - linmask) > 0
             else:
-                self.perim_mask = (self.compute_perim_mask(params["inner_mask_thickness"]) - self.sept_mask) > 0
+                self.perim_mask = (
+                    self.compute_perim_mask(params["inner_mask_thickness"])
+                    - self.sept_mask
+                ) > 0
                 self.membsept_mask = (self.perim_mask + self.sept_mask) > 0
-                self.cyto_mask = (self.cell_mask - self.perim_mask - self.sept_mask) > 0
+                self.cyto_mask = (
+                    self.cell_mask - self.perim_mask - self.sept_mask
+                ) > 0
         else:
             self.sept_mask = None
-            self.perim_mask = self.compute_perim_mask(params["inner_mask_thickness"])
+            self.perim_mask = self.compute_perim_mask(
+                params["inner_mask_thickness"]
+            )
             self.cyto_mask = (self.cell_mask - self.perim_mask) > 0
 
     def compute_fluor_baseline(self, mask, fluor, margin):
         """mask and fluor are the global images
-           NOTE: mask is 0 (black) at cells and 1 (white) outside
+        NOTE: mask is 0 (black) at cells and 1 (white) outside
         """
         # compatibility
         mask = 1 - mask
@@ -527,7 +671,9 @@ class Cell:
         mask_box = 1 - inverted_mask_box
 
         fluor_box = fluor[x0:x1, y0:y1]
-        self.stats["Baseline"] = np.median(mask_box[mask_box > 0] * fluor_box[mask_box > 0])
+        self.stats["Baseline"] = np.median(
+            mask_box[mask_box > 0] * fluor_box[mask_box > 0]
+        )
 
     def measure_fluor(self, fluorbox, roi, fraction=1.0):
         """returns the median and std of  fluorescence in roi
@@ -544,7 +690,7 @@ class Cell:
             if fraction < 1:
                 sortvals = np.sort(bright, axis=None)[::-1]
                 sortvals = sortvals[np.nonzero(sortvals)]
-                sortvals = sortvals[:int(len(sortvals) * fraction)]
+                sortvals = sortvals[: int(len(sortvals) * fraction)]
                 return np.median(sortvals)
 
             else:
@@ -554,40 +700,66 @@ class Cell:
 
     def compute_fluor_stats(self, params, mask, fluor):
         """Computes the cell stats related to the fluorescence"""
-        self.compute_fluor_baseline(mask,
-                                    fluor,
-                                    params["baseline_margin"])
+        self.compute_fluor_baseline(mask, fluor, params["baseline_margin"])
 
         fluorbox = self.fluor_mask
 
-        self.stats["Cell Median"] = \
-            self.measure_fluor(fluorbox, self.cell_mask) - \
-            self.stats["Baseline"]
+        self.stats["Cell Median"] = (
+            self.measure_fluor(fluorbox, self.cell_mask)
+            - self.stats["Baseline"]
+        )
 
-        self.stats["Membrane Median"] = \
-            self.measure_fluor(fluorbox, self.perim_mask) - \
-            self.stats["Baseline"]
+        self.stats["Membrane Median"] = (
+            self.measure_fluor(fluorbox, self.perim_mask)
+            - self.stats["Baseline"]
+        )
 
-        self.stats["Cytoplasm Median"] = \
-            self.measure_fluor(fluorbox, self.cyto_mask) - \
-            self.stats["Baseline"]
+        self.stats["Cytoplasm Median"] = (
+            self.measure_fluor(fluorbox, self.cyto_mask)
+            - self.stats["Baseline"]
+        )
 
         if params["find_septum"] or params["find_openseptum"]:
-            self.stats["Septum Median"] = self.measure_fluor(
-                fluorbox, self.sept_mask) - self.stats["Baseline"]
+            self.stats["Septum Median"] = (
+                self.measure_fluor(fluorbox, self.sept_mask)
+                - self.stats["Baseline"]
+            )
 
-            self.stats["Fluor Ratio"] = (self.measure_fluor(fluorbox, self.sept_mask) - self.stats[
-                "Baseline"]) / (self.measure_fluor(fluorbox, self.perim_mask) - self.stats["Baseline"])
+            self.stats["Fluor Ratio"] = (
+                self.measure_fluor(fluorbox, self.sept_mask)
+                - self.stats["Baseline"]
+            ) / (
+                self.measure_fluor(fluorbox, self.perim_mask)
+                - self.stats["Baseline"]
+            )
 
-            self.stats["Fluor Ratio 75%"] = (self.measure_fluor(fluorbox, self.sept_mask, 0.75) - self.stats[
-                "Baseline"]) / (self.measure_fluor(fluorbox, self.perim_mask) - self.stats["Baseline"])
+            self.stats["Fluor Ratio 75%"] = (
+                self.measure_fluor(fluorbox, self.sept_mask, 0.75)
+                - self.stats["Baseline"]
+            ) / (
+                self.measure_fluor(fluorbox, self.perim_mask)
+                - self.stats["Baseline"]
+            )
 
-            self.stats["Fluor Ratio 25%"] = (self.measure_fluor(fluorbox, self.sept_mask, 0.25) - self.stats[
-                "Baseline"]) / (self.measure_fluor(fluorbox, self.perim_mask) - self.stats["Baseline"])
+            self.stats["Fluor Ratio 25%"] = (
+                self.measure_fluor(fluorbox, self.sept_mask, 0.25)
+                - self.stats["Baseline"]
+            ) / (
+                self.measure_fluor(fluorbox, self.perim_mask)
+                - self.stats["Baseline"]
+            )
 
-            self.stats["Fluor Ratio 10%"] = (self.measure_fluor(fluorbox, self.sept_mask, 0.10) - self.stats[
-                "Baseline"]) / (self.measure_fluor(fluorbox, self.perim_mask) - self.stats["Baseline"])
-            self.stats["Memb+Sept Median"] = self.measure_fluor(fluorbox, self.membsept_mask) - self.stats["Baseline"]
+            self.stats["Fluor Ratio 10%"] = (
+                self.measure_fluor(fluorbox, self.sept_mask, 0.10)
+                - self.stats["Baseline"]
+            ) / (
+                self.measure_fluor(fluorbox, self.perim_mask)
+                - self.stats["Baseline"]
+            )
+            self.stats["Memb+Sept Median"] = (
+                self.measure_fluor(fluorbox, self.membsept_mask)
+                - self.stats["Baseline"]
+            )
 
         else:
             self.stats["Septum Median"] = 0
@@ -623,39 +795,44 @@ class Cell:
 
         # 7 images
 
-        # #1 is the fluorescence 
-        img[bx0:bx1, by0:by1] = fluor[x0:x1 + 1, y0:y1 + 1]
+        # #1 is the fluorescence
+        img[bx0:bx1, by0:by1] = fluor[x0 : x1 + 1, y0 : y1 + 1]
         by0 = by0 + y1 - y0 + 1
         by1 = by1 + y1 - y0 + 1
-        
+
         # #2 is the fluorescence segmented
-        img[bx0:bx1, by0:by1] = fluor[x0:x1 + 1, y0:y1 + 1] * self.cell_mask
+        img[bx0:bx1, by0:by1] = (
+            fluor[x0 : x1 + 1, y0 : y1 + 1] * self.cell_mask
+        )
         by0 = by0 + y1 - y0 + 1
         by1 = by1 + y1 - y0 + 1
 
         # #3 is the dna
-        img[bx0:bx1, by0:by1] = optional[x0:x1 + 1, y0:y1 + 1]
+        img[bx0:bx1, by0:by1] = optional[x0 : x1 + 1, y0 : y1 + 1]
         by0 = by0 + y1 - y0 + 1
         by1 = by1 + y1 - y0 + 1
 
         # #4 is the dna segmented
-        img[bx0:bx1, by0:by1] = optional[x0:x1 + 1, y0:y1 + 1] * self.cell_mask
+        img[bx0:bx1, by0:by1] = (
+            optional[x0 : x1 + 1, y0 : y1 + 1] * self.cell_mask
+        )
         by0 = by0 + y1 - y0 + 1
         by1 = by1 + y1 - y0 + 1
 
         # 5,6,7 is perimeter, cytoplasm and septa
-        img[bx0:bx1, by0:by1] = fluor[x0:x1 + 1, y0:y1 + 1] * perim
+        img[bx0:bx1, by0:by1] = fluor[x0 : x1 + 1, y0 : y1 + 1] * perim
         by0 = by0 + y1 - y0 + 1
         by1 = by1 + y1 - y0 + 1
 
-        img[bx0:bx1, by0:by1] = fluor[x0:x1 + 1, y0:y1 + 1] * cyto
+        img[bx0:bx1, by0:by1] = fluor[x0 : x1 + 1, y0 : y1 + 1] * cyto
 
-        if self.params['find_septum'] or self.params['find_openseptum']:
+        if self.params["find_septum"] or self.params["find_openseptum"]:
             by0 = by0 + y1 - y0 + 1
             by1 = by1 + y1 - y0 + 1
-            img[bx0:bx1, by0:by1] = fluor[x0:x1 + 1, y0:y1 + 1] * axial
+            img[bx0:bx1, by0:by1] = fluor[x0 : x1 + 1, y0 : y1 + 1] * axial
 
         self.image = img
+
 
 class CellManager:
     """Main class of the module. Should be used to interact with the rest of
@@ -684,110 +861,155 @@ class CellManager:
         CellMedian = []
         Membrane_Median = []
         Septum_Median = []
-        Cytoplasm_Median = [] 
+        Cytoplasm_Median = []
         Fluor_Ratio = []
         Fluor_Ratio_75 = []
         Fluor_Ratio_25 = []
         Fluor_Ratio_10 = []
         CellCyclePhase = []
         DNARatio = []
-        All_Cells = [] # TODO consider always saving
+        All_Cells = []  # TODO consider always saving
 
         CellsImage = []
 
-        if self.params['classify_cell_cycle']:
+        if self.params["classify_cell_cycle"]:
             print("Cell cycle...")
-            ccc = CellCycleClassifier(self.fluor_img, self.optional_img, self.params['model'], self.params['custom_model_path'], self.params['custom_model_input'],self.params['custom_model_maxsize'])
-        if self.params['cell_averager']:
+            ccc = CellCycleClassifier(
+                self.fluor_img,
+                self.optional_img,
+                self.params["model"],
+                self.params["custom_model_path"],
+                self.params["custom_model_input"],
+                self.params["custom_model_maxsize"],
+            )
+        if self.params["cell_averager"]:
             print("Cell averager...")
             ca = CellAverager(self.fluor_img)
 
-        optional_img_cells = self.optional_img * (self.label_img>0).astype(int)
-        histcounts, binedges = np.histogram(optional_img_cells[np.nonzero(optional_img_cells)],bins='auto')
-        maxintensity = binedges[np.argmax(histcounts)+1]
+        optional_img_cells = self.optional_img * (self.label_img > 0).astype(
+            int
+        )
+        histcounts, binedges = np.histogram(
+            optional_img_cells[np.nonzero(optional_img_cells)], bins="auto"
+        )
+        maxintensity = binedges[np.argmax(histcounts) + 1]
 
         optimg = self.optional_img.copy()
-        optimg[optimg>=maxintensity] = maxintensity
+        optimg[optimg >= maxintensity] = maxintensity
         dnathresh = threshold_isodata(optimg[np.nonzero(optimg)])
 
-        proptable = pd.DataFrame(regionprops_table(self.label_img,properties=['label','bbox','centroid','orientation','axis_minor_length','axis_major_length','area','perimeter','eccentricity']))
+        proptable = pd.DataFrame(
+            regionprops_table(
+                self.label_img,
+                properties=[
+                    "label",
+                    "bbox",
+                    "centroid",
+                    "orientation",
+                    "axis_minor_length",
+                    "axis_major_length",
+                    "area",
+                    "perimeter",
+                    "eccentricity",
+                ],
+            )
+        )
 
         print("Per cell stats...")
         label_list = np.unique(self.label_img)
-        for i,l in enumerate(label_list):
+        for i, l in enumerate(label_list):
 
-            if l == 0: # BG
+            if l == 0:  # BG
                 continue
 
-            mask = (self.label_img==l).astype(int)
-            c = Cell(label=l, regionmask=mask, intensity=self.fluor_img, properties=proptable[proptable['label']==l], params=self.params, optional=self.optional_img) 
-            
-            if self.params['generate_report']:
-                #CellsImage.append(resize(c.image,(50,350)))
+            mask = (self.label_img == l).astype(int)
+            c = Cell(
+                label=l,
+                regionmask=mask,
+                intensity=self.fluor_img,
+                properties=proptable[proptable["label"] == l],
+                params=self.params,
+                optional=self.optional_img,
+            )
+
+            if self.params["generate_report"]:
+                # CellsImage.append(resize(c.image,(50,350)))
                 All_Cells.append(c.image)
-            if self.params['cell_averager']:
+            if self.params["cell_averager"]:
                 ca.align(c)
 
             Label.append(c.label)
-            Area.append(c.stats['Area'])
-            Perimeter.append(c.stats['Perimeter'])
-            Eccentricity.append(c.stats['Eccentricity'])
-            Baseline.append(c.stats['Baseline'])
-            CellMedian.append(c.stats['Cell Median'])
-            Membrane_Median.append(c.stats['Membrane Median'])
-            Septum_Median.append(c.stats['Septum Median'])
-            Cytoplasm_Median.append(c.stats['Cytoplasm Median'])
-            Fluor_Ratio.append(c.stats['Fluor Ratio'])
-            Fluor_Ratio_75.append(c.stats['Fluor Ratio 75%'])
-            Fluor_Ratio_25.append(c.stats['Fluor Ratio 25%'])
-            Fluor_Ratio_10.append(c.stats['Fluor Ratio 10%'])
-            if self.params['classify_cell_cycle']:
-                c.stats['Cell Cycle Phase'] = ccc.classify_cell(c)
+            Area.append(c.stats["Area"])
+            Perimeter.append(c.stats["Perimeter"])
+            Eccentricity.append(c.stats["Eccentricity"])
+            Baseline.append(c.stats["Baseline"])
+            CellMedian.append(c.stats["Cell Median"])
+            Membrane_Median.append(c.stats["Membrane Median"])
+            Septum_Median.append(c.stats["Septum Median"])
+            Cytoplasm_Median.append(c.stats["Cytoplasm Median"])
+            Fluor_Ratio.append(c.stats["Fluor Ratio"])
+            Fluor_Ratio_75.append(c.stats["Fluor Ratio 75%"])
+            Fluor_Ratio_25.append(c.stats["Fluor Ratio 25%"])
+            Fluor_Ratio_10.append(c.stats["Fluor Ratio 10%"])
+            if self.params["classify_cell_cycle"]:
+                c.stats["Cell Cycle Phase"] = ccc.classify_cell(c)
             else:
-                c.stats['Cell Cycle Phase'] = 0
-            CellCyclePhase.append(c.stats['Cell Cycle Phase'])
-            DNARatio.append(self.calculate_DNARatio(c,self.optional_img,dnathresh))
+                c.stats["Cell Cycle Phase"] = 0
+            CellCyclePhase.append(c.stats["Cell Cycle Phase"])
+            DNARatio.append(
+                self.calculate_DNARatio(c, self.optional_img, dnathresh)
+            )
 
         properties = {}
-        properties['label'] = np.array(Label)
-        properties['Area'] = np.array(Area)
-        properties['Perimeter'] = np.array(Perimeter)
-        properties['Eccentricity'] = np.array(Eccentricity)
-        properties['Baseline'] = np.array(Baseline)
-        properties['Cell Median'] = np.array(CellMedian)
-        properties['Membrane Median'] = np.array(Membrane_Median)
-        properties['Septum Median'] = np.array(Septum_Median)
-        properties['Cytoplasm Median'] = np.array(Cytoplasm_Median)
-        properties['Fluor Ratio'] = np.array(Fluor_Ratio)
-        properties['Fluor Ratio 75%'] = np.array(Fluor_Ratio_75)
-        properties['Fluor Ratio 25%'] = np.array(Fluor_Ratio_25)
-        properties['Fluor Ratio 10%'] = np.array(Fluor_Ratio_10)
-        properties['Cell Cycle Phase'] = np.array(CellCyclePhase)
-        properties['DNA Ratio'] = np.array(DNARatio)
+        properties["label"] = np.array(Label)
+        properties["Area"] = np.array(Area)
+        properties["Perimeter"] = np.array(Perimeter)
+        properties["Eccentricity"] = np.array(Eccentricity)
+        properties["Baseline"] = np.array(Baseline)
+        properties["Cell Median"] = np.array(CellMedian)
+        properties["Membrane Median"] = np.array(Membrane_Median)
+        properties["Septum Median"] = np.array(Septum_Median)
+        properties["Cytoplasm Median"] = np.array(Cytoplasm_Median)
+        properties["Fluor Ratio"] = np.array(Fluor_Ratio)
+        properties["Fluor Ratio 75%"] = np.array(Fluor_Ratio_75)
+        properties["Fluor Ratio 25%"] = np.array(Fluor_Ratio_25)
+        properties["Fluor Ratio 10%"] = np.array(Fluor_Ratio_10)
+        properties["Cell Cycle Phase"] = np.array(CellCyclePhase)
+        properties["DNA Ratio"] = np.array(DNARatio)
 
         self.properties = properties
 
-        if self.params['cell_averager']:
+        if self.params["cell_averager"]:
             ca.average()
             self.heatmap_model = ca.model
 
-        if self.params['generate_report']:
-            self.all_cells=All_Cells
-            rm = ReportManager(parameters=self.params,properties=self.properties,allcells=All_Cells)
-            rm.generate_report(self.params['report_path'], report_id=self.params.get('report_id',None))
-            if self.params['coloc']:
+        if self.params["generate_report"]:
+            self.all_cells = All_Cells
+            rm = ReportManager(
+                parameters=self.params,
+                properties=self.properties,
+                allcells=All_Cells,
+            )
+            rm.generate_report(
+                self.params["report_path"],
+                report_id=self.params.get("report_id", None),
+            )
+            if self.params["coloc"]:
                 coloc = ColocManager()
-                coloc.compute_pcc(self.fluor_img, self.optional_img,All_Cells,self.params,rm.cell_data_filename)
-
-
+                coloc.compute_pcc(
+                    self.fluor_img,
+                    self.optional_img,
+                    All_Cells,
+                    self.params,
+                    rm.cell_data_filename,
+                )
 
     @staticmethod
-    def calculate_DNARatio(cell_object, dna_fov,thresh):
+    def calculate_DNARatio(cell_object, dna_fov, thresh):
 
         x0, y0, x1, y1 = cell_object.box
         cell_mask = cell_object.cell_mask
-        optional_cell = dna_fov[x0:x1 + 1, y0:y1 + 1]
+        optional_cell = dna_fov[x0 : x1 + 1, y0 : y1 + 1]
         optional_signal = (optional_cell * cell_mask) > thresh
 
         return np.sum(optional_signal) / np.sum(cell_mask)
-           

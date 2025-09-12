@@ -1,17 +1,18 @@
 import math
-import numpy as np
 
-from skimage.transform import rotate, resize
+import numpy as np
 from skimage.morphology import binary_erosion
+from skimage.transform import resize, rotate
 from sklearn.decomposition import PCA
+
 
 class CellAverager:
     """
-    Class in charge of building an average heatmap 
+    Class in charge of building an average heatmap
     """
 
     def __init__(self, fluor):
-        
+
         self.fluor = fluor
         self.model = None
         self.aligned_fluor_masks = []
@@ -19,14 +20,18 @@ class CellAverager:
     def align(self, cell):
 
         angle = self.calculate_rotation_angle(cell)
-        self.aligned_fluor_masks.append(rotate(cell.image_box(self.fluor) * cell.cell_mask, angle))
+        self.aligned_fluor_masks.append(
+            rotate(cell.image_box(self.fluor) * cell.cell_mask, angle)
+        )
 
     def average(self):
 
         mean_x = int(np.median([s.shape[0] for s in self.aligned_fluor_masks]))
         mean_y = int(np.median([s.shape[1] for s in self.aligned_fluor_masks]))
 
-        fluor_crops_array = [resize(s, (mean_x, mean_y)) for s in self.aligned_fluor_masks]
+        fluor_crops_array = [
+            resize(s, (mean_x, mean_y)) for s in self.aligned_fluor_masks
+        ]
 
         model_cell = np.zeros((mean_x, mean_y))
         for cell in fluor_crops_array:
@@ -61,8 +66,16 @@ class CellAverager:
         eigenvector_x, eigenvector_y = pca.components_[0]
         eigenval = pca.explained_variance_[0]
 
-        return [[pos_x - eigenvector_x * eigenval, pos_y - eigenvector_y * eigenval],
-                [pos_x + eigenvector_x * eigenval, pos_y + eigenvector_y * eigenval]]
+        return [
+            [
+                pos_x - eigenvector_x * eigenval,
+                pos_y - eigenvector_y * eigenval,
+            ],
+            [
+                pos_x + eigenvector_x * eigenval,
+                pos_y + eigenvector_y * eigenval,
+            ],
+        ]
 
     @staticmethod
     def calculate_axis_angle(major_axis):

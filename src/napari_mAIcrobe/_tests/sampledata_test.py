@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def testing_sampledata(all_sample_data):
     """Check if sample data is available for downloading."""
 

@@ -7,11 +7,12 @@ of the mask: features and labels, which will later be used to define the differe
 """
 
 import numpy as np
-from skimage.feature import peak_local_max
-from skimage import segmentation
 from scipy import ndimage
+from skimage import segmentation
+from skimage.feature import peak_local_max
 
-class SegmentsManager(object):
+
+class SegmentsManager:
     """Main class of the module.
     The class is responsible for the computation of the features of the image.
     Requires an instance of the ImageManager class after loading both the
@@ -43,13 +44,16 @@ class SegmentsManager(object):
 
         distance = ndimage.distance_transform_edt(mask)
 
-        mindist = params['peak_min_distance']
-        minmargin = params['peak_min_distance_from_edge']
+        mindist = params["peak_min_distance"]
+        minmargin = params["peak_min_distance_from_edge"]
 
-        centers = peak_local_max(distance, min_distance=mindist,
-                                 threshold_abs=params['peak_min_height'],
-                                 exclude_border=True,
-                                 num_peaks=params['max_peaks'])
+        centers = peak_local_max(
+            distance,
+            min_distance=mindist,
+            threshold_abs=params["peak_min_height"],
+            exclude_border=True,
+            num_peaks=params["max_peaks"],
+        )
 
         placedmask = np.ones(distance.shape)
         lx, ly = distance.shape
@@ -60,10 +64,17 @@ class SegmentsManager(object):
         for c in centers:
             x, y = c
 
-            if x >= minmargin and y >= minmargin and x <= lx - minmargin \
-                    and y <= ly - minmargin and placedmask[x, y]:
-                placedmask[x - mindist:x + mindist +
-                                       1, y - mindist:y + mindist + 1] = 0
+            if (
+                x >= minmargin
+                and y >= minmargin
+                and x <= lx - minmargin
+                and y <= ly - minmargin
+                and placedmask[x, y]
+            ):
+                placedmask[
+                    x - mindist : x + mindist + 1,
+                    y - mindist : y + mindist + 1,
+                ] = 0
                 s = distance[x, y]
                 circles.append((x, y))
                 heights.append(s)
@@ -79,11 +90,11 @@ class SegmentsManager(object):
         requires a mask and an instance of the imageprocessingparams
         if the selected algorithm used is Distance Peak, used the method
         compute_distance_peaks to compute the features"""
-        
+
         features = np.zeros(mask.shape)
 
-        if params['peak_min_distance_from_edge'] < 1:
-            params['peak_min_distance_from_edge'] = 1
+        if params["peak_min_distance_from_edge"] < 1:
+            params["peak_min_distance_from_edge"] = 1
 
         circles = self.compute_distance_peaks(mask, params)
 
@@ -115,11 +126,13 @@ class SegmentsManager(object):
 
         markers = self.features
 
-        distance = - ndimage.distance_transform_edt(mask)
+        distance = -ndimage.distance_transform_edt(mask)
         mindist = np.min(distance)
         markpoints = markers > 0
         distance[markpoints] = mindist
-        labels = segmentation.watershed(distance, markers, mask=mask).astype(int)
+        labels = segmentation.watershed(distance, markers, mask=mask).astype(
+            int
+        )
 
         self.labels = labels
 

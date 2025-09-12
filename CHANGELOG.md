@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Comprehensive documentation overhaul with professional README
-- Complete user guide documentation 
+- Complete user guide documentation
 - Tutorials and API reference documentation
 - Contributing guidelines and development setup instructions
 
@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `filter_cells`: Interactive cell filtering based on computed statistics
 - Deep learning cell cycle classification with 6 pre-trained TensorFlow models:
   - S.aureus DNA+Membrane (Epi/SIM)
-  - S.aureus DNA-only (Epi/SIM) 
+  - S.aureus DNA-only (Epi/SIM)
   - S.aureus Membrane-only (Epi/SIM)
 - Sample _S. aureus_ datasets for testing:
   - Phase contrast images
@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for custom TensorFlow models
 
 ### Features
-- **Cell Segmentation**: StarDist2D, Cellpose and custom U-Net 
+- **Cell Segmentation**: StarDist2D, Cellpose and custom U-Net
 - **Morphometry**: Comprehensive shape and size analysis
 - **Classification**: Single cell classification using pretraiend models (S. aureus cell cycle) or custom trained ones
 - **Filtering**: Interactive filtering of cell populations
@@ -63,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
 - Development setup instructions
-- Code style guidelines  
+- Code style guidelines
 - Testing requirements
 - Pull request process
 - Community guidelines

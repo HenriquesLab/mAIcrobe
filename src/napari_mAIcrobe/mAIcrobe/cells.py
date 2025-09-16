@@ -886,6 +886,10 @@ class CellManager:
             print("Cell averager...")
             ca = CellAverager(self.fluor_img)
 
+        if self.params["coloc"]:
+            coloc = ColocManager()
+
+
         optional_img_cells = self.optional_img * (self.label_img > 0).astype(
             int
         )
@@ -959,6 +963,10 @@ class CellManager:
             DNARatio.append(
                 self.calculate_DNARatio(c, self.optional_img, dnathresh)
             )
+            if self.params["coloc"]:
+                coloc.computes_cell_pcc(self.fluor_img,self.optional_img,c,self.params)
+
+
 
         properties = {}
         properties["label"] = np.array(Label)
@@ -995,14 +1003,7 @@ class CellManager:
                 report_id=self.params.get("report_id", None),
             )
             if self.params["coloc"]:
-                coloc = ColocManager()
-                coloc.compute_pcc(
-                    self.fluor_img,
-                    self.optional_img,
-                    All_Cells,
-                    self.params,
-                    rm.cell_data_filename,
-                )
+                coloc.save_report(rm.cell_data_filename,self.params["find_septum"])
 
     @staticmethod
     def calculate_DNARatio(cell_object, dna_fov, thresh):

@@ -40,6 +40,39 @@ class ColocManager:
         ]  # removes 0s from entering pcc calculation
 
         return pearsonr(filtered_1, filtered_2)
+    
+    def computes_cell_pcc(self, fluor_image, optional_image, cell, parameters):
+
+        key = str(cell.label)
+        self.report[key] = {}
+        x0, y0, x1, y1 = cell.box
+
+        fluor_box = fluor_image[x0 : x1 + 1, y0 : y1 + 1]
+        optional_box = optional_image[x0 : x1 + 1, y0 : y1 + 1]
+
+        try:
+            self.report[key]["Channel 1"] = fluor_box
+            self.report[key]["Channel 2"] = optional_box
+
+            self.report[key]["Whole Cell"] = self.pearsons_score(
+                fluor_box, optional_box, cell.cell_mask
+            )[0]
+            self.report[key]["Membrane"] = self.pearsons_score(
+                fluor_box, optional_box, cell.perim_mask
+            )[0]
+            self.report[key]["Cytoplasm"] = self.pearsons_score(
+                fluor_box, optional_box, cell.cyto_mask
+            )[0]
+
+            if parameters["find_septum"]:
+                self.report[key]["Septum"] = self.pearsons_score(
+                    fluor_box, optional_box, cell.sept_mask
+                )[0]
+                self.report[key]["MembSept"] = self.pearsons_score(
+                    fluor_box, optional_box, cell.membsept_mask
+                )[0]
+        except ValueError:
+            del self.report[key]
 
     def compute_pcc(
         self, fluor_image, optional_image, cells, parameters, reportID

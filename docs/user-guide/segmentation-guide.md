@@ -4,223 +4,40 @@ This guide helps you choose the optimal segmentation method for your bacterial i
 
 ## 🎯 Overview
 
-napari-mAIcrobe offers three main segmentation approaches:
+napari-mAIcrobe offers four main segmentation approaches:
 
-1. **StarDist2D** - Star-convex shape detection (recommended for bacteria)
-2. **Cellpose** - Deep learning-based universal segmentation
-3. **Custom U-Net Models** - User-trained segmentation networks
+1. **StarDist models** 
+2. **Cellpose cyto3 model** 
+3. **Custom U-Net Models** 
+4. **Thresholding-based methods** - Classical image processing using [Isodata](https://scikit-image.org/docs/0.25.x/api/skimage.filters.html#skimage.filters.threshold_isodata) or [Local Average](https://scikit-image.org/docs/0.25.x/api/skimage.filters.html#skimage.filters.threshold_local) tresholding followed by euclidean distance transform and watershed segmentation. This method is fast and does not require training data, but may be less accurate for complex images.
 
-## 🌟 StarDist2D (Recommended)
+## Stardist 
 
-StarDist2D is optimized for detecting star-convex objects, making it ideal for bacterial cells.
+1. Check the original [StarDist paper](https://arxiv.org/abs/1806.03535) and [repository](https://github.com/stardist/stardist) for details on how StarDist works!
+2. Deep learning-based segmentation based on star-convex shapes detection.
+3. mAIcrobe does not include pre-trained StarDist models, you have to provide your own model. To train your own model, check out the [StarDist examples](https://github.com/stardist/stardist/tree/main/examples/2D). We also provide an example notebook to train your own StarDist2D model in [notebooks/StarDistSegmentationTraining.ipynb](../../notebooks/StarDistSegmentationTraining.ipynb).
 
-### When to Use StarDist2D
+## Cellpose
+1. Check the original [Cellpose paper](https://www.nature.com/articles/s41592-020-01018-x) and [repository](https://github.com/MouseLand/cellpose) for details on how Cellpose works!
+2. Deep learning-based universal segmentation model trained on a large variety of cell types and imaging modalities.
+3. mAIcrobe includes the Cellpose cyto3 model, which is pre-trained and ready to use.
+4. The first time you run Cellpose, it will download the model weights from the Cellpose repository.
 
-- **Rod-shaped bacteria** like _S. aureus_, _E. coli_
-- **Dense cell populations** with touching cells
-- **Phase contrast images** with clear cell boundaries
-- **Consistent cell morphology** across the image
+## U-Net Models
+1. Check the original [U-Net paper](https://arxiv.org/abs/1505.04597) for details on how U-Net works!
+2. Deep learning-based segmentation using a convolutional neural network architecture. 
+3. mAIcrobe does not include pre-trained U-Net models, you have to provide your own model in Keras format (.keras).
+4. You can train your own U-Net segmentation models using [ZeroCostDL4Mic](https://github.com/HenriquesLab/ZeroCostDL4Mic).
+5. The U-Net model is assumed to output a label image with 0 for background, 1 for cell interior, and 2 for cell boundary. mAIcrobe will convert this to a label image with unique integer IDs for each cell via a watershed algorithm. Check [skimage.segmentation.watershed](https://scikit-image.org/docs/stable/api/skimage.segmentation.html#skimage.segmentation.watershed) for more info.
 
-### StarDist2D Parameters
+## Thresholding-based Methods
+1. Classical image processing methods that do not require training data.
+2. Fast and easy to use, but may be less accurate for complex images.
+3. Two methods available:
+   - **Isodata**: Global thresholding method that automatically determines the optimal threshold value based on image histogram. Check [skimage.filters.threshold_isodata](https://scikit-image.org/docs/0.25.x/api/skimage.filters.html#skimage.filters.threshold_isodata) for more info.
+   - **Local Average**: Adaptive thresholding method that computes a local threshold for each pixel based on the average intensity in its neighborhood. Check [skimage.filters.threshold_local](https://scikit-image.org/docs/0.25.x/api/skimage.filters.html#skimage.filters.threshold_local) for more info.
+4. After thresholding, a distance transform and watershed algorithm is applied to separate touching cells. Check [skimage.filters](https://scikit-image.org/docs/0.25.x/api/skimage.filters.html) and [skimage.segmentation.watershed](https://scikit-image.org/docs/stable/api/skimage.segmentation.html#skimage.segmentation.watershed) for more info.
 
-**Key Settings:**
-- **Probability Threshold** (0.3-0.7): Higher values = fewer false positives
-- **NMS Threshold** (0.3-0.5): Controls overlap detection
-- **Normalize Input**: Usually keep enabled for consistent results
-
-### Optimizing StarDist2D
-
-**For Dense Populations:**
-```python
-# Lower NMS threshold to separate touching cells
-nms_threshold = 0.3
-probability_threshold = 0.5
-```
-
-**For Sparse Populations:**
-```python
-# Higher thresholds for cleaner detection
-nms_threshold = 0.4
-probability_threshold = 0.6
-```
-
-**For Poor Contrast:**
-```python
-# Lower probability threshold to catch dim cells
-probability_threshold = 0.3
-normalize_input = True
-```
-
-## 🔬 Cellpose
-
-Cellpose uses deep learning to segment cells of various shapes and sizes.
-
-### When to Use Cellpose
-
-- **Irregular cell shapes** not well-suited for StarDist
-- **Mixed cell populations** with varying morphologies
-- **Fluorescence images** with membrane staining
-- **Human cells** or other non-bacterial samples
-
-### Cellpose Parameters
-
-**Model Selection:**
-- **cyto**: General cytoplasm model (good for bacteria)
-- **nuclei**: For nuclear segmentation
-- **cyto2**: Improved cytoplasm model
-- **Custom models**: Your own trained models
-
-**Key Settings:**
-- **Diameter** (pixels): Expected cell diameter
-- **Flow threshold** (0.4): Controls segmentation sensitivity
-- **Cellprob threshold** (-6 to 6): Probability threshold for cells
-
-### Optimizing Cellpose
-
-**For Small Bacteria:**
-```python
-model_type = "cyto"
-diameter = 15  # Adjust based on your cell size
-flow_threshold = 0.4
-cellprob_threshold = 0.0
-```
-
-**For Larger Cells:**
-```python
-model_type = "cyto2"
-diameter = 30
-flow_threshold = 0.6
-cellprob_threshold = -2.0
-```
-
-## 🎨 Custom U-Net Models
-
-Load your own trained segmentation models for specialized applications.
-
-### When to Use Custom Models
-
-- **Specialized cell types** not covered by standard models
-- **Unique imaging conditions** requiring custom training
-- **Research applications** with specific segmentation requirements
-
-### Loading Custom Models
-
-```python
-# In the Compute label widget:
-# 1. Select "Custom" from model dropdown
-# 2. Browse to your .h5 or .keras model file
-# 3. Configure input preprocessing if needed
-```
-
-### Custom Model Requirements
-
-**Supported Formats:**
-- TensorFlow SavedModel (.pb)
-- Keras models (.h5, .keras)
-- ONNX models (.onnx)
-
-**Input Requirements:**
-- Single-channel grayscale images
-- Normalized pixel values (0-1)
-- Compatible input dimensions
-
-## 📊 Comparing Segmentation Methods
-
-| Method | Best For | Speed | Accuracy | Customization |
-|--------|----------|-------|----------|--------------|
-| **StarDist2D** | Rod-shaped bacteria | Fast | High | Medium |
-| **Cellpose** | Variable shapes | Medium | High | High |
-| **Custom Models** | Specialized cases | Varies | Variable | Maximum |
-
-## 🔧 Troubleshooting Segmentation
-
-### Common Issues and Solutions
-
-#### Poor Cell Detection
-
-**Symptoms:** Missing cells, incomplete boundaries
-**Solutions:**
-- Lower probability/flow thresholds
-- Check image contrast and quality
-- Try different models
-- Adjust diameter (Cellpose)
-
-#### Over-segmentation
-
-**Symptoms:** Single cells split into multiple objects
-**Solutions:**
-- Increase probability threshold
-- Increase NMS threshold (StarDist)
-- Increase diameter (Cellpose)
-- Apply smoothing filters
-
-#### Under-segmentation
-
-**Symptoms:** Multiple cells merged into single objects
-**Solutions:**
-- Decrease NMS threshold (StarDist)
-- Decrease flow threshold (Cellpose)
-- Use watershed post-processing
-- Improve image contrast
-
-#### Background Noise
-
-**Symptoms:** False positive detections in background
-**Solutions:**
-- Increase probability thresholds
-- Enable input normalization
-- Pre-process images to reduce noise
-- Use size filters in post-processing
-
-## 📈 Preprocessing Tips
-
-### Image Enhancement
-
-**Contrast Enhancement:**
-```python
-# Using scikit-image
-from skimage import exposure
-enhanced = exposure.equalize_adapthist(image)
-```
-
-**Noise Reduction:**
-```python
-# Gaussian filtering
-from skimage import filters
-denoised = filters.gaussian(image, sigma=0.5)
-```
-
-**Background Subtraction:**
-```python
-# Rolling ball background subtraction
-from skimage.morphology import disk
-from skimage.filters import rank
-background = rank.mean(image, disk(50))
-corrected = image - background
-```
-
-## 🎯 Workflow Recommendations
-
-### Phase Contrast Images
-
-1. **Start with StarDist2D**
-2. **Probability threshold**: 0.5
-3. **NMS threshold**: 0.4
-4. **Enable normalization**
-
-### Fluorescence Membrane Images
-
-1. **Try Cellpose first** (cyto model)
-2. **Diameter**: Measure typical cell size
-3. **Flow threshold**: 0.4
-4. **Consider custom preprocessing**
-
-### Mixed/Complex Images
-
-1. **Test both StarDist2D and Cellpose**
-2. **Compare results visually**
-3. **Consider ensemble approaches**
-4. **Manual validation on subset**
 
 ## 📏 Validation and Quality Control
 
@@ -230,63 +47,24 @@ Always validate segmentation on a representative subset:
 
 1. **Random sampling**: Check 50-100 cells
 2. **Visual inspection**: Look for common errors
-3. **Quantitative metrics**: Count false positives/negatives
-4. **Parameter adjustment**: Based on validation results
 
 ### Automated Quality Metrics
 
 **Segmentation Quality Indicators:**
-- Cell count consistency across similar images
-- Size distribution reasonableness
-- Shape parameter distributions
-- Boundary completeness scores
+- Cell count consistency 
+- Size distribution reasonableness (look for outliers on the size distribution)
 
-### Best Practices
-
-**Consistent Parameters:**
-- Use identical settings for comparative studies
-- Document all parameter choices
-- Test on control/reference images first
-
-**Batch Processing:**
-- Process similar images with same parameters
-- Monitor quality metrics across batches
-- Flag outlier images for manual review
-
-## 🚀 Advanced Techniques
-
-### Multi-scale Segmentation
-
-For images with cells of varying sizes:
-
-1. **Run multiple scales** with different diameter settings
-2. **Combine results** using confidence scores
-3. **Post-process** to resolve conflicts
-
-### Ensemble Methods
-
-Combine multiple models for improved accuracy:
-
-1. **Run StarDist2D and Cellpose**
-2. **Compare outputs** and select best regions
-3. **Merge results** using overlap analysis
-
-### Custom Training
-
-For specialized applications:
-
-1. **Collect training data** (images + annotations)
-2. **Use existing frameworks** (StarDist, Cellpose)
-3. **Validate thoroughly** on independent test set
-4. **Document model performance** and limitations
 
 ## 📚 Further Reading
 
 - **[Cell Analysis Guide](cell-analysis.md)** - What to do after segmentation
-- **[AI Models Guide](ai-models.md)** - Cell cycle classification
+- **[Cell Classification Guide](cell-classification.md)** - Cell classification
 - **[API Reference](../api/api-reference.md)** - Programmatic control
 - **StarDist Paper**: [Schmidt et al., MICCAI 2018](https://arxiv.org/abs/1806.03535)
 - **Cellpose Paper**: [Stringer et al., Nature Methods 2021](https://doi.org/10.1038/s41592-020-01018-x)
+- **U-Net Paper**: [Ronneberger et al., MICCAI 2015](https://arxiv.org/abs/1505.04597)
+- **scikit-image watershed**: [Documentation](https://scikit-image.org/docs/stable/api/skimage.segmentation.html#skimage.segmentation.watershed)
+- **scikit-image filters**: [Documentation](https://scikit-image.org/docs/stable/api/skimage.filters.html)
 
 ---
 

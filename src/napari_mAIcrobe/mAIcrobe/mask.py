@@ -18,6 +18,31 @@ def mask_computation(
     dilation: int = 0,
     fillholes: bool = False,
 ):
+    """Compute a binary mask from an image using Isodata or Local Average thresholding. 
+    Optionally, apply binary closing, dilation and fill holes operations to the binary mask.
+
+    Parameters
+    ----------
+    base_image : numpy.ndarray
+        Input 2D image.
+    algorithm : {"Isodata", "Local Average"}, optional
+        Thresholding strategy, by default "Isodata".
+    blocksize : int, optional
+        Neighborhood size for Local Average; must be odd, by default 151.
+    offset : float, optional
+        Offset for Local Average threshold, by default 0.02.
+    closing : int, optional
+        Size of binary closing kernel; if >0 applied, by default 1.
+    dilation : int, optional
+        Number of dilation iterations, by default 0.
+    fillholes : bool, optional
+        Whether to fill holes after morphology, by default False.
+
+    Returns
+    -------
+    numpy.ndarray
+        Binary mask with non-zero values inside objects.
+    """
 
     # Binarization
     if algorithm == "Isodata":
@@ -52,6 +77,23 @@ def mask_computation(
 
 
 def mask_alignment(mask: np.ndarray, fluor_image: np.ndarray):
+    """Align a fluorescence image to a mask via phase correlation.
+
+    Uses FFT-based cross-correlation to estimate translation and translates the
+    fluorescence image accordingly.
+
+    Parameters
+    ----------
+    mask : numpy.ndarray
+        Binary mask image.
+    fluor_image : numpy.ndarray
+        Fluorescence image to align.
+
+    Returns
+    -------
+    numpy.ndarray
+        Aligned fluorescence image (same shape as input).
+    """
 
     corr = signal.fftconvolve(mask, fluor_image[::-1, ::-1])
     deviation = np.unravel_index(np.argmax(corr), corr.shape)
@@ -62,6 +104,6 @@ def mask_alignment(mask: np.ndarray, fluor_image: np.ndarray):
 
     aligned_fluor = warp(
         fluor_image, matrix.inverse, preserve_range=True
-    )  # TODO check if fluor intensity values stay the same
+    )  # TODO triple check if fluor intensity values stay the same
 
     return aligned_fluor

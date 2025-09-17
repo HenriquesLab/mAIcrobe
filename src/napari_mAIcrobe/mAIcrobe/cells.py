@@ -1,5 +1,3 @@
-"""TODO"""
-
 import math
 
 import numpy as np
@@ -18,11 +16,70 @@ from .reports import ReportManager
 
 
 class Cell:
-    """Template for each cell object."""
+    """Template for each cell object.
+
+    Represents a single labeled cell with derived region masks (cell, membrane, cytoplasm, 
+    and optionally septum) alongside morphologic and fluorescence statistics.
+
+    Parameters
+    ----------
+    label : int
+        Integer label for this cell.
+    regionmask : numpy.ndarray
+        Binary mask for the cell region within the full image.
+    properties : pandas.DataFrame
+        Row of region properties (bbox, centroid, orientation, axis lengths, etc.), calculated from skimage's `regionprops_table`.
+    intensity : numpy.ndarray
+        Fluorescence image (primary channel).
+    params : dict
+        Analysis parameters dict controlling region computation and other params.
+    optional : numpy.ndarray, optional
+        Optional fluorescence image (e.g., DNA), by default None.
+
+    Attributes
+    ----------
+    box : tuple[int, int, int, int]
+        Bounding box (min_row, min_col, max_row, max_col) with padding.
+    long_axis : numpy.ndarray
+        Two endpoints defining the long axis, integer indices.
+    short_axis : numpy.ndarray
+        Two endpoints defining the short axis, integer indices.
+    cell_mask : numpy.ndarray
+        Cell region mask (cropped to bounding box).
+    perim_mask : numpy.ndarray or None
+        Membrane/perimeter mask (cropped).
+    sept_mask : numpy.ndarray or None
+        Septum mask (cropped), if computed.
+    cyto_mask : numpy.ndarray or None
+        Cytoplasm mask (cropped)
+    membsept_mask : numpy.ndarray or None
+        Union mask of membrane and septum (cropped), if computed.
+    stats : dict
+        Per-cell fluorescence and morphology statistics.
+    image : numpy.ndarray or None
+        Image mosaic of fluorescence and masks for visualization. Used for reports.
+    """
 
     def __init__(
         self, label, regionmask, properties, intensity, params, optional=None
     ):
+        """Construct a Cell object from the label, respective masks, parameters, and images.
+
+        Parameters
+        ----------
+        label : int
+            Cell label identifier.
+        regionmask : numpy.ndarray
+            Binary mask for the cell (same size as full image).
+        properties : pandas.DataFrame
+            Properties row for this cell (from `regionprops_table`).
+        intensity : numpy.ndarray
+            Fluorescence channel image.
+        params : dict
+            Analysis parameters controlling region and stats computation.
+        optional : numpy.ndarray, optional
+            Optional fluorescence channel image, by default None.
+        """
 
         self.label = label
 
@@ -150,8 +207,18 @@ class Cell:
         self.set_image(intensity, optional)
 
     def image_box(self, image):
-        """returns box"""
+        """Return an image crop corresponding to the cell bounding box.
 
+        Parameters
+        ----------
+        image : numpy.ndarray or None
+            Full image to crop; if None, returns None.
+
+        Returns
+        -------
+        numpy.ndarray or None
+            Cropped image of shape (x1-x0+1, y1-y0+1) or None.
+        """
         x0, y0, x1, y1 = self.box
         try:
             return image[x0 : x1 + 1, y0 : y1 + 1]
@@ -159,8 +226,17 @@ class Cell:
             return None
 
     def compute_perim_mask(self, thick):
-        """returns mask for perimeter
-        needs cell mask
+        """Compute membrane/perimeter mask by eroding the cell mask.
+
+        Parameters
+        ----------
+        thick : int
+            Thickness parameter controlling erosion.
+
+        Returns
+        -------
+        numpy.ndarray
+            Binary perimeter mask (float array with 0 and 1).
         """
         mask = self.cell_mask
 
@@ -172,8 +248,23 @@ class Cell:
         return perim
 
     def compute_sept_mask(self, thick, algorithm):
-        """returns mask for axis.
-        needs cell mask
+        """Compute septum mask using a specified algorithm.
+
+        Parameters
+        ----------
+        thick : int
+            Thickness parameter for morphology.
+        algorithm : {"Isodata", "Box"}
+            Septum detection algorithm.
+
+        Returns
+        -------
+        numpy.ndarray
+            Binary septum mask.
+
+        Notes
+        -----
+        Prints a warning if the algorithm name is invalid.
         """
 
         mask = self.cell_mask
@@ -188,9 +279,19 @@ class Cell:
             print("Not a a valid algorithm")
 
     def compute_opensept_mask(self, thick, algorithm):
-        """
-        returns mask for axis.
-        needs cell mask
+        """Compute open-septum mask using a specified algorithm.
+
+        Parameters
+        ----------
+        thick : int
+            Thickness parameter for morphology.
+        algorithm : {"Isodata", "Box"}
+            Open-septum detection algorithm.
+
+        Returns
+        -------
+        numpy.ndarray
+            Binary open-septum mask.
         """
 
         mask = self.cell_mask
@@ -204,8 +305,18 @@ class Cell:
             print("Not a a valid algorithm")
 
     def compute_sept_isodata(self, thick):
-        """Method used to create the cell sept_mask using the threshold_isodata
-        to separate the cytoplasm from the septum"""
+        """Create septum mask using isodata thresholding on inner region and separate the cytoplam from the septum.
+
+        Parameters
+        ----------
+        thick : int
+            Thickness parameter for the inner mask.
+
+        Returns
+        -------
+        numpy.ndarray
+            Binary septum mask.
+        """
         cell_mask = self.cell_mask
         fluor_box = self.fluor_mask
         perim_mask = self.compute_perim_mask(thick)
@@ -232,8 +343,18 @@ class Cell:
         return img_as_float(label_matrix == interest_label)
 
     def compute_opensept_isodata(self, thick):
-        """Method used to create the cell sept_mask using the threshold_isodata
-        to separate the cytoplasm from the septum"""
+        """Create open-septum mask via isodata.
+
+        Parameters
+        ----------
+        thick : int
+            Thickness parameter for the inner mask.
+
+        Returns
+        -------
+        numpy.ndarray
+            Binary mask for one or two largest septal components.
+        """
         cell_mask = self.cell_mask
         fluor_box = self.fluor_mask
         perim_mask = self.compute_perim_mask(thick)
@@ -276,9 +397,19 @@ class Cell:
             return img_as_float(label_matrix == first_label)
 
     def compute_sept_box(self, thick):
-        """Method used to create a mask of the septum based on creating a box
-        around the cell and then defining the septum as being the dilated short
-        axis of the box."""
+        """Create a septum mask by creating a box around the cell and then defining
+        the septum as the dilated short axis within the cell box.
+
+        Parameters
+        ----------
+        thick : int
+            Dilation kernel size.
+
+        Returns
+        -------
+        numpy.ndarray
+            Binary mask for the septum estimate.
+        """
 
         mask = self.cell_mask
 
@@ -299,7 +430,18 @@ class Cell:
         return linmask
 
     def get_outline_points(self, data):
-        """Method used to obtain the outline pixels of the septum"""
+        """Extract outline pixel coordinates from a binary mask. Used to get the outline pixels of the septum
+
+        Parameters
+        ----------
+        data : numpy.ndarray
+            Binary mask.
+
+        Returns
+        -------
+        list[tuple[int, int]]
+            List of (x, y) outline points.
+        """
         outline = []
         for x in range(0, len(data)):
             for y in range(0, len(data[x])):
@@ -386,8 +528,21 @@ class Cell:
 
     def compute_sept_box_fix(self, outline, maskshape):
         """Method used to create a box around the septum, so that the short
-        axis of this box can be used to choose the pixels of the membrane
-        mask that need to be removed"""
+        axis of this box can be used to choose the piels of the membrane
+        mask that need to be removed.
+
+        Parameters
+        ----------
+        outline : list[tuple[int, int]]
+            Outline points of the septum.
+        maskshape : tuple[int, int]
+            Shape of the mask to clamp coordinates.
+
+        Returns
+        -------
+        tuple[int, int, int, int]
+            Bounding box (x0, y0, x1, y1).
+        """
         points = np.asarray(outline)  # in two columns, x, y
         bm = self.box_margin
         w, h = maskshape
@@ -401,8 +556,18 @@ class Cell:
         return box
 
     def remove_sept_from_membrane(self, maskshape):
-        """Method used to remove the pixels of the septum that were still in
-        the membrane"""
+        """Remove septum pixels from the membrane mask.
+
+        Parameters
+        ----------
+        maskshape : tuple[int, int]
+            Shape of the septum/membrane masks.
+
+        Returns
+        -------
+        numpy.ndarray
+            Binary line mask used to subtract from membrane.
+        """
 
         # get outline points of septum mask
         septum_outline = []
@@ -552,6 +717,15 @@ class Cell:
         return img_as_float(linmask)
 
     def recursive_compute_sept(self, inner_mask_thickness, algorithm):
+        """Compute septum mask, reducing thickness on failure.
+
+        Parameters
+        ----------
+        inner_mask_thickness : int
+            Initial thickness to try.
+        algorithm : {"Isodata", "Box"}
+            Septum detection algorithm.
+        """
         try:
             self.sept_mask = self.compute_sept_mask(
                 inner_mask_thickness, algorithm
@@ -565,6 +739,15 @@ class Cell:
                 self.recursive_compute_sept(inner_mask_thickness - 1, "Box")
 
     def recursive_compute_opensept(self, inner_mask_thickness, algorithm):
+        """Compute open-septum mask, reducing thickness on failure.
+
+        Parameters
+        ----------
+        inner_mask_thickness : int
+            Initial thickness to try.
+        algorithm : {"Isodata", "Box"}
+            Open-septum detection algorithm.
+        """
         try:
             self.sept_mask = self.compute_opensept_mask(
                 inner_mask_thickness, algorithm
@@ -580,8 +763,13 @@ class Cell:
                 )
 
     def compute_regions(self, params):
-        """Computes each different region of the cell (whole cell, membrane,
-        septum, cytoplasm) and creates their respectives masks."""
+        """Compute masks for whole cell, membrane, septum (optional), and cytoplasm.
+
+        Parameters
+        ----------
+        params : dict
+            Analysis parameters controlling septum detection and thickness.
+        """
 
         if params["find_septum"]:
             self.recursive_compute_sept(
@@ -644,8 +832,21 @@ class Cell:
             self.cyto_mask = (self.cell_mask - self.perim_mask) > 0
 
     def compute_fluor_baseline(self, mask, fluor, margin):
-        """mask and fluor are the global images
-        NOTE: mask is 0 (black) at cells and 1 (white) outside
+        """Compute baseline fluorescence around the cell. Mask and fluor are the global images.
+        Parameters
+        ----------
+        mask : numpy.ndarray
+            Global mask image where 0 indicates cell regions and 1 indicates background.
+        fluor : numpy.ndarray
+            Full-field fluorescence image.
+        margin : int
+            Margin to expand the bounding box for baseline calculation.
+
+        Notes
+        -----
+        Mask is 0 (black) at cells and 1 (white) outside
+        Updates self.stats["Baseline"] with the computed median baseline fluorescence. 
+    
         """
         # compatibility
         mask = 1 - mask
@@ -676,8 +877,25 @@ class Cell:
         )
 
     def measure_fluor(self, fluorbox, roi, fraction=1.0):
-        """returns the median and std of  fluorescence in roi
-        fluorbox has the same dimensions as the roi mask
+        """Computes median fluorescence in a region of interest (ROI).
+        Parameters
+        ----------
+        fluorbox : numpy.ndarray
+            Cropped fluorescence image corresponding to the cell bounding box.
+        roi : numpy.ndarray
+            Binary mask for the region of interest (same shape as fluorbox).
+        fraction : float, optional
+            Fraction of brightest pixels to consider (0 < fraction <= 1), by default 1.0
+
+        Returns
+        -------
+        float
+            Median fluorescence in the ROI, considering only the specified fraction of brightest pixels.
+        Notes
+        -----
+        fraction=0.1 means median of the top 10% brightest pixels in the ROI
+        fluorbox and roi must be the same shape
+
         """
         if roi is not None:
             bright = fluorbox * roi
@@ -699,7 +917,17 @@ class Cell:
             return 0
 
     def compute_fluor_stats(self, params, mask, fluor):
-        """Computes the cell stats related to the fluorescence"""
+        """Compute per-region fluorescence statistics and ratios.
+
+        Parameters
+        ----------
+        params : dict
+            Analysis parameters including `find_septum` and `baseline_margin`.
+        mask : numpy.ndarray
+            Global mask image used for baseline.
+        fluor : numpy.ndarray
+            Full-field fluorescence image.
+        """
         self.compute_fluor_baseline(mask, fluor, params["baseline_margin"])
 
         fluorbox = self.fluor_mask
@@ -775,6 +1003,17 @@ class Cell:
             self.stats["Memb+Sept Median"] = 0
 
     def set_image(self, fluor, optional):
+        """Compose a 7-panel per-cell visualization image.
+
+        Panels include raw and masked channels and region-specific overlays.
+
+        Parameters
+        ----------
+        fluor : numpy.ndarray
+            Fluorescence image.
+        optional : numpy.ndarray
+            Optional fluorescence image.
+        """
 
         fluor = img_as_float(fluor)
         fluor = exposure.rescale_intensity(fluor)
@@ -835,10 +1074,119 @@ class Cell:
 
 
 class CellManager:
-    """Main class of the module. Should be used to interact with the rest of
-    the modules."""
+    """
+    Manages cell property computations, classifications, colocalization, and reporting.
+
+    Parameters
+    ----------
+    label_img : ndarray
+        Labeled image where each cell is represented by a unique integer.
+    fluor : ndarray
+        Fluorescence image corresponding to the labeled image.
+    optional : ndarray
+        Optional image used for additional calculations (e.g., DNA content).
+    params : dict
+        Dictionary of parameters controlling the behavior of the class. Keys include:
+        - "classify_cell_cycle" : bool
+            Whether to classify the cell cycle phase.
+        - "model" : str
+            Model type for cell cycle classification.
+        - "custom_model_path" : str
+            Path to a custom model for classification.
+        - "custom_model_input" : int
+            Input size for the custom model.
+        - "custom_model_maxsize" : int
+            Maximum size for the custom model.
+        - "cell_averager" : bool
+            Whether to perform cell averaging.
+        - "coloc" : bool
+            Whether to compute colocalization metrics.
+        - "generate_report" : bool
+            Whether to generate a report.
+        - "report_path" : str
+            Path to save the generated report.
+        - "report_id" : str, optional
+            Identifier for the report.
+        - "find_septum" : bool
+            Whether to find the septum in cells.
+
+    Attributes
+    ----------
+    label_img : ndarray
+        Labeled image where each cell is represented by a unique integer.
+    fluor_img : ndarray
+        Fluorescence image corresponding to the labeled image.
+    optional_img : ndarray
+        Optional image used for additional calculations.
+    params : dict
+        Dictionary of parameters controlling the behavior of the class.
+    properties : dict or None
+        Dictionary containing computed properties for each cell. Keys include:
+        - "label"
+        - "Area"
+        - "Perimeter"
+        - "Eccentricity"
+        - "Baseline"
+        - "Cell Median"
+        - "Membrane Median"
+        - "Septum Median"
+        - "Cytoplasm Median"
+        - "Fluor Ratio"
+        - "Fluor Ratio 75%"
+        - "Fluor Ratio 25%"
+        - "Fluor Ratio 10%"
+        - "Cell Cycle Phase"
+        - "DNA Ratio"
+    heatmap_model : ndarray or None
+        Heatmap model generated by the cell averager, if applicable.
+    all_cells : list or None
+        List of all cell images, used for generating reports.
+
+    Methods
+    -------
+    compute_cell_properties()
+        Computes various properties for each cell in the labeled image.
+    calculate_DNARatio(cell_object, dna_fov, thresh)
+        Static method to calculate the ratio of area that has discernable DNA signal for a given cell.
+
+    Notes
+    -----
+    This class integrates multiple functionalities such as cell property computation,
+    cell cycle classification, colocalization analysis, and report generation.
+    """
+
 
     def __init__(self, label_img, fluor, optional, params):
+        """
+        Initialize the class with the provided images and parameters.
+        Parameters:
+        -----------
+        label_img : ndarray
+            The labeled image where each unique integer represents a different object or cell.
+        fluor : ndarray
+            A fluorescence image to be analysed. Fluorescence metrics and heatmaps will be computed from this image.
+        optional : ndarray
+            An optional image that can be used for additional processing or analysis, mainly PCC calculations, or classification
+        params : dict
+            A dictionary of parameters used for processing or analysis.
+        Attributes:
+        -----------
+        label_img : ndarray
+            Stores the labeled image.
+        fluor_img : ndarray
+            Stores the fluorescence image.
+        optional_img : ndarray
+            Stores the optional image.
+        params : dict
+            Stores the parameters dictionary.
+        properties : None or dict
+            Placeholder for storing computed properties of the cells.
+        heatmap_model : None or object
+            Placeholder for storing a heatmap model.
+        all_cells : None or object
+            Placeholder for storing all cell-related data.
+        """
+
 
         self.label_img = label_img
         self.fluor_img = fluor
@@ -852,6 +1200,35 @@ class CellManager:
         self.all_cells = None
 
     def compute_cell_properties(self):
+        """
+        Compute various properties of cells from a label img and fluorescence data,
+        including morphology and intensity metrics. It also supports optional functionalities
+        such as cell cycle classification, cell averaging, and colocalization analysis.
+        Attributes:
+            self.properties (dict): A dictionary containing computed cell properties, including:
+                - label: Array of cell labels.
+                - Area: Array of cell areas.
+                - Perimeter: Array of cell perimeters.
+                - Eccentricity: Array of cell eccentricities.
+                - Baseline: Array of baseline fluorescence intensities.
+                - Cell Median: Array of median fluorescence intensities for cells.
+                - Membrane Median: Array of median fluorescence intensities for membranes.
+                - Septum Median: Array of median fluorescence intensities for septa.
+                - Cytoplasm Median: Array of median fluorescence intensities for cytoplasm.
+                - Fluor Ratio: Array of fluorescence ratios.
+                - Fluor Ratio 75%: Array of 75th percentile fluorescence ratios.
+                - Fluor Ratio 25%: Array of 25th percentile fluorescence ratios.
+                - Fluor Ratio 10%: Array of 10th percentile fluorescence ratios.
+                - Cell Cycle Phase: Array of cell cycle phase classifications.
+                - DNA Ratio: Array of DNA ratios.
+        Parameters:
+            None
+        Outputs:
+            - Updates `self.properties` with computed cell properties.
+            - Optionally updates `self.all_cells` with mosaics of cell images for report generation.
+            - Optionally generates a report if `self.params["generate_report"]` is True.
+        """
+        
 
         Label = []
         Area = []
@@ -1007,6 +1384,20 @@ class CellManager:
 
     @staticmethod
     def calculate_DNARatio(cell_object, dna_fov, thresh):
+        """Calculate the ratio of area that has discernable DNA signal for a given cell.
+        Parameters
+        ----------
+        cell_object : Cell
+            The cell object for which to calculate the DNA ratio.
+        dna_fov : np.ndarray
+            The field of view image containing the DNA signal.
+        thresh : float
+            The threshold value for determining discernable DNA signal.
+        Returns
+        -------
+        float
+            The ratio of discernable DNA signal area to total cell area.
+        """
 
         x0, y0, x1, y1 = cell_object.box
         cell_mask = cell_object.cell_mask

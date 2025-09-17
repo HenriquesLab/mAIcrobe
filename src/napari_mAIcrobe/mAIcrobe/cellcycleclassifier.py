@@ -1,3 +1,9 @@
+"""
+Cell-cycle phase classifier helpers.
+
+Loads prebuilt or custom Keras models and classifies per-cell crops.
+"""
+
 import numpy as np
 from keras.models import load_model
 from keras.utils import get_file
@@ -7,9 +13,42 @@ from skimage.util import img_as_float
 
 
 class CellCycleClassifier:
+    """Cell-cycle classifier using a Keras CNN.
+
+    Parameters
+    ----------
+    fluor_fov : numpy.ndarray
+        Primary fluorescence image (full field).
+    optional_fov : numpy.ndarray
+        Optional fluorescence image (full field).
+    model : str
+        Prebuilt model selector or "custom".
+    model_path : str
+        Path to custom model when `model == "custom"`.
+    model_input : {"Membrane","DNA","Membrane+DNA"}
+        Which channels are used as input.
+    max_dim : int
+        Maximum dimension used to pad/crop per-cell images.
+
+    Attributes
+    ----------
+    model : keras.Model
+        Loaded classifier model.
+    max_dim : int
+        Preprocessing target size.
+    model_input : str
+        Effective model input type.
+    custom : bool
+        Whether a custom model was loaded.
+    """
+
     def __init__(
         self, fluor_fov, optional_fov, model, model_path, model_input, max_dim
     ):
+        """Initialize classifier and load model.
+
+        See class docstring for parameter details.
+        """
 
         self.prebuilts_config = {
             "S.aureus DNA+Membrane Epi": {
@@ -115,6 +154,18 @@ class CellCycleClassifier:
         self.optional_fov = optional_fov
 
     def preprocess_image(self, image):
+        """Pad/crop and reshape an image to (max_dim, max_dim, 1).
+
+        Parameters
+        ----------
+        image : numpy.ndarray
+            2D image to preprocess.
+
+        Returns
+        -------
+        numpy.ndarray
+            Float image of shape (max_dim, max_dim, 1).
+        """
 
         h, w = image.shape
 
@@ -175,6 +226,18 @@ class CellCycleClassifier:
         return image
 
     def classify_cell(self, cell_object):
+        """Predict cell-cycle phase from per-cell crops.
+
+        Parameters
+        ----------
+        cell_object : napari_mAIcrobe.mAIcrobe.cells.Cell
+            Cell with `box` and `cell_mask` to extract crops.
+
+        Returns
+        -------
+        int
+            Predicted phase index starting at 1.
+        """
 
         x0, y0, x1, y1 = cell_object.box
         fluor = None

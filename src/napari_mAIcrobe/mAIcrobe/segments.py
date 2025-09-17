@@ -13,14 +13,27 @@ from skimage.feature import peak_local_max
 
 
 class SegmentsManager:
-    """Main class of the module.
-    The class is responsible for the computation of the features of the image.
-    Requires an instance of the ImageManager class after loading both the
-    base and fluor and image aswell as computing the mask
-    The first step of the analysis consists on the usage of the distance
-    peaks algorithm (based on the Euclidean Distances) and the second on the
-    usage of the watershed algorithm to define each individual region of the
-    mask"""
+    """Segmentation seed detection and labeling via watershed.
+
+    Computes distance transform peaks as seeds, overlays features, and runs
+    watershed to generate integer labels. 
+
+    This class is used to generate a label image after a binary mask has been computed, 
+    normally through thresholding and morphological operations.
+
+    #TODO remove deprecated attributes and methods.
+
+    Attributes
+    ----------
+    features : numpy.ndarray or None
+        Seed markers image.
+    labels : numpy.ndarray or None
+        Integer label image.
+    base_w_features : numpy.ndarray or None
+        Binary overlay of features. Deprecated.
+    fluor_w_features : numpy.ndarray or None
+        Reserved for fluorescence overlay. Deprecated.
+    """
 
     def __init__(self):
         self.features = None
@@ -37,10 +50,24 @@ class SegmentsManager:
 
     @staticmethod
     def compute_distance_peaks(mask, params):
-        """Method used when the selected algorithm for the feature computation
-        is the Distance Peaks.
-        Returns a list of the centers of the different identified regions,
-        which should be used in the compute_features method"""
+        """Compute peaks (maximum values) from the euclidean distance transform.  
+
+        Parameters
+        ----------
+        mask : numpy.ndarray
+            Binary mask (non-zero inside cell regions).
+        params : dict
+            Dictionary with keys:
+            - "peak_min_distance_from_edge" : int
+            - "peak_min_distance" : int
+            - "peak_min_height" : float
+            - "max_peaks" : int
+
+        Returns
+        -------
+        list[tuple[int, int]]
+            List of (x, y) marker coordinates to be used by the compute_features method.
+        """
 
         distance = ndimage.distance_transform_edt(mask)
 
@@ -86,10 +113,15 @@ class SegmentsManager:
         return result
 
     def compute_features(self, params, mask):
-        """Method used to compute the features of an image using the mask.
-        requires a mask and an instance of the imageprocessingparams
-        if the selected algorithm used is Distance Peak, used the method
-        compute_distance_peaks to compute the features"""
+        """Generate marker features image from peak coordinates.
+
+        Parameters
+        ----------
+        params : dict
+            Parameters for distance peaks (see `compute_distance_peaks`).
+        mask : numpy.ndarray
+            Binary mask image.
+        """
 
         features = np.zeros(mask.shape)
 
@@ -107,11 +139,13 @@ class SegmentsManager:
         self.features = features
 
     def overlay_features(self, mask):
-        """Method used to produce an image with an overlay of the features on
-        the base image requires a base image, the features and the clip
-        values to overlay the images returns a image matrix which can be saved
-        using the save_image method or directly using the imsave
-        from skimage.io"""
+        """Create a binary overlay image of the features.
+         DEPRECATED.
+        Parameters
+        ----------
+        mask : numpy.ndarray
+            Binary mask used only for shape reference.
+        """
 
         clipped_base = np.zeros(mask.shape)
 
@@ -119,10 +153,19 @@ class SegmentsManager:
         clipped_base[places] = 1
         self.base_w_features = clipped_base.astype(int)
 
-    def compute_labels(self, mask):
-        """Computes the labels for each region based on the previous computed
-        features. Requires the mask, the features and an
-        instance of the imageprocessingparams"""
+    def compute_labels(self, mask): 
+        """Run watershed to obtain integer labels. Uses the features attribute computed in compute_features as markers for the watershed. 
+
+        Parameters
+        ----------
+        mask : numpy.ndarray
+            Binary mask used to constrain watershed.
+
+        Returns
+        -------
+        None
+            Results stored in `self.labels`.
+        """
 
         markers = self.features
 
@@ -137,9 +180,15 @@ class SegmentsManager:
         self.labels = labels
 
     def compute_segments(self, params, mask):
-        """Calls the different methods of the module in the right order.
-        Can be used as the interface of this module in the main module of the
-        software"""
+        """Full pipeline: features, overlay, and labels.
+
+        Parameters
+        ----------
+        params : dict
+            Parameters for peak detection.
+        mask : numpy.ndarray
+            Binary mask image.
+        """
 
         self.compute_features(params, mask)
         self.overlay_features(mask)

@@ -41,7 +41,29 @@ from stardist.models import StarDist2D
 
 
 class compute_label(Container):
+    """
+    Widget for label computation and optional channel alignment.
+
+    Allows selecting input images, choosing a mask algorithm (Isodata, Local
+    Average, Unet, StarDist, CellPose cyto3), tuning parameters, and running
+    segmentation. Adds "Mask" and "Labels" layers to the viewer; optionally
+    aligns auxiliary channels to the mask and performs binary operations 
+    like dilation, erosion and fill holes.
+
+    Parameters
+    ----------
+    viewer : napari.viewer.Viewer
+        The active napari viewer.
+    """
+
     def __init__(self, viewer: "napari.viewer.Viewer"):
+        """Build the UI and connect handlers.
+
+        Parameters
+        ----------
+        viewer : napari.viewer.Viewer
+            The active napari viewer instance.
+        """
 
         self._viewer = viewer
 
@@ -181,6 +203,18 @@ class compute_label(Container):
         )
 
     def _on_algorithm_changed(self, new_algorithm: str):
+        """Toggle parameter widgets according to algorithm choice.
+
+        #TODO make this cleaner.
+        #TODO watershed parameters should be hidden for Unet, StarDist and CellPose.
+        #TODO binary operations should be hidden for StarDist and CellPose.
+
+        Parameters
+        ----------
+        new_algorithm : str
+            One of {"Isodata", "Local Average", "Unet", "StarDist",
+            "CellPose cyto3"}.
+        """
 
         if new_algorithm == "Isodata":
             self[9].visible = True
@@ -216,6 +250,22 @@ class compute_label(Container):
         return
 
     def compute(self):
+        """Run mask/label computation, optional channel alignment and binary operations. 
+
+        Notes
+        -----
+        - Unet uses `computelabel_unet` imported from mAIcrobe. 
+        - StarDist uses the StarDist python package with a model directory selected via `_path2stardist`.
+        - CellPose uses the CellPose python package to download to cache and subsequently use the `cyto3` model for inference.
+        - Other algorithms use `mask_computation` imported from mAIcrobe + watershed via
+          `SegmentsManager`.
+
+        Side Effects
+        ------------
+        Adds "Mask" and "Labels" Layers to the viewer. If Auto Align is
+        enabled, updates fluor channels with aligned images.
+        """
+
         _algorithm = self._algorithm_combo.value
 
         _baseimg = self._baseimg_combo.value

@@ -11,7 +11,44 @@ from .cellprocessing import stats_format
 
 
 class ReportManager:
+    """
+    Generate HTML and CSV reports for analyzed cells.
+
+    Parameters
+    ----------
+    parameters : dict
+        Analysis parameters dictionary.
+    properties : dict
+        Per-cell properties dictionary (e.g., Label, Area, etc.).
+    allcells : list[numpy.ndarray]
+        List of per-cell montage images for visualization.
+
+    Attributes
+    ----------
+    cells : list[numpy.ndarray]
+        Padded per-cell images.
+    properties : dict
+        Properties passed at initialization.
+    params : dict
+        Parameters passed at initialization.
+    keys : list[tuple[str, int]]
+        Property labels and display precision from `stats_format`.
+    cell_data_filename : str or None
+        Base path of the generated report.
+    """
+
     def __init__(self, parameters, properties, allcells):
+        """Initialize report content and pad cell images.
+
+        Parameters
+        ----------
+        parameters : dict
+            Analysis parameters.
+        properties : dict
+            Per-cell properties.
+        allcells : list[numpy.ndarray]
+            Raw per-cell images prior to padding.
+        """
 
         self.cells = allcells
 
@@ -41,6 +78,13 @@ class ReportManager:
         self.cell_data_filename = None
 
     def html_report(self, filename):
+        """Write an HTML report composing cell thumbnails and stats.
+
+        Parameters
+        ----------
+        filename : str
+            Output directory path for the HTML report and images.
+        """
         cells = self.cells
         """generates an html report with the all the cell stats from the
         selected cells"""
@@ -144,6 +188,18 @@ class ReportManager:
         ).writelines(report)
 
     def check_filename(self, filename):
+        """Ensure a unique report directory by appending an index.
+
+        Parameters
+        ----------
+        filename : str
+            Base filename (without extension).
+
+        Returns
+        -------
+        str
+            Available filename not colliding with existing path.
+        """
         if os.path.exists(filename):
             tmp = ""
             split_path = filename.split("_")
@@ -155,6 +211,20 @@ class ReportManager:
             return filename
 
     def generate_report(self, path, report_id=None):
+        """Generate HTML report and CSV with properties.
+
+        Parameters
+        ----------
+        path : str
+            Output directory.
+        report_id : str or None, optional
+            Optional report identifier appended to directory name.
+
+        Side Effects
+        ------------
+        Creates directory structure, writes HTML and `Analysis.csv`, and sets
+        `self.cell_data_filename`.
+        """
         if report_id is None:
             filename = path + "/Report_1"
             filename = self.check_filename(filename)
@@ -181,5 +251,4 @@ class ReportManager:
         df = pd.DataFrame(self.properties)
         df.to_csv(os.path.join(filename, f"Analysis.csv"))
 
-        # TODO add view of selected cells
         # TODO SAVE PARS

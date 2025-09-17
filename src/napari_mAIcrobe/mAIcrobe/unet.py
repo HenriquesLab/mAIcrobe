@@ -1,3 +1,10 @@
+"""
+UNet-based segmentation utilities.
+
+Includes percentile normalization helpers (adapted from ZeroCostDL4Mic UNet
+notebook), tiled prediction, and label computation with watershed.
+"""
+
 from math import ceil
 
 import numpy as np
@@ -13,15 +20,38 @@ from skimage.segmentation import watershed
 from tensorflow.keras.models import load_model
 
 
-# TODO move this 3 function to the maicrobe folder
 ############################################################################
 ## THIS FUNCTION ARE COPIED FROM THE ZEROCOSTDL4MIC UNET JUPYTER NOTEBOOK ##
 ############################################################################
 def normalizePercentile(
     x, pmin=1, pmax=99.8, axis=None, clip=False, eps=1e-20, dtype=np.float32
 ):
-    """This function is adapted from Martin Weigert"""
-    """Percentile-based image normalization."""
+    """Percentile-based image normalization.
+
+    This function is adapted from Martin Weigert and copied from the ZeroCostDL4Mic UNet notebook.
+
+    Parameters
+    ----------
+    x : numpy.ndarray
+        Input image.
+    pmin : float, optional
+        Lower percentile, by default 1.
+    pmax : float, optional
+        Upper percentile, by default 99.8.
+    axis : int or tuple of int, optional
+        Percentile computation axis, by default None.
+    clip : bool, optional
+        Clip output to [0, 1], by default False.
+    eps : float, optional
+        Epsilon to avoid division by zero, by default 1e-20.
+    dtype : numpy.dtype, optional
+        Output dtype, by default numpy.float32.
+
+    Returns
+    -------
+    numpy.ndarray
+        Normalized image.
+    """
 
     mi = np.percentile(x, pmin, axis=axis, keepdims=True)
     ma = np.percentile(x, pmax, axis=axis, keepdims=True)
@@ -33,8 +63,32 @@ def normalizePercentile(
 ############################################################################
 def normalize_mi_ma(
     x, mi, ma, clip=False, eps=1e-20, dtype=np.float32
-):  # dtype=np.float32
-    """This function is adapted from Martin Weigert"""
+):
+    """Normalize by explicit min/max values.
+
+    This function is adapted from Martin Weigert and copied from the ZeroCostDL4Mic UNet notebook.
+
+    Parameters
+    ----------
+    x : numpy.ndarray
+        Input image.
+    mi : float or numpy.ndarray
+        Minimum value(s).
+    ma : float or numpy.ndarray
+        Maximum value(s).
+    clip : bool, optional
+        Clip output to [0, 1], by default False.
+    eps : float, optional
+        Epsilon to avoid division by zero, by default 1e-20.
+    dtype : numpy.dtype, optional
+        Output dtype, by default numpy.float32.
+
+    Returns
+    -------
+    numpy.ndarray
+        Normalized image.
+    """
+
     if dtype is not None:
         x = x.astype(dtype, copy=False)
         mi = dtype(mi) if np.isscalar(mi) else mi.astype(dtype, copy=False)
@@ -55,9 +109,28 @@ def normalize_mi_ma(
 
 
 ############################################################################
-## THIS FUNCTION ARE COPIED FROM THE ZEROCOSTDL4MIC UNET JUPYTER NOTEBOOK ##
+## THIS FUNCTION IS COPIED FROM THE ZEROCOSTDL4MIC UNET JUPYTER NOTEBOOK ##
 ############################################################################
 def predict_as_tiles(img, model):
+    """Run tiled prediction with a Keras model over a 2D image.
+
+    Pads the image to at least the model's input patch size, iterates over
+    tiles, and stitches the argmax class predictions.
+
+    THIS FUNCTION IS COPIED FROM THE ZEROCOSTDL4MIC UNET JUPYTER NOTEBOOK.
+
+    Parameters
+    ----------
+    img : numpy.ndarray
+        2D input image.
+    model : keras.Model
+        Loaded Keras model with classification output per pixel.
+
+    Returns
+    -------
+    numpy.ndarray
+        2D array of predicted class indices.
+    """
 
     # Read the data in and normalize
     Image_raw = normalizePercentile(img)
@@ -114,6 +187,26 @@ def predict_as_tiles(img, model):
 
 
 def computelabel_unet(path2model, base_image, closing, dilation, fillholes):
+    """Compute mask and labels using a UNet model and watershed. The U-Net model outputs an image with 3 classes: background, edges, insides. Background = 0, edges = 1, insides = 2. A binary mask is created by the binary union of the edges and insides. To generate the final label image, we use the insides as markers and run a watershed on the inverse of the binary mask. Optionally, this function applies some morphological operations to clean up the binary mask. Specifically closing, dilation, and hole filling.
+
+    Parameters
+    ----------
+    path2model : str or os.PathLike
+        Path to a saved Keras model.
+    base_image : numpy.ndarray
+        Input 2D image to segment.
+    closing : int
+        Size of binary closing kernel; if >0 applied to remove small spots.
+    dilation : int
+        Number of binary dilation iterations.
+    fillholes : bool
+        Whether to binary fill holes after morphology.
+
+    Returns
+    -------
+    tuple[numpy.ndarray, numpy.ndarray]
+        (mask, labels) binary mask and integer labels.
+    """
 
     model = load_model(path2model)
     prediction = predict_as_tiles(base_image, model)

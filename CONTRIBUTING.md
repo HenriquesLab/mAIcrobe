@@ -307,5 +307,3 @@ def analyze_cell_morphology(image, labels, pixel_size=1.0):
 Thank you for contributing to napari-mAIcrobe! Your efforts help advance automated microscopy analysis for the entire research community.
 
 *Developed collaboratively by the [Henriques](https://henriqueslab.org) and [Pinho](https://www.itqb.unl.pt/research/biology/bacterial-cell-biology) Labs.* 🔬✨
-
-

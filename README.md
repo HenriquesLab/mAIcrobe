@@ -55,7 +55,7 @@ pip install -e .
 ### 🧠 **Single cell Classification**
 - **Pre-trained Models**: 6 specialized models for cell cycle determination in *S. aureus*:
   - DNA+Membrane (Epifluorescence & SIM)
-  - DNA-only (Epifluorescence & SIM)  
+  - DNA-only (Epifluorescence & SIM)
   - Membrane-only (Epifluorescence & SIM)
 - **Custom Model Support**: Load your own TensorFlow models
 
@@ -97,9 +97,9 @@ Access via napari: `File > Open Sample > napari-mAIcrobe`
 ## 🏃‍♀️ Example Analysis
 
 **Input Data:**
-- Phase contrast image 
-- Membrane fluorescence  
-- DNA fluorescence 
+- Phase contrast image
+- Membrane fluorescence
+- DNA fluorescence
 
 **Analysis Pipeline:**
 1. **Segmentation**: Isodate segmentation identifies individual cells in phase contrast image
@@ -128,7 +128,7 @@ We welcome contributions! Whether it's:
 
 - 🐛 Bug reports and fixes
 - ✨ New segmentation algorithms
-- 📖 Documentation improvements  
+- 📖 Documentation improvements
 - 🧪 Additional test datasets
 - 🤖 New AI models for classification
 
@@ -145,7 +145,7 @@ pre-commit install
 # Run tests
 pytest -v
 
-# Run tests with coverage  
+# Run tests with coverage
 pytest --cov=napari_mAIcrobe
 
 # Run tests across Python versions
@@ -165,7 +165,7 @@ napari-mAIcrobe is developed in the [Henriques](https://henriqueslab.org) and [P
 
 **Built with:**
 - [napari](https://napari.org/) - Multi-dimensional image viewer
-- [TensorFlow](https://tensorflow.org/) - Machine learning framework  
+- [TensorFlow](https://tensorflow.org/) - Machine learning framework
 - [StarDist](https://github.com/stardist/stardist) - Object detection with star-convex shapes
 - [Cellpose](https://github.com/MouseLand/cellpose) - Generalist cell segmentation
 - [scikit-image](https://scikit-image.org/) - Image processing library

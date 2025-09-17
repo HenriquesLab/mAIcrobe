@@ -60,7 +60,7 @@ Let's perform your first bacterial cell analysis using the included sample data.
 
 Go to your terminal and run:
 
-```bash   
+```bash
 napari
 ```
 
@@ -79,7 +79,7 @@ napari-mAIcrobe includes _S. aureus_ test images. Load them via:
 1. Go to `File > Open Sample > mAIcrobe`
 2. Select:
    - "Phase contrast S. aureus"
-   - "Membrane dye S.aureus"  
+   - "Membrane dye S.aureus"
    - "DNA dye S.aureus"
 
 **Option B: Programmatic Method**
@@ -96,7 +96,7 @@ from napari_mAIcrobe._sample_data import phase_example, membrane_example, dna_ex
 
 # Get the sample images
 phase_data = phase_example()[0]
-membrane_data = membrane_example()[0]  
+membrane_data = membrane_example()[0]
 dna_data = dna_example()[0]
 
 # Add images to viewer
@@ -126,7 +126,7 @@ The segmentation will create a new "Labels" layer with individual cells outlined
 2. Configure analysis parameters:
    - **Label Image**: Select the labels layer from Step 3
    - **Membrane Image**: Select membrane layer
-   - **DNA Image**: Select DNA layer  
+   - **DNA Image**: Select DNA layer
    - **Pixel size**: Enter your pixel size (e.g., 0.065 μm/pixel) (optional)
    - **Classify cell cycle**: Check this box
    - **Model**: Select "S.aureus DNA+Membrane Epi"

@@ -18,8 +18,9 @@ def mask_computation(
     dilation: int = 0,
     fillholes: bool = False,
 ):
-    """Compute a binary mask from an image using Isodata or Local Average thresholding. 
-    Optionally, apply binary closing, dilation and fill holes operations to the binary mask.
+    """Compute a binary mask from an image using Isodata or Local Average
+    thresholding. Optionally, apply binary closing, dilation and fill
+    holes operations to the binary mask.
 
     Parameters
     ----------
@@ -79,8 +80,8 @@ def mask_computation(
 def mask_alignment(mask: np.ndarray, fluor_image: np.ndarray):
     """Align a fluorescence image to a mask via phase correlation.
 
-    Uses FFT-based cross-correlation to estimate translation and translates the
-    fluorescence image accordingly.
+    Uses FFT-based cross-correlation to estimate translation and
+    translates the fluorescence image accordingly.
 
     Parameters
     ----------

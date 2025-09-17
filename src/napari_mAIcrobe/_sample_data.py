@@ -12,8 +12,8 @@ def phase_example():
     Returns
     -------
     list[tuple[numpy.ndarray, dict, str]]
-        A list with one (data, meta, layer_type) tuple suitable for napari's
-        sample data hook.
+        A list with one (data, meta, layer_type) tuple suitable for
+        napari's sample data hook.
     """
     return [
         (
@@ -32,8 +32,8 @@ def membrane_example():
     Returns
     -------
     list[tuple[numpy.ndarray, dict, str]]
-        A list with one (data, meta, layer_type) tuple suitable for napari's
-        sample data hook.
+        A list with one (data, meta, layer_type) tuple suitable for
+        napari's sample data hook.
     """
     return [
         (
@@ -52,8 +52,8 @@ def dna_example():
     Returns
     -------
     list[tuple[numpy.ndarray, dict, str]]
-        A list with one (data, meta, layer_type) tuple suitable for napari's
-        sample data hook.
+        A list with one (data, meta, layer_type) tuple suitable for
+        napari's sample data hook.
     """
     return [
         (

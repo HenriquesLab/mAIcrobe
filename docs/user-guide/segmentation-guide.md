@@ -6,12 +6,12 @@ This guide helps you choose the optimal segmentation method for your bacterial i
 
 napari-mAIcrobe offers four main segmentation approaches:
 
-1. **StarDist models** 
-2. **Cellpose cyto3 model** 
-3. **Custom U-Net Models** 
+1. **StarDist models**
+2. **Cellpose cyto3 model**
+3. **Custom U-Net Models**
 4. **Thresholding-based methods** - Classical image processing using [Isodata](https://scikit-image.org/docs/0.25.x/api/skimage.filters.html#skimage.filters.threshold_isodata) or [Local Average](https://scikit-image.org/docs/0.25.x/api/skimage.filters.html#skimage.filters.threshold_local) tresholding followed by euclidean distance transform and watershed segmentation. This method is fast and does not require training data, but may be less accurate for complex images.
 
-## Stardist 
+## Stardist
 
 1. Check the original [StarDist paper](https://arxiv.org/abs/1806.03535) and [repository](https://github.com/stardist/stardist) for details on how StarDist works!
 2. Deep learning-based segmentation based on star-convex shapes detection.
@@ -25,7 +25,7 @@ napari-mAIcrobe offers four main segmentation approaches:
 
 ## U-Net Models
 1. Check the original [U-Net paper](https://arxiv.org/abs/1505.04597) for details on how U-Net works!
-2. Deep learning-based segmentation using a convolutional neural network architecture. 
+2. Deep learning-based segmentation using a convolutional neural network architecture.
 3. mAIcrobe does not include pre-trained U-Net models, you have to provide your own model in Keras format (.keras).
 4. You can train your own U-Net segmentation models using [ZeroCostDL4Mic](https://github.com/HenriquesLab/ZeroCostDL4Mic).
 5. The U-Net model is assumed to output a label image with 0 for background, 1 for cell interior, and 2 for cell boundary. mAIcrobe will convert this to a label image with unique integer IDs for each cell via a watershed algorithm. Check [skimage.segmentation.watershed](https://scikit-image.org/docs/stable/api/skimage.segmentation.html#skimage.segmentation.watershed) for more info.
@@ -51,7 +51,7 @@ Always validate segmentation on a representative subset:
 ### Automated Quality Metrics
 
 **Segmentation Quality Indicators:**
-- Cell count consistency 
+- Cell count consistency
 - Size distribution reasonableness (look for outliers on the size distribution)
 
 

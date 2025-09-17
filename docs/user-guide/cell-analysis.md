@@ -27,7 +27,7 @@ Before running cell analysis, ensure you have:
 
 **Image Selection:**
 - **Label Image**: Segmentation results (required)
-- **Membrane Image**: Fluorescence channel 
+- **Membrane Image**: Fluorescence channel
 - **DNA Image**: Nuclear/nucleoid staining
 - **Pixel size**: Physical pixel size (e.g., 0.065 μm/pixel) (optional)
 
@@ -106,7 +106,7 @@ napari-mAIcrobe includes 6 specialized models for cell cycle determination in *S
 - **S.aureus DNA SIM**: Nuclear staining, super-resolution SIM
 
 **Membrane Only Models:**
-- **S.aureus Membrane Epi**: Membrane staining, epifluorescence  
+- **S.aureus Membrane Epi**: Membrane staining, epifluorescence
 - **S.aureus Membrane SIM**: Membrane staining, super-resolution SIM
 
 
@@ -141,7 +141,7 @@ Process multiple images with consistent parameters:
 import glob
 for image_path in glob.glob("*.tif"):
     # Load image
-    # Run analysis with identical parameters  
+    # Run analysis with identical parameters
     # Save results with systematic naming
 ```
 

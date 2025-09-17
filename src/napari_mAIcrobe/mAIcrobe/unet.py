@@ -1,8 +1,9 @@
 """
 UNet-based segmentation utilities.
 
-Includes percentile normalization helpers (adapted from ZeroCostDL4Mic UNet
-notebook), tiled prediction, and label computation with watershed.
+Includes percentile normalization helpers (adapted from ZeroCostDL4Mic
+UNet notebook), tiled prediction, and label computation with
+watershed.
 """
 
 from math import ceil
@@ -28,7 +29,8 @@ def normalizePercentile(
 ):
     """Percentile-based image normalization.
 
-    This function is adapted from Martin Weigert and copied from the ZeroCostDL4Mic UNet notebook.
+    This function is adapted from Martin Weigert and copied from the
+    ZeroCostDL4Mic UNet notebook.
 
     Parameters
     ----------
@@ -61,12 +63,11 @@ def normalizePercentile(
 ############################################################################
 ## THIS FUNCTION ARE COPIED FROM THE ZEROCOSTDL4MIC UNET JUPYTER NOTEBOOK ##
 ############################################################################
-def normalize_mi_ma(
-    x, mi, ma, clip=False, eps=1e-20, dtype=np.float32
-):
+def normalize_mi_ma(x, mi, ma, clip=False, eps=1e-20, dtype=np.float32):
     """Normalize by explicit min/max values.
 
-    This function is adapted from Martin Weigert and copied from the ZeroCostDL4Mic UNet notebook.
+    This function is adapted from Martin Weigert and copied from the
+    ZeroCostDL4Mic UNet notebook.
 
     Parameters
     ----------
@@ -114,10 +115,11 @@ def normalize_mi_ma(
 def predict_as_tiles(img, model):
     """Run tiled prediction with a Keras model over a 2D image.
 
-    Pads the image to at least the model's input patch size, iterates over
-    tiles, and stitches the argmax class predictions.
+    Pads the image to at least the model's input patch size, iterates
+    over tiles, and stitches the argmax class predictions.
 
-    THIS FUNCTION IS COPIED FROM THE ZEROCOSTDL4MIC UNET JUPYTER NOTEBOOK.
+    THIS FUNCTION IS COPIED FROM THE ZEROCOSTDL4MIC UNET JUPYTER
+    NOTEBOOK.
 
     Parameters
     ----------
@@ -187,7 +189,14 @@ def predict_as_tiles(img, model):
 
 
 def computelabel_unet(path2model, base_image, closing, dilation, fillholes):
-    """Compute mask and labels using a UNet model and watershed. The U-Net model outputs an image with 3 classes: background, edges, insides. Background = 0, edges = 1, insides = 2. A binary mask is created by the binary union of the edges and insides. To generate the final label image, we use the insides as markers and run a watershed on the inverse of the binary mask. Optionally, this function applies some morphological operations to clean up the binary mask. Specifically closing, dilation, and hole filling.
+    """Compute mask and labels using a UNet model and watershed. The U-Net
+    model outputs an image with 3 classes: background, edges, insides.
+    Background = 0, edges = 1, insides = 2. A binary mask is created by
+    the binary union of the edges and insides. To generate the final
+    label image, we use the insides as markers and run a watershed on
+    the inverse of the binary mask. Optionally, this function applies
+    some morphological operations to clean up the binary mask.
+    Specifically closing, dilation, and hole filling.
 
     Parameters
     ----------

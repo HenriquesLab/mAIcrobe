@@ -4,7 +4,8 @@ from scipy.stats import pearsonr
 
 
 class ColocManager:
-    """Calculate and export per-cell Pearson correlation coefficients between two fluorescence metrics.
+    """Calculate and export per-cell Pearson correlation coefficients
+    between two fluorescence metrics.
 
     Attributes
     ----------
@@ -17,14 +18,16 @@ class ColocManager:
         self.report = {}
 
     def save_report(self, reportID, sept=False):
-        """Write a CSV report with the computed Pearson metrics that are stored in the report attribute.
+        """Write a CSV report with the computed Pearson metrics that are
+        stored in the report attribute.
 
         Parameters
         ----------
         reportID : str
             Base output directory for the report CSV.
         sept : bool, optional
-            Include septum-related metrics if available, by default False.
+            Include septum-related metrics if available, by default
+            False.
         """
 
         sorted_keys = sorted(self.report.keys())
@@ -76,7 +79,7 @@ class ColocManager:
         ]  # removes 0s from entering pcc calculation
 
         return pearsonr(filtered_1, filtered_2)
-    
+
     def computes_cell_pcc(self, fluor_image, optional_image, cell, parameters):
         """Compute and store Pearson metrics for a single cell.
 
@@ -127,9 +130,9 @@ class ColocManager:
         self, fluor_image, optional_image, cells, parameters, reportID
     ):
         """Compute Pearson metrics for all cells and save a report.
-        
+
         DEPRECATED: use `computes_cell_pcc` for single cells instead.
-        
+
         Parameters
         ----------
         fluor_image : numpy.ndarray

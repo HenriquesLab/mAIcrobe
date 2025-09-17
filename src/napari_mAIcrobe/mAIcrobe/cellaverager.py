@@ -25,8 +25,8 @@ class CellAverager:
         Parameters
         ----------
         fluor : numpy.ndarray
-            Full fluorescence field-of-view image. It is the channel that will be used
-            to build the average heatmap.
+            Full fluorescence field-of-view image. It is the channel that
+            will be used to build the average heatmap.
         """
 
         self.fluor = fluor
@@ -73,12 +73,14 @@ class CellAverager:
         self.model = model_cell
 
     def calculate_rotation_angle(self, cell):
-        """Estimate the rotation angle that aligns the cell's major axis vertically.
+        """Estimate the rotation angle that aligns the cell's major axis
+        vertically.
 
         Parameters
         ----------
         cell : napari_mAIcrobe.mAIcrobe.cells.Cell
-            Cell instance used to extract the per-cell fluorescence and mask.
+            Cell instance used to extract the per-cell fluorescence and
+            mask.
 
         Returns
         -------

@@ -24,9 +24,9 @@ class filter_cells(Container):
     """
     Interactive cell filtering widget.
 
-    Provides a Labels layer selector and dynamic property-based filters using
-    range sliders. Emits a `changed` signal when filtering updates and writes
-    results to a "Filtered Cells" Labels layer.
+    Provides a Labels layer selector and dynamic property-based filters
+    using range sliders. Emits a `changed` signal when filtering updates
+    and writes results to a "Filtered Cells" Labels layer.
 
     Parameters
     ----------
@@ -68,12 +68,18 @@ class filter_cells(Container):
         self._viewer.add_labels(self._current_layer, name="Filtered Cells")
 
     def _on_label_layer_changed(self, new_layer: "napari.layers.Labels"):
-        """Handle change of the selected Labels layer. When the layer changes, update cached properties and data and generate a duplicate label image called "Filtered Cells". If "Filtered Cells" already exists, it is removed first. The properties dict is essential, as it provides all the filterable properties and the values for each labeled cell.
+        """Handle change of the selected Labels layer. When the layer
+        changes, update cached properties and data and generate a
+        duplicate label image called "Filtered Cells". If "Filtered
+        Cells" already exists, it is removed first. The properties dict
+        is essential, as it provides all the filterable properties and
+        the values for each labeled cell.
 
         Parameters
         ----------
         new_layer : napari.layers.Labels
-            Newly selected labels layer providing `.data` and `.properties`.
+            Newly selected labels layer providing `.data` and
+            `.properties`.
         """
         while self.__len__() > 2:
             self.pop()
@@ -89,12 +95,17 @@ class filter_cells(Container):
     def _on_plus_clicked(
         self,
     ):
-        """Append a new unit filter to the UI. See `unit_filter` class for more info."""
+        """Append a new unit filter to the UI. See `unit_filter` class
+        for more info."""
         filter = unit_filter(self)
         self.append(filter)
 
     def _on_changed(self, obj):
-        """Update the Filtered Cells Labels layer by removing labels that do not match the current filters. Function is triggered by the `changed` signal. The changed signal is given by the unit_filter instances when their sliders or property selectors change.
+        """Update the Filtered Cells Labels layer by removing labels
+        that do not match the current filters. Function is triggered by
+        the `changed` signal. The changed signal is given by the
+        unit_filter instances when their sliders or property selectors
+        change.
 
         Parameters
         ----------
@@ -131,14 +142,16 @@ class unit_filter(QWidget):
     """
     Single property filter unit.
 
-    Lets users choose a property from the Labels layer properties dict and filter
-    labels by a numeric range using a slider. Updates parent container via
-    `parent.changed` signal which triggers a refresh of the Filtered Cells Labels layer.
+    Lets users choose a property from the Labels layer properties dict
+    and filter labels by a numeric range using a slider. Updates parent
+    container via `parent.changed` signal which triggers a refresh of
+    the Filtered Cells Labels layer.
 
     Parameters
     ----------
     parent : filter_cells
-        Parent container providing viewer, current layer data and properties.
+        Parent container providing viewer, current layer data and
+        properties.
     """
 
     def __init__(self, parent):

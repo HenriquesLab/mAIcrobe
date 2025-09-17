@@ -222,8 +222,8 @@ class ReportManager:
 
         Side Effects
         ------------
-        Creates directory structure, writes HTML and `Analysis.csv`, and sets
-        `self.cell_data_filename`.
+        Creates directory structure, writes HTML and `Analysis.csv`, and
+        sets `self.cell_data_filename`.
         """
         if report_id is None:
             filename = path + "/Report_1"

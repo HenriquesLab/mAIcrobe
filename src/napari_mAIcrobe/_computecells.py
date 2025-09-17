@@ -51,9 +51,11 @@ def compute_cells(
     Report_path: os.PathLike = "",
     Compute_Heatmap: bool = False,
 ):
-    """Compute per-cell features, generate reports. Optionally build average heatmap, classification and colocalization.
+    """Compute per-cell features, generate reports. Optionally build
+    average heatmap, classification and colocalization.
 
-    #TODO check parameter order in the GUI and in the docstring. It should make sense to the user.
+    #TODO check parameter order in the GUI and in the docstring. It
+    should make sense to the user.
 
     Parameters
     ----------
@@ -72,7 +74,8 @@ def compute_cells(
     Septum_algorithm : {"Isodata", "Box"}, optional
         Algorithm to detect septum, by default "Isodata".
     Baseline_margin : int, optional
-        Margin (pixels) around cell to compute background baseline, by default 30.
+        Margin (pixels) around cell to compute background baseline, by
+        default 30.
     Find_septum : bool, optional
         Enable septum detection, by default False.
     Find_open_septum : bool, optional
@@ -80,7 +83,8 @@ def compute_cells(
     Classify_cell_cycle : bool, optional
         Enable cell cycle classification, by default False.
     Model : str, optional
-        Prebuilt or custom model selector, by default "S.aureus DNA+Membrane Epi".
+        Prebuilt or custom model selector, by default "S.aureus
+        DNA+Membrane Epi".
     Custom_model_path : os.PathLike, optional
         Path to custom Keras model, by default "".
     Custom_model_input : {"Membrane","DNA","Membrane+DNA"}, optional
@@ -88,7 +92,8 @@ def compute_cells(
     Custom_model_MaxSize : int, optional
         Max dimension for classifier preprocessing, by default 50.
     Compute_Colocalization : bool, optional
-        Compute per cell Pearson correlation coefficients between channels, by default False.
+        Compute per cell Pearson correlation coefficients between
+        channels, by default False.
     Generate_Report : bool, optional
         Generate HTML and CSV report, by default False.
     Report_path : os.PathLike, optional

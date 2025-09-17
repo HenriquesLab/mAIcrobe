@@ -46,7 +46,7 @@ from napari_mAIcrobe._sample_data import phase_example, membrane_example, dna_ex
 
 # Get the sample images
 phase_data = phase_example()[0]
-membrane_data = membrane_example()[0]  
+membrane_data = membrane_example()[0]
 dna_data = dna_example()[0]
 
 # Add images to viewer
@@ -88,7 +88,7 @@ Now we'll segment individual cells using the Compute label widget:
 - Minimal under-segmentation (cells merged incorrectly)
 
 **If segmentation needs improvement:**
-- Try a different model 
+- Try a different model
 - Adjust parameters (e.g., Fill holes)
 
 ### Step 4: Comprehensive Cell Analysis
@@ -128,7 +128,7 @@ With segmented cells, we can now perform detailed analysis:
 2. **Available measurements:**
    - **Morphology:** area, perimeter, eccentricity
    - **Intensity:** Baseline, and median intensity for the cell, membrane, cytoplasm and septum (if find septum is enabled). Fluorescent ratios betweens septa and membrane are also available if find septum is enabled.
-   - **Cell cycle:** predicted phase 
+   - **Cell cycle:** predicted phase
    - **DNA:** relative DNA content when compared to the baseline background fluorescence (DNARatio)
 
 #### Interactive Data Exploration
@@ -142,7 +142,7 @@ You can interactively explore and filter cells based on measurements:
    - Choose properties to filter (e.g., Area, Eccentricity, Cell cycle phase)
    - Adjust min/max sliders to refine selection
 3. **Apply filters:**
-   - Filters are automatically applied on a new layer called "Filtered cells". 
+   - Filters are automatically applied on a new layer called "Filtered cells".
    - Hide the original Labels layer to see only filtered results.
 
 Or you can interact with the results programmatically:

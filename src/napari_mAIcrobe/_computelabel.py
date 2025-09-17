@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 
 import os
 
+import tensorflow as tf
 from cellpose import models
 from magicgui.widgets import (
     CheckBox,
@@ -22,6 +23,7 @@ from magicgui.widgets import (
 )
 from qtpy import QtWidgets
 from qtpy.QtCore import Qt
+from stardist.models import StarDist2D
 
 from .mAIcrobe.mask import mask_alignment, mask_computation
 from .mAIcrobe.segments import SegmentsManager
@@ -32,12 +34,8 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 # Remove some extraneous log outputs
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
-import tensorflow as tf
 
 tf.config.set_visible_devices([], "GPU")
-
-
-from stardist.models import StarDist2D
 
 
 class compute_label(Container):
@@ -47,7 +45,7 @@ class compute_label(Container):
     Allows selecting input images, choosing a mask algorithm (Isodata, Local
     Average, Unet, StarDist, CellPose cyto3), tuning parameters, and running
     segmentation. Adds "Mask" and "Labels" layers to the viewer; optionally
-    aligns auxiliary channels to the mask and performs binary operations 
+    aligns auxiliary channels to the mask and performs binary operations
     like dilation, erosion and fill holes.
 
     Parameters
@@ -206,8 +204,10 @@ class compute_label(Container):
         """Toggle parameter widgets according to algorithm choice.
 
         #TODO make this cleaner.
-        #TODO watershed parameters should be hidden for Unet, StarDist and CellPose.
-        #TODO binary operations should be hidden for StarDist and CellPose.
+        #TODO watershed parameters should be hidden for Unet, StarDist
+        # and CellPose.
+        #TODO binary operations should be hidden for StarDist and
+        # CellPose.
 
         Parameters
         ----------
@@ -250,15 +250,18 @@ class compute_label(Container):
         return
 
     def compute(self):
-        """Run mask/label computation, optional channel alignment and binary operations. 
+        """Run mask/label computation, optional channel alignment and
+        binary operations.
 
         Notes
         -----
-        - Unet uses `computelabel_unet` imported from mAIcrobe. 
-        - StarDist uses the StarDist python package with a model directory selected via `_path2stardist`.
-        - CellPose uses the CellPose python package to download to cache and subsequently use the `cyto3` model for inference.
-        - Other algorithms use `mask_computation` imported from mAIcrobe + watershed via
-          `SegmentsManager`.
+        - Unet uses `computelabel_unet` imported from mAIcrobe.
+        - StarDist uses the StarDist python package with a model
+          directory selected via `_path2stardist`.
+        - CellPose uses the CellPose python package to download to cache
+          and subsequently use the `cyto3` model for inference.
+        - Other algorithms use `mask_computation` imported from mAIcrobe
+          + watershed via `SegmentsManager`.
 
         Side Effects
         ------------

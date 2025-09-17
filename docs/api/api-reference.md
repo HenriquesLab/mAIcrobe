@@ -15,7 +15,7 @@ napari-mAIcrobe provides both GUI widgets and programmatic APIs:
 ```
 napari_mAIcrobe/
 ├── _computelabel.py      # Segmentation widget and functions
-├── _computecells.py      # Cell analysis widget and functions  
+├── _computecells.py      # Cell analysis widget and functions
 ├── _filtercells.py       # Filtering widget and functions
 ├── _sample_data.py       # Sample data providers
 ├── napari.yaml           # Plugin manifest

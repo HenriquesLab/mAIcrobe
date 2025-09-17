@@ -3,7 +3,8 @@ mask, which should correspond to the cell regions.
 The regions are then labeled using the watershed algorithm. Requires an
 ImageManager object containg the loaded images (base + fluor) and the mask.
 Contains a single class, Segments, which stores the data from the processing
-of the mask: features and labels, which will later be used to define the different cell regions
+of the mask: features and labels, which will later be used to define the
+different cell regions
 """
 
 import numpy as np
@@ -15,11 +16,12 @@ from skimage.feature import peak_local_max
 class SegmentsManager:
     """Segmentation seed detection and labeling via watershed.
 
-    Computes distance transform peaks as seeds, overlays features, and runs
-    watershed to generate integer labels. 
+    Computes distance transform peaks as seeds, overlays features, and
+    runs watershed to generate integer labels.
 
-    This class is used to generate a label image after a binary mask has been computed, 
-    normally through thresholding and morphological operations.
+    This class is used to generate a label image after a binary mask has
+    been computed, normally through thresholding and morphological
+    operations.
 
     #TODO remove deprecated attributes and methods.
 
@@ -50,7 +52,8 @@ class SegmentsManager:
 
     @staticmethod
     def compute_distance_peaks(mask, params):
-        """Compute peaks (maximum values) from the euclidean distance transform.  
+        """Compute peaks (maximum values) from the euclidean distance
+        transform.
 
         Parameters
         ----------
@@ -66,7 +69,8 @@ class SegmentsManager:
         Returns
         -------
         list[tuple[int, int]]
-            List of (x, y) marker coordinates to be used by the compute_features method.
+            List of (x, y) marker coordinates to be used by the
+            compute_features method.
         """
 
         distance = ndimage.distance_transform_edt(mask)
@@ -141,6 +145,7 @@ class SegmentsManager:
     def overlay_features(self, mask):
         """Create a binary overlay image of the features.
          DEPRECATED.
+
         Parameters
         ----------
         mask : numpy.ndarray
@@ -153,8 +158,10 @@ class SegmentsManager:
         clipped_base[places] = 1
         self.base_w_features = clipped_base.astype(int)
 
-    def compute_labels(self, mask): 
-        """Run watershed to obtain integer labels. Uses the features attribute computed in compute_features as markers for the watershed. 
+    def compute_labels(self, mask):
+        """Run watershed to obtain integer labels. Uses the features
+        attribute computed in compute_features as markers for the
+        watershed.
 
         Parameters
         ----------

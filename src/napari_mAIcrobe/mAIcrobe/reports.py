@@ -47,7 +47,7 @@ class ReportManager:
         properties : dict
             Per-cell properties.
         allcells : list[numpy.ndarray]
-            Raw per-cell images prior to padding.
+            List of per-cell montage images.
         """
 
         self.cells = allcells

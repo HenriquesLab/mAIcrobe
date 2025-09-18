@@ -204,10 +204,6 @@ class compute_label(Container):
         """Toggle parameter widgets according to algorithm choice.
 
         #TODO make this cleaner.
-        #TODO watershed parameters should be hidden for Unet, StarDist
-        # and CellPose.
-        #TODO binary operations should be hidden for StarDist and
-        # CellPose.
 
         Parameters
         ----------
@@ -217,35 +213,90 @@ class compute_label(Container):
         """
 
         if new_algorithm == "Isodata":
+            self[8].visible = True
             self[9].visible = True
             self[10].visible = False
             self[11].visible = False
             self[12].visible = False
             self[13].visible = False
+            # watershed parameters
+            self[14].visible = True
+            self[15].visible = True
+            self[16].visible = True
+            self[17].visible = True
+            self[18].visible = True
+            # binary operations
+            self[3].visible = True
+            self[4].visible = True
+            self[5].visible = True
         elif new_algorithm == "Local Average":
+            self[8].visible = True
             self[9].visible = False
             self[10].visible = True
             self[11].visible = True
             self[12].visible = False
             self[13].visible = False
+            # watershed parameters
+            self[14].visible = True
+            self[15].visible = True
+            self[16].visible = True
+            self[17].visible = True
+            self[18].visible = True
+            # binary operations
+            self[3].visible = True
+            self[4].visible = True
+            self[5].visible = True
         elif new_algorithm == "Unet":
+            self[8].visible = True
             self[9].visible = False
             self[10].visible = False
             self[11].visible = False
             self[12].visible = True
             self[13].visible = False
+            # watershed parameters
+            self[14].visible = False
+            self[15].visible = False
+            self[16].visible = False
+            self[17].visible = False
+            self[18].visible = False
+            # binary operations
+            self[3].visible = True
+            self[4].visible = True
+            self[5].visible = True
         elif new_algorithm == "StarDist":
+            self[8].visible = True
             self[9].visible = False
             self[10].visible = False
             self[11].visible = False
             self[12].visible = False
             self[13].visible = True
+            # watershed parameters
+            self[14].visible = False
+            self[15].visible = False
+            self[16].visible = False
+            self[17].visible = False
+            self[18].visible = False
+            # binary operations
+            self[3].visible = False
+            self[4].visible = False
+            self[5].visible = False
         elif new_algorithm == "CellPose cyto3":
+            self[8].visible = False
             self[9].visible = False
             self[10].visible = False
             self[11].visible = False
             self[12].visible = False
             self[13].visible = False
+            # watershed parameters
+            self[14].visible = False
+            self[15].visible = False
+            self[16].visible = False
+            self[17].visible = False
+            self[18].visible = False
+            # binary operations
+            self[3].visible = False
+            self[4].visible = False
+            self[5].visible = False
 
         return
 

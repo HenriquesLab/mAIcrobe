@@ -47,7 +47,8 @@ pip install -e .
 
 ## 🏆 Key Features
 
-### 🎨 **Advanced Cell Segmentation**
+### 🎨 **Cell Segmentation**
+- **Thresholding**: Isodata and Local Average methods with watershed
 - **StarDist2D**: custom models
 - **Cellpose**: cyto3 model
 - **Custom U-Net Models**: custom models
@@ -71,13 +72,13 @@ pip install -e .
 | **[🚀 Getting Started](docs/user-guide/getting-started.md)** | Installation to first analysis |
 | **[🔬 Segmentation Guide](docs/user-guide/segmentation-guide.md)** | Choose the right segmentation method |
 | **[📊 Cell Analysis](docs/user-guide/cell-analysis.md)** | Complete analysis workflows |
-| **[🧠 AI Models Guide](docs/user-guide/ai-models.md)** | Cell cycle classification setup |
+| **[🧠 Cell Classification Guide](docs/user-guide/cell-classification.md)** | Cell cycle classification setup |
 | **[⚙️ API Reference](docs/api/api-reference.md)** | Programmatic usage |
 
 ## 🎯 Analysis Workflow
 
 ### 📄 **Single Image Analysis**
-1. **Load Images**: Phase contrast, membrane, and/or DNA channels
+1. **Load Images**: Phase contrast and/or fluorescence
 2. **Segment Cells**: Choose segmentation algorithm and parameters
 3. **Analyze Cells**: Extract morphological and intensity features and choose classification model
 4. **Filter Results**: Interactive filtering of cell populations
@@ -102,10 +103,10 @@ Access via napari: `File > Open Sample > napari-mAIcrobe`
 - DNA fluorescence
 
 **Analysis Pipeline:**
-1. **Segmentation**: Isodate segmentation identifies individual cells in phase contrast image
+1. **Segmentation**: Isodata or CellPose's cyto3 identifies individual cells in the phase contrast image
 2. **Morphology**: Calculate morphological and intensity measurements
-3. **Classification**: Cell cycle phase determination
-4. **Quality Control**: Interactive filtering of analysis results
+3. **Classification**: Cell cycle phase determination using pre-trained CNN model
+4. **Quality Control**: Interactive filtering of analysis results. Select subpopulations based on size, intensity, or classification
 5. **Report Generation**: HTML output
 
 
@@ -120,7 +121,6 @@ Explore advanced functionality with included notebooks:
 
 - **🐛 [Issues](https://github.com/HenriquesLab/napari-mAIcrobe/issues)** - Report bugs, request features
 - **📚 [napari hub](https://napari-hub.org/plugins/napari-mAIcrobe)** - Plugin ecosystem
-- **🧪 [Sample Datasets](docs/user-guide/getting-started.md#sample-data)** - Test data for validation
 
 ## 🏗️ Contributing
 

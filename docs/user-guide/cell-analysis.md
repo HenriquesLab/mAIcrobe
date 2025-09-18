@@ -62,7 +62,7 @@ Before running cell analysis, ensure you have:
 
 ## 📊 Morphological Measurements
 
-napari-mAIcrobe computes comprehensive shape and size parameters using scikit-image regionprops.
+napari-mAIcrobe computes shape and size parameters using scikit-image regionprops.
 
 ### Basic Shape Parameters
 
@@ -129,21 +129,6 @@ Use the "Filter cells" widget for real-time quality control:
 2. **Add filters** for any measured feature
 3. **Preview filtered population** in real-time
 4. **Use the filtered results for further analysis** The new layer "Filtered cells" contains only the selected cells.
-
-## 🚀 Advanced Analysis Techniques
-
-### Batch Processing
-
-Process multiple images with consistent parameters:
-
-```python
-# Process all images in directory
-import glob
-for image_path in glob.glob("*.tif"):
-    # Load image
-    # Run analysis with identical parameters
-    # Save results with systematic naming
-```
 
 
 ## 📖 Further Reading

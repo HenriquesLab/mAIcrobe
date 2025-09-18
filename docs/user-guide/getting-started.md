@@ -50,7 +50,7 @@ import napari
 viewer = napari.Viewer()
 ```
 
-You should see `napari-mAIcrobe` in the plugins list.
+Then check if "mAIcrobe" appears under `Plugins` in the menu bar.
 
 ## 🔥 First Analysis
 

@@ -1135,6 +1135,14 @@ class CellManager:
             Identifier for the report.
         - "find_septum" : bool
             Whether to find the septum in cells.
+        - "find_openseptum" : bool
+            Whether to find open septa in cells.
+        - "inner_mask_thickness" : int
+            Thickness for inner mask computation.
+        - "septum_algorithm" : str
+            Algorithm for septum detection ("Isodata" or "Box").
+        - "baseline_margin" : int
+            Margin for baseline fluorescence calculation.
 
     Attributes
     ----------

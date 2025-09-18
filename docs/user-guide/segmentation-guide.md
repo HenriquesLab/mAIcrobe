@@ -28,7 +28,7 @@ napari-mAIcrobe offers four main segmentation approaches:
 2. Deep learning-based segmentation using a convolutional neural network architecture.
 3. mAIcrobe does not include pre-trained U-Net models, you have to provide your own model in Keras format (.keras).
 4. You can train your own U-Net segmentation models using [ZeroCostDL4Mic](https://github.com/HenriquesLab/ZeroCostDL4Mic).
-5. The U-Net model is assumed to output a label image with 0 for background, 1 for cell interior, and 2 for cell boundary. mAIcrobe will convert this to a label image with unique integer IDs for each cell via a watershed algorithm. Check [skimage.segmentation.watershed](https://scikit-image.org/docs/stable/api/skimage.segmentation.html#skimage.segmentation.watershed) for more info.
+5. The U-Net model is assumed to output a label image with 0 for background, 1 for cell boundary, and 2 for cell interior. mAIcrobe will convert this to a label image with unique integer IDs for each cell via a watershed algorithm. Check [skimage.segmentation.watershed](https://scikit-image.org/docs/stable/api/skimage.segmentation.html#skimage.segmentation.watershed) for more info.
 
 ## Thresholding-based Methods
 1. Classical image processing methods that do not require training data.

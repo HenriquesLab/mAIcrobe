@@ -55,7 +55,9 @@ membrane_layer = viewer.add_image(membrane_data[0], **membrane_data[1])
 dna_layer = viewer.add_image(dna_data[0], **dna_data[1])
 ```
 
-**Expected result:** You should see three image layers in napari with bacterial cells visible in each channel. (INSERT SCREENSHOT HERE)
+**Expected result:** You should see three image layers in napari with bacterial cells visible in each channel.
+
+![Loading Sample Data](../Images/LoadSamples.png)
 
 ### Step 2: Cell Segmentation
 
@@ -71,13 +73,15 @@ Now we'll segment individual cells using the Compute label widget:
    Fluor 2: DNA (select the DNA layer)
    Model: Isodata (or CellPose cyto3)
    ```
-   For the purpose of this tutorial, leave all other parameters as default.
+   The GUI should automatically change the available parameter options based on the selected model. For the purpose of this tutorial, independent of the selected model, leave all other parameters as default.
 
 3. **Run segmentation:**
    - Click the **Run** button
    - Wait for processing to complete (typically 5-10 seconds, could be longer for large images or if its the first time you are running CellPose as it needs to download the model into cache)
 
-**Expected result:** Two new layers appear. A "Mask" layer and a "Labels" layer appears with individual cells outlined in different colors. (INSERT SCREENSHOT HERE)
+**Expected result:** Two new layers appear. A "Mask" layer and a "Labels" layer appears with individual cells outlined in different colors.
+
+![Segmentation Result](../Images/SegmentationResult.png)
 
 #### Evaluating Segmentation Quality
 
@@ -115,7 +119,8 @@ With segmented cells, we can now perform detailed analysis:
    - Click **Run**
    - Analysis may take 5-20 seconds depending on cell count
 
-**Expected result:** The Labels layer now contains comprehensive measurements for each cell, including morphology, intensity, and cell cycle predictions as layer properties. A HTML report is generated in the specified directory. A table appears on the napari GUI. (INSERT SCREENSHOT HERE)
+**Expected result:** The Labels layer now contains comprehensive measurements for each cell, including morphology, intensity, and cell cycle predictions as layer properties. A HTML report is generated in the specified directory. A table appears on the napari GUI.
+![Properties Panel](../Images/PropertiesTable.png)
 
 ### Step 5: Explore Analysis Results
 

@@ -93,75 +93,38 @@ tox
 
 ### Writing Tests
 
-**Test Structure:**
-```
-src/napari_mAIcrobe/_tests/
-├── conftest.py                # Test configuration and fixtures
-├── test_widgets.py           # Widget functionality tests
-├── test_segmentation.py      # Segmentation algorithm tests
-├── test_analysis.py          # Cell analysis tests
-├── test_classification.py    # Classification model tests
-└── test_sample_data.py       # Sample data tests
-```
+- Place tests in `src/napari_mAIcrobe/_tests/`
+- Filenames should end with `_test.py`
 
 **Example Test:**
 ```python
-import numpy as np
-import pytest
-from napari_mAIcrobe._computelabel import compute_label
+def test_segmentation_isodata(phase_example):
+    """Test segmentation using isodata method."""
+    # Test data
+    phase_image = phase_example
 
-def test_stardist_segmentation(phase_image_fixture):
-    """Test StarDist2D segmentation functionality."""
-    # Create mock napari viewer
-    viewer = MockViewer()
-    image_layer = viewer.add_image(phase_image_fixture, name="Phase")
+    # Run isodata
+    mask = mask_computation(phase_image, method='isodata')
 
-    # Run segmentation
-    labels_layer = compute_label(
-        viewer=viewer,
-        image=image_layer,
-        model="StarDist2D",
-        probability_threshold=0.5
-    )
+    # Assert results
+    assert mask is not None
+    assert np.any(mask)  # Ensure that the mask is not empty
 
-    # Validate results
-    assert labels_layer is not None
-    assert labels_layer.data.max() > 0  # Should detect some cells
-    assert len(np.unique(labels_layer.data)) > 1  # Multiple cell labels
+    # Run watershed
+    pars = {"peak_min_distance_from_edge":10, "peak_min_distance":5, "peak_min_height" :5, "max_peaks" :100000}
+    seg_man = SegmentsManager()
+    seg_man.compute_segments(pars, mask)
+    labels = seg_man.labels
+
+    # Assert labels
+    assert labels is not None
+    assert labels.data.max() > 0  # Should detect some cells
+    assert len(np.unique(labels.data)) > 1  # Multiple cell labels
 ```
 
 ## 🎨 Code Style
 
 We follow standard Python conventions with project-specific guidelines.
-
-### Formatting Standards
-
-**Black Configuration (pyproject.toml):**
-```toml
-[tool.black]
-line-length = 79
-target-version = ['py310', 'py311']
-```
-
-**Import Organization (isort):**
-```python
-# Standard library imports
-import os
-import sys
-from pathlib import Path
-
-# Third-party imports
-import numpy as np
-import pandas as pd
-from magicgui import magic_factory
-
-# napari imports
-import napari
-from napari.layers import Image, Labels
-
-# Local imports
-from .mAIcrobe.cells import CellManager
-```
 
 ### Code Quality Checks
 
@@ -189,33 +152,33 @@ pre-commit run --all-files
 
 **Docstring Format (NumPy style):**
 ```python
-def analyze_cell_morphology(image, labels, pixel_size=1.0):
-    """Compute morphological measurements for segmented cells.
+def rotation_matrices(step):
+    """Generate rotation matrices from 0 to <180 degrees.
+
+    Matrices are transposed to use with 2 column point arrays (x, y).
 
     Parameters
     ----------
-    image : np.ndarray
-        Input image for analysis
-    labels : np.ndarray
-        Segmented cell labels
-    pixel_size : float, optional
-        Spatial calibration in μm/pixel (default: 1.0)
+    step : int
+        Angular step in degrees.
 
     Returns
     -------
-    dict
-        Dictionary containing morphological measurements
-
-    Raises
-    ------
-    ValueError
-        If image and labels dimensions don't match
-
-    Examples
-    --------
-    >>> measurements = analyze_cell_morphology(phase_image, cell_labels, 0.065)
-    >>> print(f"Found {len(measurements)} cells")
+    list[numpy.matrix]
+        List of 2x2 rotation matrices (transposed).
     """
+
+    result = []
+    ang = 0
+
+    while ang < 180:
+        sa = np.sin(ang / 180.0 * np.pi)
+        ca = np.cos(ang / 180.0 * np.pi)
+        # note .T, for column points
+        result.append(np.matrix([[ca, -sa], [sa, ca]]).T)
+        ang = ang + step
+
+    return result
 ```
 
 ## 🏗️ Contribution Workflow
@@ -223,9 +186,6 @@ def analyze_cell_morphology(image, labels, pixel_size=1.0):
 ### Standard Process
 
 1. **Create an Issue** (for significant changes)
-   - Describe the problem or enhancement
-   - Discuss approach with maintainers
-   - Get approval before starting work
 
 2. **Fork and Branch**
    ```bash
@@ -238,7 +198,7 @@ def analyze_cell_morphology(image, labels, pixel_size=1.0):
 
 3. **Make Changes**
    - Write code following style guidelines
-   - Add tests for new functionality
+   - Add tests for new /old functionality
    - Update documentation as needed
 
 4. **Test Locally**
@@ -300,7 +260,6 @@ def analyze_cell_morphology(image, labels, pixel_size=1.0):
 
 - **GitHub Issues**: Bug reports, feature requests
 - **Pull Requests**: Code contributions and review
-
 
 ---
 

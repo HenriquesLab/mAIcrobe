@@ -8,22 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Comprehensive documentation overhaul with professional README
-- Complete user guide documentation
+- Comprehensive documentation overhaul and updated README
+- User guide documentation
 - Tutorials and API reference documentation
 - Contributing guidelines and development setup instructions
 
 ### Changed
-- README.md completely rewritten with professional styling and comprehensive feature overview
+- README.md completely rewritten
 - Documentation structure reorganized with user-friendly navigation
 - Enhanced project description and value proposition
 
 ### Documentation
 - Added getting started guide with step-by-step tutorial
-- Created comprehensive segmentation guide with troubleshooting
-- Detailed cell analysis documentation with advanced features
-- AI models guide with custom model integration instructions
-- API reference with programmatic usage examples
+- Created comprehensive segmentation guide
+- Detailed cell analysis documentation
+- Cell classification guide with model descriptions
+- API reference
 - Basic workflow tutorial for new users
 
 ## [0.0.1] - Initial Release
@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `compute_label`: Cell segmentation using StarDist2D, Cellpose, or custom U-Net models
   - `compute_cells`: Comprehensive cell analysis with morphological measurements and optionally deep learning classification
   - `filter_cells`: Interactive cell filtering based on computed statistics
-- Deep learning cell cycle classification with 6 pre-trained TensorFlow models:
+- Deep learning cell classification with 6 pre-trained TensorFlow models for cell cycle determination in *S. aureus*:
   - S.aureus DNA+Membrane (Epi/SIM)
   - S.aureus DNA-only (Epi/SIM)
   - S.aureus Membrane-only (Epi/SIM)
@@ -46,12 +46,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multi-channel colocalization analysis
 - HTML report generation with statistics and visualizations
 - CSV data export for further analysis
-- Support for custom TensorFlow models
+- Support for custom Keras models for cell classification and U-Net segmentation
 
 ### Features
-- **Cell Segmentation**: StarDist2D, Cellpose and custom U-Net
+- **Cell Segmentation**: StarDist2D, Cellpose, custom U-Net and traditional thresholding methods with watershed
 - **Morphometry**: Comprehensive shape and size analysis
-- **Classification**: Single cell classification using pretraiend models (S. aureus cell cycle) or custom trained ones
+- **Classification**: Single cell classification using pre-trained models (S. aureus cell cycle) or custom trained ones
 - **Filtering**: Interactive filtering of cell populations
 - **Reporting**: HTML reports and CSV exports
 - **Custom Models**: Support for user-trained classification models
@@ -61,12 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
-- Development setup instructions
-- Code style guidelines
-- Testing requirements
-- Pull request process
-- Community guidelines
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Support
 

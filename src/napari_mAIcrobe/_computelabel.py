@@ -320,6 +320,8 @@ class compute_label(Container):
         enabled, updates fluor channels with aligned images.
         """
 
+        # TODO some code should be moved to mAIcrobe folder to isolate logic
+
         _algorithm = self._algorithm_combo.value
 
         _baseimg = self._baseimg_combo.value

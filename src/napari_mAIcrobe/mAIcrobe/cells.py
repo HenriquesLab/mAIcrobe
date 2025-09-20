@@ -1368,7 +1368,6 @@ class CellManager:
             )
 
             if self.params["generate_report"]:
-                # CellsImage.append(resize(c.image,(50,350)))
                 All_Cells.append(c.image)
             if self.params["cell_averager"]:
                 ca.align(c)

@@ -152,6 +152,8 @@ Now that you've completed your first analysis:
 3. **[Cell Classification Guide](cell-classification.md)** - Cell classification in detail
 4. **[API Reference](../api/api-reference.md)** - Programmatic usage
 
+Tip: Building your own classifier? Export per-cell training pickles via `Plugins > mAIcrobe > Compute pickles`. Provide a Labels layer, a Points layer named with the class id (e.g., "1"), select one/two channels, and choose an output folder. See the [Cell Classification Guide](cell-classification.md) for details.
+
 ## 🤝 Getting Help
 
 If you encounter issues:

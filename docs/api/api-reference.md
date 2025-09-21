@@ -14,6 +14,7 @@ and integration into custom analysis pipelines.
   - _computelabel
   - _computecells
   - _filtercells
+  - _compute_pickles
 - Sample Data
 - Core Library
   - mask
@@ -43,6 +44,7 @@ napari_mAIcrobe/
 ├── _computelabel.py       # Segmentation widget
 ├── _computecells.py       # Cell analysis widget
 ├── _filtercells.py        # Labels property-based filtering widget
+├── _compute_pickles.py    # Export per-cell crops/targets as pickles for training
 ├── _sample_data.py        # Sample data providers
 └── mAIcrobe/              # Core analysis library
     ├── mask.py            # Thresholding based masks
@@ -150,6 +152,34 @@ unit_filter(parent)
   - **Parameters**:
     - parent: instance of FilterCells containing this filter.
 
+
+</details>
+
+<details>
+<summary><code>napari_mAIcrobe._compute_pickles</code></summary>
+
+Source: [../../src/napari_mAIcrobe/_compute_pickles.py](../../src/napari_mAIcrobe/_compute_pickles.py)
+
+```python
+from napari_mAIcrobe._compute_pickles import compute_pickles
+compute_pickles(viewer)
+```
+  - Export per-cell training data as pickles from annotated layers.
+  - Inputs:
+    - Labels layer (cells)
+    - Points layer named with a positive integer (class id), one point per cell
+    - One or two Image layers (channel 1 required, channel 2 optional)
+    - Output directory
+  - Processing:
+    - Crop by label bounding box (+margin 5px), mask by cell, pad to square, resize to 100×100
+    - If two channels, concatenate crops side-by-side (shape 100×200)
+    - Intensity rescaled to [0, 1]
+  - Outputs:
+    - `Class_<id>_source.p`: list of ndarray crops
+    - `Class_<id>_target.p`: list of class ids (same length as source)
+  - Methods:
+    - `_on_channel_change()`: toggle second-channel selector visibility
+    - `_on_run()`: validate inputs, build crops, and write pickle files
 
 </details>
 

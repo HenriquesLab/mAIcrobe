@@ -109,6 +109,8 @@ napari-mAIcrobe includes 6 specialized models for cell cycle determination in *S
 - **S.aureus Membrane Epi**: Membrane staining, epifluorescence
 - **S.aureus Membrane SIM**: Membrane staining, super-resolution SIM
 
+Note: To build your own training dataset from annotated cells, export pickles via `Plugins > mAIcrobe > Compute pickles`. See the [Cell Classification Guide](cell-classification.md) for details.
+
 
 
 ## 📈 Colocalization Analysis

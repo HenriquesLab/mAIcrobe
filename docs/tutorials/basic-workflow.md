@@ -180,4 +180,27 @@ If you enabled report generation, examine the HTML output:
 - **HTML report** Total cells their properties and a small crop of each cell
 - **.csv file:** All cell properties in tabular format
 
+### Optional: Export Training Data for Custom Classifiers
+
+You can create pickle files with per-cell crops for training your own models:
+1. Manually annotate cells using a Points layer
+   - Create a Points layer and name it with a positive integer (class id), e.g., "1"
+   - Add one point per cell to assign to that class
+   - Repeat for other classes with different integer names
+   - Make sure you have a Labels layer to detect individual cells and one or two Image layers to extract the training crops from.
+   - Check the oficial napari documentation on how to create and edit Points layers if needed - [here](https://napari.org/dev/howtos/layers/points.html).
+1. Go to `Plugins > mAIcrobe > Compute pickles`
+2. Select:
+   - Labels layer
+   - Points layer named with a positive integer (class id), one point per cell
+   - Channel 1 (required) and optionally Channel 2
+   - Output directory
+3. Click “Save Pickle”
+
+Outputs:
+- `Class_<id>_source.p` with crops (100×100 single-channel or 100×200 concatenated)
+- `Class_<id>_target.p` with class ids
+
+These files can be used in your training pipelines or the provided notebooks. They are designed for seamless integration with the [Cell Cycle Model Training](../../notebooks/napari_mAIcrobe_cellcyclemodel.ipynb) notebook.
+
 Congratulations on completing your first napari-mAIcrobe analysis! 🎉

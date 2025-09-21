@@ -28,9 +28,75 @@ from skimage.util import img_as_float
 
 
 class compute_pickles(Container):
-    """ """
+    """
+    Widget to export per-cell crops and class targets as pickle files for model training.
+
+    This widget expects:
+    - A Labels layer with segmented cells.
+    - A Points layer whose name is a positive integer (the class id).
+      Points should lie inside labeled regions and one point per cell is considered.
+    - One or two fluorescence image layers used to extract the cell crops.
+
+    For each point, the underlying label is identified, the cell bounding box (with an
+    extra margin) is computed, and fluorescence crops are:
+    - Masked by the cell label region
+    - Padded to a square shape
+    - Resized to 100×100 pixels
+    - Concatenated side-by-side if two channels are selected
+
+    Two pickles are saved:
+    - Class_<id>_source.p: list of ndarray crops (float64; shape 100×100 or 100×200)
+    - Class_<id>_target.p: list of integers (class id), same length as source
+
+    Parameters
+    ----------
+    viewer : napari.viewer.Viewer
+        Active napari viewer instance.
+
+    Attributes
+    ----------
+    _viewer : napari.viewer.Viewer
+        Stored viewer.
+    _label_combo : magicgui.widgets.ComboBox
+        Selector for a Labels layer.
+    _points_combo : magicgui.widgets.ComboBox
+        Selector for a Points layer (its name defines the class id).
+    _channel_radio : magicgui.widgets.RadioButtons
+        Selector for one or two channels.
+    channelone_combo : magicgui.widgets.ComboBox
+        Selector for the first Image layer.
+    channeltwo_combo : magicgui.widgets.ComboBox
+        Selector for the second Image layer (hidden when one channel is selected).
+    _path2save : magicgui.widgets.FileEdit
+        Directory where pickle files are saved.
+    _run_button : magicgui.widgets.PushButton
+        Triggers the export.
+    box_margin : int
+        Extra pixels added around the bounding box before cropping (default: 5).
+
+    Notes
+    -----
+    - Points outside labeled regions or duplicated labels are skipped.
+    - The Points layer name must be a positive integer (e.g., "1", "2", ...).
+    - Crops are rescaled to [0, 1] using skimage.exposure.rescale_intensity.
+    """
 
     def __init__(self, viewer: "napari.viewer.Viewer"):
+        """
+        Build the widget UI and connect signals.
+
+        Parameters
+        ----------
+        viewer : napari.viewer.Viewer
+            Active napari viewer instance.
+
+        Notes
+        -----
+        The widget contains:
+        - Layer selectors for labels, points, and one/two image channels
+        - A folder selector to choose the output directory
+        - A button to run the export
+        """
 
         self._viewer = viewer
 
@@ -88,12 +154,49 @@ class compute_pickles(Container):
         )
 
     def _on_channel_change(self):
+        """
+        Toggle visibility of the second channel selector.
+
+        Notes
+        -----
+        Shows `channeltwo_combo` when "Two Channels" is selected; hides it otherwise.
+
+        Returns
+        -------
+        None
+        """
         if self._channel_radio.value == "One Channel":
             self.channeltwo_combo.visible = False
         else:
             self.channeltwo_combo.visible = True
 
     def _on_run(self):
+        """
+        Export per-cell crops and class ids to pickle files.
+
+        1. Validate inputs (layers, output path, points layer name as class id).
+        2. For each point:
+           - Retrieve label id; skip if 0 or already assigned.
+           - Compute bounding box with `box_margin`.
+           - Mask fluorescence crops by the label region.
+           - Pad to square, then resize to 100×100.
+           - Concatenate channels horizontally if two channels.
+        3. Save:
+           - `Class_<classid>_source.p` with list of crops.
+           - `Class_<classid>_target.p` with list of class ids.
+
+        Requirements
+        ------------
+        - Labels layer (ndarray)
+        - Points layer (ndarray) named as a positive integer class id
+        - One or two Image layers
+        - Valid output directory
+
+        Returns
+        -------
+        None
+        """
+
         label_layer = self._label_combo.value
         points_layer = self._points_combo.value
         path2save = self._path2save.value

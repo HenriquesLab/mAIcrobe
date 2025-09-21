@@ -128,6 +128,26 @@ Load and use your own trained TensorFlow models.
 
 To train your own models and assure seamless integration with the plugin, refer to the jupyter notebook: [Cell Cycle Model Training](../../notebooks/napari_mAIcrobe_cellcyclemodel.ipynb)
 
+### Build Your Own Training Data (Pickles)
+
+Use the Compute pickles widget to export standardized per-cell crops:
+
+Workflow:
+1. Ensure you have a Labels layer (cells). This is used to detect individual cells.
+2. Ensure you have one or two Image layers. These are used to extract the training crops from.
+3. Create a Points layer and name it as a positive integer class id (e.g., "1"); add one point per cell to assign that class. Make sure to repeat for other classes with different integer names.
+4. Open `Plugins > mAIcrobe > Compute pickles`, select the layers and output folder, then click “Save Pickle”.
+
+Notes:
+- The Points layer name must be a positive integer (class id). This is required.
+- Each point in the Points layer assigns the corresponding cell to that class. Make sure to add only one point per cell and one cell per class.
+
+What gets saved:
+- `Class_<id>_source.p`: list of masked, padded, and resized crops (100×100; 100×200 if two channels concatenated).
+- `Class_<id>_target.p`: list with the class id repeated for each crop.
+
+These files integrate with the training notebook: [Cell Cycle Model Training](../../notebooks/napari_mAIcrobe_cellcyclemodel.ipynb).
+
 ## 📖 Further Reading
 
 - **[Cell Analysis Guide](cell-analysis.md)** - Complete analysis workflows

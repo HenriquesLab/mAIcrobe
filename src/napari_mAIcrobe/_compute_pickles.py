@@ -290,7 +290,7 @@ class compute_pickles(Container):
             )
 
             cell_label = (
-                label_layer.data[bbox[0] : bbox[2], bbox[1] : bbox[3]] > 0
+                label_layer.data[bbox[0] : bbox[2], bbox[1] : bbox[3]] == label
             )
             cell_channel1 = rescale_intensity(
                 img_as_float(

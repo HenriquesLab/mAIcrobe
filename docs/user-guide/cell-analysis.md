@@ -139,6 +139,7 @@ Use the "Filter cells" widget for real-time quality control:
 - **[API Reference](../api/api-reference.md)** - Programmatic analysis
 - **[Tutorials](../tutorials/basic-workflow.md)** - Step-by-step examples
 - **scikit-image regionprops**: [Documentation](https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.regionprops)
+- **napari-skimage-regionprops plugin**: [GitHub](https://github.com/haesleinhuepf/napari-skimage-regionprops) - napari-mAIcrobe internally uses this plugin to add regionprops tables to the GUI.
 
 ---
 

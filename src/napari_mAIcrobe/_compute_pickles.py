@@ -262,9 +262,13 @@ class compute_pickles(Container):
 
         combined_classes_list = [class_int] * len(combined_crops_list)
 
-        with open(f"Class_{class_int}_source.p", "wb") as f:
+        with open(
+            os.path.join(path2save, f"Class_{class_int}_source.p"), "wb"
+        ) as f:
             pickle.dump(combined_crops_list, f)
-        with open(f"Class_{class_int}_target.p", "wb") as f:
+        with open(
+            os.path.join(path2save, f"Class_{class_int}_target.p"), "wb"
+        ) as f:
             pickle.dump(combined_classes_list, f)
 
         print(

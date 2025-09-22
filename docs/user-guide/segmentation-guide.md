@@ -6,66 +6,157 @@ This guide helps you choose the optimal segmentation method for your bacterial i
 
 napari-mAIcrobe offers four main segmentation approaches:
 
-1. **StarDist models**
-2. **Cellpose cyto3 model**
-3. **Custom U-Net Models**
-4. **Thresholding-based methods** - Classical image processing using [Isodata](https://scikit-image.org/docs/0.25.x/api/skimage.filters.html#skimage.filters.threshold_isodata) or [Local Average](https://scikit-image.org/docs/0.25.x/api/skimage.filters.html#skimage.filters.threshold_local) tresholding followed by euclidean distance transform and watershed segmentation. This method is fast and does not require training data, but may be less accurate for complex images.
+| Method | Type | Training Required | Speed | Accuracy |
+|--------|------|-------------------|-------|----------|
+| **🌟 StarDist** | Deep Learning | ✅ Custom model | Medium | High |
+| **🔬 Cellpose** | Deep Learning | ❌ Pre-trained | Medium | High |
+| **🧠 U-Net** | Deep Learning | ✅ Custom model | Medium | High |
+| **⚡ Thresholding** | Classical | ❌ None | Fast | Medium |
 
-## Stardist
+---
 
-1. Check the original [StarDist paper](https://arxiv.org/abs/1806.03535) and [repository](https://github.com/stardist/stardist) for details on how StarDist works!
-2. Deep learning-based segmentation based on star-convex shapes detection.
-3. mAIcrobe does not include pre-trained StarDist models, you have to provide your own model. To train your own model, check out the [StarDist examples](https://github.com/stardist/stardist/tree/main/examples/2D). We also provide an example notebook to train your own StarDist2D model in [notebooks/StarDistSegmentationTraining.ipynb](../../notebooks/StarDistSegmentationTraining.ipynb).
+## 🌟 StarDist Models
 
-## Cellpose
-1. Check the original [Cellpose paper](https://www.nature.com/articles/s41592-020-01018-x) and [repository](https://github.com/MouseLand/cellpose) for details on how Cellpose works!
-2. Deep learning-based universal segmentation model trained on a large variety of cell types and imaging modalities.
-3. mAIcrobe includes the Cellpose cyto3 model, which is pre-trained and ready to use.
-4. The first time you run Cellpose, it will download the model weights from the Cellpose repository.
+**Best for:** Star-convex shaped cells (most bacteria)
 
-## U-Net Models
-1. Check the original [U-Net paper](https://arxiv.org/abs/1505.04597) for details on how U-Net works!
-2. Deep learning-based segmentation using a convolutional neural network architecture.
-3. mAIcrobe does not include pre-trained U-Net models, you have to provide your own model in Keras format (.keras).
-4. You can train your own U-Net segmentation models using [ZeroCostDL4Mic](https://github.com/HenriquesLab/ZeroCostDL4Mic).
-5. The U-Net model is assumed to output a label image with 0 for background, 1 for cell boundary, and 2 for cell interior. mAIcrobe will convert this to a label image with unique integer IDs for each cell via a watershed algorithm. Check [skimage.segmentation.watershed](https://scikit-image.org/docs/stable/api/skimage.segmentation.html#skimage.segmentation.watershed) for more info.
+### Key Features
+- 🎯 **Purpose**: Deep learning-based segmentation for star-convex shapes
+- 📊 **Performance**: High accuracy for bacterial cells
+- 🔧 **Requirement**: Custom trained model needed
 
-## Thresholding-based Methods
-1. Classical image processing methods that do not require training data.
-2. Fast and easy to use, but may be less accurate for complex images.
-3. Two methods available:
-   - **Isodata**: Global thresholding method that automatically determines the optimal threshold value based on image histogram. Check [skimage.filters.threshold_isodata](https://scikit-image.org/docs/0.25.x/api/skimage.filters.html#skimage.filters.threshold_isodata) for more info.
-   - **Local Average**: Adaptive thresholding method that computes a local threshold for each pixel based on the average intensity in its neighborhood. Check [skimage.filters.threshold_local](https://scikit-image.org/docs/0.25.x/api/skimage.filters.html#skimage.filters.threshold_local) for more info.
-4. After thresholding, a distance transform and watershed algorithm is applied to separate touching cells. Check [skimage.filters](https://scikit-image.org/docs/0.25.x/api/skimage.filters.html) and [skimage.segmentation.watershed](https://scikit-image.org/docs/stable/api/skimage.segmentation.html#skimage.segmentation.watershed) for more info.
+### Getting Started
+1. **Learn more**: Check the [StarDist paper](https://arxiv.org/abs/1806.03535) and [repository](https://github.com/stardist/stardist)
+2. **Training**: Use our example notebook at [`notebooks/StarDistSegmentationTraining.ipynb`](../../notebooks/StarDistSegmentationTraining.ipynb)
+3. **Examples**: See [StarDist training examples](https://github.com/stardist/stardist/tree/main/examples/2D)
 
+> **Note**: mAIcrobe doesn't include pre-trained StarDist models - you must provide your own.
+
+---
+
+## 🔬 Cellpose Models
+
+**Best for:** General cell segmentation across diverse cell types
+
+### Key Features
+- 🎯 **Purpose**: Universal deep learning segmentation model
+- 🚀 **Ready to use**: Pre-trained cyto3 model included
+- 🌐 **Versatile**: Trained on diverse cell types and imaging modalities
+
+### Getting Started
+1. **Learn more**: Check the [Cellpose paper](https://www.nature.com/articles/s41592-020-01018-x) and [repository](https://github.com/MouseLand/cellpose)
+2. **First run**: Model weights download automatically on first use
+3. **Usage**: Select "CellPose cyto3" in the segmentation widget
+
+> **Tip**: Cellpose is great for getting started quickly without training custom models.
+
+---
+
+## 🧠 U-Net Models
+
+**Best for:** Custom applications with specific imaging conditions
+
+### Key Features
+- 🎯 **Purpose**: Convolutional neural network for precise segmentation
+- 🔧 **Format**: Requires Keras model files (`.keras`)
+- 🎨 **Flexible**: Can be trained for specific cell types and conditions
+
+### Model Requirements
+Your U-Net model should output:
+- **0**: Background
+- **1**: Cell boundary
+- **2**: Cell interior
+
+mAIcrobe converts this to individual cell labels using watershed segmentation.
+
+### Getting Started
+1. **Learn more**: Read the [U-Net paper](https://arxiv.org/abs/1505.04597)
+2. **Training**: Use [ZeroCostDL4Mic](https://github.com/HenriquesLab/ZeroCostDL4Mic)
+3. **Technical details**: See [watershed documentation](https://scikit-image.org/docs/stable/api/skimage.segmentation.html#skimage.segmentation.watershed)
+
+---
+
+## ⚡ Thresholding-Based Methods
+
+**Best for:** Quick analysis without training requirements
+
+### Key Features
+- 🚀 **Speed**: Fastest segmentation method
+- 🔧 **No training**: Classical image processing
+- ⚖️ **Trade-off**: Lower accuracy for complex images
+
+### Available Methods
+
+#### 📊 Isodata Thresholding
+- **Type**: Global automatic threshold
+- **How it works**: Analyzes image histogram to find optimal threshold
+- **Best for**: Images with clear intensity separation
+- **Reference**: [scikit-image documentation](https://scikit-image.org/docs/0.25.x/api/skimage.filters.html#skimage.filters.threshold_isodata)
+
+#### 🎯 Local Average Thresholding
+- **Type**: Adaptive local threshold
+- **How it works**: Computes threshold based on local neighborhood
+- **Best for**: Images with uneven illumination
+- **Reference**: [scikit-image documentation](https://scikit-image.org/docs/0.25.x/api/skimage.filters.html#skimage.filters.threshold_local)
+
+### Processing Pipeline
+1. **Threshold** → Binary image
+2. **Distance transform** → Separate touching cells
+3. **Watershed** → Individual cell labels
+
+---
 
 ## 📏 Validation and Quality Control
 
-### Manual Validation
+### ✅ Manual Validation Checklist
 
-Always validate segmentation on a representative subset:
+Always validate segmentation results:
 
-1. **Random sampling**: Check 50-100 cells
-2. **Visual inspection**: Look for common errors
+- [ ] **Sample size**: Check 50-100 cells randomly
+- [ ] **Visual inspection**: Look for common segmentation errors:
+  - Under-segmentation (multiple cells as one)
+  - Over-segmentation (one cell split into multiple)
+  - Boundary accuracy
+  - Missing cells
 
-### Automated Quality Metrics
+### 📊 Automated Quality Metrics
 
-**Segmentation Quality Indicators:**
-- Cell count consistency
-- Size distribution reasonableness (look for outliers on the size distribution)
+**Key indicators to monitor:**
 
+| Metric | Good Range | Red Flags |
+|--------|------------|-----------|
+| Cell count consistency | ±10% between similar images | >20% variation |
+| Size distribution | Normal/log-normal shape | Many outliers |
+| Circularity | Species-appropriate | Too many non-circular shapes |
+
+---
+
+## 🏆 Choosing the Right Method
+
+| Your Situation | Recommended Method |
+|----------------|-------------------|
+| 🚀 **Quick start, no training** | Cellpose cyto3 |
+| ⚡ **Very fast, simple images** | Isodata thresholding |
+| 🎯 **Best accuracy, have training data** | StarDist (custom) |
+| 🔬 **Specific imaging conditions** | U-Net (custom) |
+| 🌈 **Uneven illumination** | Local average thresholding |
+
+---
 
 ## 📚 Further Reading
 
 - **[Cell Analysis Guide](cell-analysis.md)** - What to do after segmentation
-- **[Cell Classification Guide](cell-classification.md)** - Cell classification
+- **[Cell Classification Guide](cell-classification.md)** - Cell classification workflows
 - **[API Reference](../api/api-reference.md)** - Programmatic control
-- **StarDist Paper**: [Schmidt et al., MICCAI 2018](https://arxiv.org/abs/1806.03535)
-- **Cellpose Paper**: [Stringer et al., Nature Methods 2021](https://doi.org/10.1038/s41592-020-01018-x)
-- **U-Net Paper**: [Ronneberger et al., MICCAI 2015](https://arxiv.org/abs/1505.04597)
-- **scikit-image watershed**: [Documentation](https://scikit-image.org/docs/stable/api/skimage.segmentation.html#skimage.segmentation.watershed)
-- **scikit-image filters**: [Documentation](https://scikit-image.org/docs/stable/api/skimage.filters.html)
+
+### 📖 Scientific References
+- **StarDist**: [Schmidt et al., MICCAI 2018](https://arxiv.org/abs/1806.03535)
+- **Cellpose**: [Stringer et al., Nature Methods 2021](https://doi.org/10.1038/s41592-020-01018-x)
+- **U-Net**: [Ronneberger et al., MICCAI 2015](https://arxiv.org/abs/1505.04597)
+
+### 🛠️ Technical Documentation
+- **Watershed segmentation**: [scikit-image docs](https://scikit-image.org/docs/stable/api/skimage.segmentation.html#skimage.segmentation.watershed)
+- **Image filters**: [scikit-image docs](https://scikit-image.org/docs/stable/api/skimage.filters.html)
 
 ---
 
-**Next:** Learn how to analyze your segmented cells in the [Cell Analysis Guide](cell-analysis.md).
+**Next:** Learn how to analyze your segmented cells in the **[Cell Analysis Guide](cell-analysis.md)** 🔬

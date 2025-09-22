@@ -29,14 +29,14 @@ We **strongly recommend** using miniconda to manage your Python environment and 
 
 3. **Restart** your terminal/command prompt after installation
 
-4. **Verify** installation by running:
+4. **Verify** installation by running the following in your terminal (macOS/Linux) or miniconda command prompt (Windows):
    ```bash
    conda --version
    ```
 
 #### Create a Dedicated Environment
 
-Create a clean environment specifically for napari-mAIcrobe:
+Create a clean environment specifically for napari-mAIcrobe. In your terminal (macOS/Linux) or miniconda command prompt (Windows), run:
 
 ```bash
 # Create new environment with Python 3.11
@@ -57,6 +57,11 @@ conda install -c conda-forge napari pyqt
 # Install napari-mAIcrobe with pip
 pip install napari-mAIcrobe
 ```
+
+**Important** Make sure your conda environment is activated whenever you want to use napari-mAIcrobe! You should see `(mAIcrobe)` in your terminal prompt.
+
+ mAIcrobe is now installed! 🎉
+ To use, just activate your conda environment and launch napari. See below for more details.
 
 ### Alternative Installation Methods
 
@@ -82,7 +87,7 @@ pip install -e .[testing]
 
 ## ✅ Verify Installation
 
-Test your installation by launching napari with the plugin:
+Test your installation by launching napari with the plugin. In your terminal, run:
 
 ```bash
 # Activate your environment first (if using conda)

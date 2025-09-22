@@ -9,29 +9,68 @@ Welcome to napari-mAIcrobe! This guide will get you up and running with bacteria
 Before installing napari-mAIcrobe, ensure you have:
 
 - **Python 3.10 or 3.11** (required for TensorFlow compatibility)
-- **napari** installed (see below)
+- **Miniconda** (strongly recommended for dependency management)
 
-### Standard Installation
+### Installing Miniconda (Recommended)
 
-Install napari-mAIcrobe from PyPI:
+We **strongly recommend** using miniconda to manage your Python environment and dependencies. This prevents conflicts and ensures a smooth installation experience.
+
+#### Download and Install Miniconda
+
+1. **Download** the appropriate installer for your system from [miniconda.org](https://docs.conda.io/en/latest/miniconda.html):
+   - **Windows**: Download the `.exe` installer
+   - **macOS**: Download the `.pkg` installer (Intel) or `.sh` script (Apple Silicon)
+   - **Linux**: Download the `.sh` script
+
+2. **Install** by following the installer prompts:
+   - Accept the license agreement
+   - Choose installation location (default is recommended)
+   - **Important**: When asked "Do you wish the installer to initialize Miniconda3?", choose **Yes**
+
+3. **Restart** your terminal/command prompt after installation
+
+4. **Verify** installation by running:
+   ```bash
+   conda --version
+   ```
+
+#### Create a Dedicated Environment
+
+Create a clean environment specifically for napari-mAIcrobe:
 
 ```bash
-pip install napari-mAIcrobe
+# Create new environment with Python 3.11
+conda create -n mAIcrobe python=3.11
+
+# Activate the environment
+conda activate mAIcrobe
 ```
 
-### Conda Installation (Recommended)
+### Recommended Installation (Using Conda)
 
-For the most stable installation, use conda for napari dependencies:
+With your conda environment activated, install napari-mAIcrobe:
 
 ```bash
-# Install napari with conda
+# Install napari with conda for best compatibility
 conda install -c conda-forge napari pyqt
 
 # Install napari-mAIcrobe with pip
 pip install napari-mAIcrobe
 ```
 
-### Development Installation
+### Alternative Installation Methods
+
+#### Standard pip Installation
+
+If you prefer not to use conda (not recommended):
+
+```bash
+pip install napari-mAIcrobe
+```
+
+**Note**: This method may encounter dependency conflicts, especially with Qt and OpenGL libraries.
+
+#### Development Installation
 
 For contributors or advanced users:
 
@@ -44,6 +83,16 @@ pip install -e .[testing]
 ## ✅ Verify Installation
 
 Test your installation by launching napari with the plugin:
+
+```bash
+# Activate your environment first (if using conda)
+conda activate mAIcrobe
+
+# Launch napari
+napari
+```
+
+Or programmatically:
 
 ```python
 import napari

@@ -74,13 +74,32 @@ compute_label(viewer)
 ```
   - Segmentation and optional channel alignment widget.
   - Mask algorithms: "Isodata", "Local Average", "Unet", "StarDist", "CellPose cyto3".
+  - UI:
+    - Inputs: Base Image, Fluor 1, Fluor 2.
+    - Post-processing: Binary Closing, Binary Dilation, Fill Holes; Auto Align (aligns Fluor 1/2 to mask).
+    - Algorithm-specific parameters:
+      - Local Average: Blocksize (odd), Offset.
+      - Watershed (Isodata/Local Average only): Peak Min Distance From Edge, Peak Min Distance, Peak Min Height, Max Peaks.
+      - Unet: Model Type = Pretrained | Custom.
+        - Pretrained models: "Ph.C. S. pneumo", "WF FtsZ B. subtilis", "Unet S. aureus" (downloaded/cached automatically).
+        - Custom: select a model file (.hdf5).
+      - StarDist: Model Type = Pretrained | Custom.
+        - Pretrained: "StarDist S. aureus". Downloads a model directory (config.json, weights_best.h5, thresholds.json) to a cache.
+        - Custom: select an existing model directory.
   - Methods:
     - _on_algorithm_changed(new_algorithm: str)
-      - Toggles parameter widgets according to algorithm.
+      - Toggle parameter widgets per algorithm (e.g., watershed params only for Isodata/Local Average).
+    - _on_pretrainedunet_changed(new_value: str)
+      - Toggle between pretrained selector and file picker.
+    - _on_pretrainedstardist_changed(new_value: str)
+      - Toggle between pretrained selector and directory picker.
     - compute()
-      - Computes mask and labels (watershed or model-based).
-      - Optional: align auxiliary channels, apply closing/dilation/fill holes.
-  - Side effects: adds "Mask" and "Labels" layers; aligns fluor images if enabled.
+      - Isodata/Local Average: threshold via mask_computation + watershed using SegmentsManager.
+      - Unet: load pretrained/custom model, predict, build mask/labels; supports closing/dilation/fill holes.
+      - StarDist: load pretrained/custom model directory, predict instances; mask = labels > 0.
+      - CellPose cyto3: run CellPose model; mask = labels > 0.
+      - If Auto Align: align Fluor 1/2 to the computed mask.
+  - Side effects: adds "Mask" and "Labels" layers; updates Fluor 1/2 if Auto Align is enabled.
 
 </details>
 
@@ -383,6 +402,19 @@ computelabel_unet(path2model, base_image, closing, dilation, fillholes)
     - `fillholes`: Boolean to fill holes in mask.
 - **Returns**:
     - Tuple of (mask, labels) as 2D ndarrays.
+
+```python
+from napari_mAIcrobe.mAIcrobe.unet import download_github_file_raw
+
+download_github_file_raw(filename, cachepath, branch="main")
+```
+- Download a file from the napari-mAIcrobe GitHub repository into a local cache if it is not present.
+- Parameters:
+  - `filename`: Relative path inside the repository (e.g., "SegmentationModels/UNetModel.hdf5").
+  - `cachepath`: Local cache directory to save/check the file.
+  - `branch`: Repository branch to fetch from (default: "main").
+- Returns:
+  - str: Absolute path to the cached file.
 
 </details>
 

@@ -6,9 +6,11 @@ UNet notebook), tiled prediction, and label computation with
 watershed.
 """
 
+import os
 from math import ceil
 
 import numpy as np
+import requests
 from scipy import ndimage
 from scipy.ndimage import label as lbl
 from skimage.morphology import (
@@ -248,3 +250,27 @@ def computelabel_unet(path2model, base_image, closing, dilation, fillholes):
     labels = watershed(~mask, markers=insides, mask=mask)
 
     return mask, labels
+
+
+def download_github_file_raw(filename, cachepath, branch="main"):
+    """Download a file from the napari-mAIcrobe GitHub repository.
+    If the file already exists at cachepath, does nothing.
+    Used to download pretrained models.
+    Parameters
+    ----------
+    filename : str
+        Name of the file to download (e.g. 'model.h5').
+    cachepath : str or os.PathLike
+        Path where to save the downloaded file.
+    branch : str, optional
+        GitHub branch to download from, by default 'main'.
+    """
+    if os.path.exists(os.path.join(cachepath, filename)):
+        return os.path.join(cachepath, filename)
+
+    url = f"https://raw.githubusercontent.com/HenriquesLab/napari-mAIcrobe/{branch}/docs/{filename}"
+    r = requests.get(url, timeout=30)
+    r.raise_for_status()
+    with open(os.path.join(cachepath, filename), "wb") as f:
+        f.write(r.content)
+    return os.path.join(cachepath, filename)

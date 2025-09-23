@@ -5,7 +5,7 @@ We welcome contributions to napari-mAIcrobe! Whether it's bug reports, feature r
 ## 🎯 Ways to Contribute
 
 ### 🐛 **Bug Reports**
-- Report issues via [GitHub Issues](https://github.com/HenriquesLab/napari-mAIcrobe/issues)
+- Report issues via [GitHub Issues](https://github.com/HenriquesLab/mAIcrobe/issues)
 - Include detailed descriptions, error messages, and steps to reproduce
 - Provide system information (OS, Python version, napari version)
 
@@ -38,8 +38,8 @@ We welcome contributions to napari-mAIcrobe! Whether it's bug reports, feature r
 ```bash
 # 1. Fork the repository on GitHub
 # 2. Clone your fork
-git clone https://github.com/YOUR_USERNAME/napari-mAIcrobe.git
-cd napari-mAIcrobe
+git clone https://github.com/YOUR_USERNAME/mAIcrobe.git
+cd mAIcrobe
 
 # 3. Create development environment
 conda create -n mAIcrobe-dev python=3.10
@@ -263,6 +263,6 @@ def rotation_matrices(step):
 
 ---
 
-Thank you for contributing to napari-mAIcrobe! Your efforts help advance automated microscopy analysis for the entire research community.
+Thank you for contributing to mAIcrobe! Your efforts help advance automated microscopy analysis for the entire research community.
 
 *Developed collaboratively by the [Henriques](https://henriqueslab.org) and [Pinho](https://www.itqb.unl.pt/research/biology/bacterial-cell-biology) Labs.* 🔬✨

@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-This comprehensive guide helps resolve common issues encountered when using napari-mAIcrobe, from installation problems to analysis errors.
+This comprehensive guide helps resolve common issues encountered when using mAIcrobe, from installation problems to analysis errors.
 
 ## 🚨 Installation Issues
 
@@ -33,7 +33,7 @@ pip install tensorflow<=2.15.0
 ```
 
 **GPU Conflicts:**
-napari-mAIcrobe automatically disables GPU to avoid conflicts:
+mAIcrobe automatically disables GPU to avoid conflicts:
 ```python
 # This is handled automatically, but you can verify:
 import os
@@ -80,7 +80,7 @@ conda activate mAIcrobe-clean
 # Install napari first
 conda install -c conda-forge napari
 
-# Then install napari-mAIcrobe
+# Then install mAIcrobe
 pip install napari-mAIcrobe
 ```
 
@@ -102,7 +102,7 @@ When reporting bugs, please include:
 - Operating system and version
 - Python version
 - napari version
-- napari-mAIcrobe version
+- mAIcrobe version
 - Hardware specs (RAM, CPU)
 
 **Error Information:**
@@ -130,7 +130,7 @@ Complete error traceback here
 - OS: Windows 10 / macOS 12 / Ubuntu 20.04
 - Python: 3.10.5
 - napari: 0.4.18
-- napari-mAIcrobe: 0.0.1
+- mAIcrobe: 0.0.1
 
 ## Additional Context
 Any additional information that might be relevant
@@ -138,5 +138,5 @@ Any additional information that might be relevant
 
 ### Community Resources
 
-- **GitHub Issues**: [Report bugs and request features](https://github.com/HenriquesLab/napari-mAIcrobe/issues)
+- **GitHub Issues**: [Report bugs and request features](https://github.com/HenriquesLab/mAIcrobe/issues)
 - **Documentation**: [Complete user guides](../user-guide/getting-started.md)

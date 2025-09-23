@@ -1,6 +1,6 @@
 # API Reference
 
-Programmatic usage of napari-mAIcrobe for automation, batch processing,
+Programmatic usage of mAIcrobe for automation, batch processing,
 and integration into custom analysis pipelines.
 
 - Widget APIs: interactive GUI components for segmentation, analysis, and filtering.
@@ -32,7 +32,7 @@ and integration into custom analysis pipelines.
 
 ## Overview
 
-napari-mAIcrobe provides:
+mAIcrobe provides:
 - Interactive widgets (segment, analyse, filter).
 - Python-callable functions and classes for reproducible workflows.
 - Exportable reports and optional colocalization/classification helpers.
@@ -408,7 +408,7 @@ from napari_mAIcrobe.mAIcrobe.unet import download_github_file_raw
 
 download_github_file_raw(filename, cachepath, branch="main")
 ```
-- Download a file from the napari-mAIcrobe GitHub repository into a local cache if it is not present.
+- Download a file from the mAIcrobe GitHub repository into a local cache if it is not present.
 - Parameters:
   - `filename`: Relative path inside the repository (e.g., "SegmentationModels/UNetModel.hdf5").
   - `cachepath`: Local cache directory to save/check the file.
@@ -906,7 +906,7 @@ stats_format(params)
 <details>
 <summary><code>napari_mAIcrobe.mAIcrobe.cellcycleclassifier</code></summary>
 
-Source: [../../src/napari_mAIcrobe/mAIcrobe/cellcycleclassifier.py](../../src/napari_mAIcrobe/mAIcrobe/cellcycleclassifier.py)
+Source: [../../src/mAIcrobe/mAIcrobe/cellcycleclassifier.py](../../src/mAIcrobe/mAIcrobe/cellcycleclassifier.py)
 
 ### class CellCycleClassifier(fluor_fov, optional_fov, model, model_path, model_input, max_dim)
 
@@ -972,8 +972,8 @@ CellCycleClassifier(fluor_fov, optional_fov, model, model_path, model_input, max
 
 - User Guide: ../user-guide/getting-started.md
 - Tutorials: ../tutorials/basic-workflow.md
-- GitHub: https://github.com/HenriquesLab/napari-mAIcrobe
-- Discussions (support): https://github.com/HenriquesLab/napari-mAIcrobe/discussions
+- GitHub: https://github.com/HenriquesLab/mAIcrobe
+- Discussions (support): https://github.com/HenriquesLab/mAIcrobe/discussions
 
 Dependencies:
 - napari: https://napari.org/

@@ -4,7 +4,7 @@ This guide helps you choose the optimal segmentation method for your bacterial i
 
 ## 🎯 Overview
 
-napari-mAIcrobe offers four main segmentation approaches:
+mAIcrobe offers four main segmentation approaches:
 
 | Method | Type | Training Required | Speed | Accuracy |
 |--------|------|-------------------|-------|----------|

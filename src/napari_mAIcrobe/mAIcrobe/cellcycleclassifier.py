@@ -54,37 +54,37 @@ class CellCycleClassifier:
             "S.aureus DNA+Membrane Epi": {
                 "max_dim": 50,
                 "model_input": "Membrane+DNA",
-                "model_path": "https://github.com/HenriquesLab/napari-mAIcrobe/blob/main/docs/ClassificationModels/cellcycle_cnn_model?raw=true",
+                "model_path": "https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/ClassificationModels/cellcycle_cnn_model?raw=true",
             },
             "S.aureus DNA+Membrane SIM": {
                 "max_dim": 100,
                 "model_input": "Membrane+DNA",
-                "model_path": "https://github.com/HenriquesLab/napari-mAIcrobe/blob/main/docs/ClassificationModels/cellcycle_cnn_model?raw=true",
+                "model_path": "https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/ClassificationModels/cellcycle_cnn_model?raw=true",
             },
             "S.aureus DNA Epi": {
                 "max_dim": 50,
                 "model_input": "DNA",
-                "model_path": "https://github.com/HenriquesLab/napari-mAIcrobe/blob/main/docs/ClassificationModels/dna_only_cellcycle_model.keras?raw=true",
+                "model_path": "https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/ClassificationModels/dna_only_cellcycle_model.keras?raw=true",
             },
             "S.aureus DNA SIM": {
                 "max_dim": 100,
                 "model_input": "DNA",
-                "model_path": "https://github.com/HenriquesLab/napari-mAIcrobe/blob/main/docs/ClassificationModels/dna_only_cellcycle_model.keras?raw=true",
+                "model_path": "https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/ClassificationModels/dna_only_cellcycle_model.keras?raw=true",
             },
             "S.aureus Membrane Epi": {
                 "max_dim": 50,
                 "model_input": "Membrane",
-                "model_path": "https://github.com/HenriquesLab/napari-mAIcrobe/blob/main/docs/ClassificationModels/membrane_only_cellcycle_model.keras?raw=true",
+                "model_path": "https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/ClassificationModels/membrane_only_cellcycle_model.keras?raw=true",
             },
             "S.aureus Membrane SIM": {
                 "max_dim": 100,
                 "model_input": "Membrane",
-                "model_path": "https://github.com/HenriquesLab/napari-mAIcrobe/blob/main/docs/ClassificationModels/membrane_only_cellcycle_model.keras?raw=true",
+                "model_path": "https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/ClassificationModels/membrane_only_cellcycle_model.keras?raw=true",
             },
             "E.coli DNA+Membrane AB phenotyping": {
                 "max_dim": 100,
                 "model_input": "Membrane+DNA",
-                "model_path": "https://github.com/HenriquesLab/napari-mAIcrobe/blob/main/docs/ClassificationModels/EcoliABpheno.keras.keras?raw=true",
+                "model_path": "https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/ClassificationModels/EcoliABpheno.keras.keras?raw=true",
             },
         }
 

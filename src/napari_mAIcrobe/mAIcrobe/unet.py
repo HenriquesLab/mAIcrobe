@@ -253,7 +253,7 @@ def computelabel_unet(path2model, base_image, closing, dilation, fillholes):
 
 
 def download_github_file_raw(filename, cachepath, branch="main"):
-    """Download a file from the napari-mAIcrobe GitHub repository.
+    """Download a file from the mAIcrobe GitHub repository.
     If the file already exists at cachepath, does nothing.
     Used to download pretrained models.
     Parameters
@@ -268,7 +268,7 @@ def download_github_file_raw(filename, cachepath, branch="main"):
     if os.path.exists(os.path.join(cachepath, filename)):
         return os.path.join(cachepath, filename)
 
-    url = f"https://raw.githubusercontent.com/HenriquesLab/napari-mAIcrobe/{branch}/docs/{filename}"
+    url = f"https://raw.githubusercontent.com/HenriquesLab/mAIcrobe/{branch}/docs/{filename}"
     r = requests.get(url, timeout=30)
     r.raise_for_status()
     with open(os.path.join(cachepath, filename), "wb") as f:

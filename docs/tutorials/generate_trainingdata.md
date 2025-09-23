@@ -27,7 +27,7 @@ The [Basic workflow](basic-workflow.md) and [Segmentation Guide](../user-guide/s
 
 You will need:
 
-- napari and napari-mAIcrobe installed (see [Getting Started](../user-guide/getting_started.md))
+- napari and mAIcrobe installed (see [Getting Started](../user-guide/getting_started.md))
 - A Labels layer with segmented cells (e.g., from Compute label, see [Segmentation Guide](../user-guide/segmentation-guide.md))
 - One or two Image layers (e.g., DNA, Membrane, Phase) -> these are the channels actually used for classification
 
@@ -55,7 +55,7 @@ You will need:
 ---
 
 ### 2) Segment cells (if needed)
-If you don’t have segmentation we can use napari-mAIcrobe to generate Labels layer:
+If you don’t have segmentation we can use mAIcrobe to generate Labels layer:
 - Go to Plugins > mAIcrobe > Compute label
 - Set Base Image, (optionally) Fluor channels and other parameters.
 - Choose a segmentation model (e.g., Isodata or CellPose cyto3)

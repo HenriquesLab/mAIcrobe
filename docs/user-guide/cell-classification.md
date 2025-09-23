@@ -1,16 +1,16 @@
 # Cell Classification Guide
 
-This guide provides comprehensive information about napari-mAIcrobe's cell classification system, including model selection, usage, and custom model integration.
+This guide provides comprehensive information about mAIcrobe's cell classification system, including model selection, usage, and custom model integration.
 
 ## 🧠 Overview
 
-napari-mAIcrobe uses deep learning models to automatically classify cells phases based on morphological and fluorescence features. The plugin includes **6 pre-trained models** optimized for the cell cycle stage detection of _Staphylococcus aureus_ under various imaging conditions, but it also has support for user-trained custom models.
+mAIcrobe uses deep learning models to automatically classify cells phases based on morphological and fluorescence features. The plugin includes **6 pre-trained models** optimized for the cell cycle stage detection of _Staphylococcus aureus_ under various imaging conditions, but it also has support for user-trained custom models.
 
 ---
 
 ## 🔬 Pre-trained Models
 
-napari-mAIcrobe includes 6 specialized models optimized for different imaging conditions and channel availability.
+mAIcrobe includes 6 specialized models optimized for different imaging conditions and channel availability.
 
 ### 🧬🔴 DNA + Membrane Models
 

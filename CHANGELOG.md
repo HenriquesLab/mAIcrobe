@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to napari-mAIcrobe will be documented in this file.
+All notable changes to mAIcrobe will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -70,8 +70,8 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Support
 
-- **Documentation**: Complete guides at [napari-mAIcrobe docs](docs/)
-- **Issues**: Report bugs via [GitHub Issues](https://github.com/HenriquesLab/napari-mAIcrobe/issues)
+- **Documentation**: Complete guides at [mAIcrobe docs](docs/)
+- **Issues**: Report bugs via [GitHub Issues](https://github.com/HenriquesLab/mAIcrobe/issues)
 - **Email**: Contact maintainers for security issues or collaboration
 
 ---

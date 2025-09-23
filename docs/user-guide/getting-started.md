@@ -1,12 +1,12 @@
-# Getting Started with napari-mAIcrobe
+# Getting Started with mAIcrobe
 
-Welcome to napari-mAIcrobe! This guide will get you up and running with bacterial cell analysis in under 10 minutes.
+Welcome to mAIcrobe! This guide will get you up and running with bacterial cell analysis in under 10 minutes.
 
 ## 🚀 Installation
 
 ### Prerequisites
 
-Before installing napari-mAIcrobe, ensure you have:
+Before installing mAIcrobe, ensure you have:
 
 - **Python 3.10 or 3.11** (required for TensorFlow compatibility)
 - **Miniconda** (strongly recommended for dependency management)
@@ -36,7 +36,7 @@ We **strongly recommend** using miniconda to manage your Python environment and 
 
 #### Create a Dedicated Environment
 
-Create a clean environment specifically for napari-mAIcrobe. In your terminal (macOS/Linux) or miniconda command prompt (Windows), run:
+Create a clean environment specifically for mAIcrobe. In your terminal (macOS/Linux) or miniconda command prompt (Windows), run:
 
 ```bash
 # Create new environment with Python 3.11
@@ -48,7 +48,7 @@ conda activate mAIcrobe
 
 ### Recommended Installation (Using Conda)
 
-With your conda environment activated, install napari-mAIcrobe:
+With your conda environment activated, install mAIcrobe:
 
 ```bash
 # Install napari with conda for best compatibility
@@ -58,7 +58,7 @@ conda install -c conda-forge napari pyqt
 pip install napari-mAIcrobe
 ```
 
-**Important** Make sure your conda environment is activated whenever you want to use napari-mAIcrobe! You should see `(mAIcrobe)` in your terminal prompt.
+**Important** Make sure your conda environment is activated whenever you want to use mAIcrobe! You should see `(mAIcrobe)` in your terminal prompt.
 
  mAIcrobe is now installed! 🎉
  To use, just activate your conda environment and launch napari. See below for more details.
@@ -80,8 +80,8 @@ pip install napari-mAIcrobe
 For contributors or advanced users:
 
 ```bash
-git clone https://github.com/HenriquesLab/napari-mAIcrobe.git
-cd napari-mAIcrobe
+git clone https://github.com/HenriquesLab/mAIcrobe.git
+cd mAIcrobe
 pip install -e .[testing]
 ```
 
@@ -127,7 +127,7 @@ viewer = napari.Viewer()
 
 ### Step 2: Load Sample Data
 
-napari-mAIcrobe includes _S. aureus_ test images. Load them via:
+mAIcrobe includes _S. aureus_ test images. Load them via:
 
 **Option A: GUI Method**
 1. Go to `File > Open Sample > mAIcrobe`
@@ -213,7 +213,7 @@ Tip: Building your own classifier? Export per-cell training pickles via `Plugins
 If you encounter issues:
 
 1. Check this documentation and troubleshooting guides
-2. Search [GitHub Issues](https://github.com/HenriquesLab/napari-mAIcrobe/issues)
+2. Search [GitHub Issues](https://github.com/HenriquesLab/mAIcrobe/issues)
 4. Include error messages, napari version, and system details
 
-Welcome to the napari-mAIcrobe community! 🔬
+Welcome to the mAIcrobe community! 🔬

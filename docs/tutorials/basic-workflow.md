@@ -1,6 +1,6 @@
 # Basic Workflow Tutorial
 
-This step-by-step tutorial will guide you through a complete bacterial cell analysis workflow using napari-mAIcrobe, from image loading to final report generation.
+This step-by-step tutorial will guide you through a complete bacterial cell analysis workflow using mAIcrobe, from image loading to final report generation.
 
 ## 🎯 Tutorial Goals
 
@@ -237,7 +237,7 @@ These files can be used in your training pipelines or the provided notebooks. Th
 
 ## 🎉 Congratulations!
 
-Congratulations on completing your first napari-mAIcrobe analysis! 🎉
+Congratulations on completing your first mAIcrobe analysis! 🎉
 
 ### 🚀 Next Steps:
 - **[Cell Analysis Guide](../user-guide/cell-analysis.md)** - Detailed analysis options

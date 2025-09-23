@@ -5,21 +5,21 @@ from skimage.io import imread
 @pytest.fixture
 def phase_example():
     return imread(
-        "https://github.com/HenriquesLab/napari-mAIcrobe/raw/main/docs/test_phase.tif"
+        "https://github.com/HenriquesLab/mAIcrobe/raw/main/docs/test_phase.tif"
     )
 
 
 @pytest.fixture
 def membrane_example():
     return imread(
-        "https://github.com/HenriquesLab/napari-mAIcrobe/raw/main/docs/test_membrane.tif"
+        "https://github.com/HenriquesLab/mAIcrobe/raw/main/docs/test_membrane.tif"
     )
 
 
 @pytest.fixture
 def dna_example():
     return imread(
-        "https://github.com/HenriquesLab/napari-mAIcrobe/raw/main/docs/test_dna.tif"
+        "https://github.com/HenriquesLab/mAIcrobe/raw/main/docs/test_dna.tif"
     )
 
 
@@ -27,12 +27,12 @@ def dna_example():
 def all_sample_data():
     return (
         imread(
-            "https://github.com/HenriquesLab/napari-mAIcrobe/raw/main/docs/test_phase.tif"
+            "https://github.com/HenriquesLab/mAIcrobe/raw/main/docs/test_phase.tif"
         ),
         imread(
-            "https://github.com/HenriquesLab/napari-mAIcrobe/raw/main/docs/test_membrane.tif"
+            "https://github.com/HenriquesLab/mAIcrobe/raw/main/docs/test_membrane.tif"
         ),
         imread(
-            "https://github.com/HenriquesLab/napari-mAIcrobe/raw/main/docs/test_dna.tif"
+            "https://github.com/HenriquesLab/mAIcrobe/raw/main/docs/test_dna.tif"
         ),
     )

@@ -1,10 +1,10 @@
-[![License BSD-3](https://img.shields.io/pypi/l/napari-mAIcrobe.svg?color=green)](https://github.com/HenriquesLab/napari-mAIcrobe/raw/main/LICENSE)
+[![License BSD-3](https://img.shields.io/pypi/l/napari-mAIcrobe.svg?color=green)](https://github.com/HenriquesLab/mAIcrobe/raw/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/napari-mAIcrobe.svg?color=green)](https://pypi.org/project/napari-mAIcrobe)
 [![Python Version](https://img.shields.io/pypi/pyversions/napari-mAIcrobe.svg?color=green)](https://python.org)
-[![tests](https://github.com/HenriquesLab/napari-mAIcrobe/actions/workflows/test_oncall.yml/badge.svg)](https://github.com/HenriquesLab/napari-mAIcrobe/actions/workflows/test_oncall.yml)
+[![tests](https://github.com/HenriquesLab/mAIcrobe/actions/workflows/test_oncall.yml/badge.svg)](https://github.com/HenriquesLab/mAIcrobe/actions/workflows/test_oncall.yml)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-mAIcrobe)](https://napari-hub.org/plugins/napari-mAIcrobe)
 
-# napari-mAIcrobe
+# mAIcrobe
 
 <img src="docs/logowhitebg.png" align="right" width="200" style="margin-left: 20px;"/>
 
@@ -12,7 +12,7 @@
 
 mAIcrobe is a comprehensive napari plugin that facilitates image analysis workflows of bacterial cells. Combining state-of-the-art segmentation approaches, morphological analysis and adaptable classification models into a napari-plugin, mAIcrobe aims to deliver a user-friendly interface that helps inexperienced users perform image analysis tasks regardless of the bacterial species and microscopy modality.
 
-## ✨ Why napari-mAIcrobe?
+## ✨ Why mAIcrobe?
 
 ### 🔬 **For Microbiologists**
 - **Automated Cell Segmentation**: StarDist2D, Cellpose, and custom U-Net models
@@ -37,8 +37,8 @@ pip install napari-mAIcrobe
 **Development Installation:**
 
 ```bash
-git clone https://github.com/HenriquesLab/napari-mAIcrobe.git
-cd napari-mAIcrobe
+git clone https://github.com/HenriquesLab/mAIcrobe.git
+cd mAIcrobe
 pip install -e .
 ```
 
@@ -119,7 +119,7 @@ Explore advanced functionality with included notebooks:
 
 ## 🤝 Community
 
-- **🐛 [Issues](https://github.com/HenriquesLab/napari-mAIcrobe/issues)** - Report bugs, request features
+- **🐛 [Issues](https://github.com/HenriquesLab/mAIcrobe/issues)** - Report bugs, request features
 - **📚 [napari hub](https://napari-hub.org/plugins/napari-mAIcrobe)** - Plugin ecosystem
 
 ## 🏗️ Contributing
@@ -134,8 +134,8 @@ We welcome contributions! Whether it's:
 
 **Quick contributor setup:**
 ```bash
-git clone https://github.com/HenriquesLab/napari-mAIcrobe.git
-cd napari-mAIcrobe
+git clone https://github.com/HenriquesLab/mAIcrobe.git
+cd mAIcrobe
 pip install -e .[testing]
 pre-commit install
 ```
@@ -157,11 +157,11 @@ tox
 
 ## 📜 License
 
-Distributed under the terms of the [BSD-3](http://opensource.org/licenses/BSD-3-Clause) license, napari-mAIcrobe is free and open source software.
+Distributed under the terms of the [BSD-3](http://opensource.org/licenses/BSD-3-Clause) license, mAIcrobe is free and open source software.
 
 ## 🙏 Acknowledgments
 
-napari-mAIcrobe is developed in the [Henriques](https://henriqueslab.org) and [Pinho](https://www.itqb.unl.pt/research/biology/bacterial-cell-biology) Labs with contributions from the napari and scientific Python communities.
+mAIcrobe is developed in the [Henriques](https://henriqueslab.org) and [Pinho](https://www.itqb.unl.pt/research/biology/bacterial-cell-biology) Labs with contributions from the napari and scientific Python communities.
 
 **Built with:**
 - [napari](https://napari.org/) - Multi-dimensional image viewer

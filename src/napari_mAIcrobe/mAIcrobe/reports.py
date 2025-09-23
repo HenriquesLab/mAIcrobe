@@ -152,7 +152,7 @@ class ReportManager:
                 selects.append(lin)
 
             report.append(
-                "\n<h1>napari-mAIcrobe Report - <a href='TODO' target='_blank'>wiki</a></h1>"
+                "\n<h1>mAIcrobe Report - <a href='TODO' target='_blank'> https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/user-guide/getting-started.md</a></h1>"
             )
 
             report.append(

@@ -1,6 +1,6 @@
 # Cell Analysis Guide
 
-This comprehensive guide covers all aspects of automated cell analysis in napari-mAIcrobe, from basic morphometry to cell classification.
+This comprehensive guide covers all aspects of automated cell analysis in mAIcrobe, from basic morphometry to cell classification.
 
 ## 🎯 Overview
 
@@ -66,7 +66,7 @@ Before running cell analysis, ensure you have:
 
 ## 📊 Morphological Measurements
 
-napari-mAIcrobe computes shape and size parameters using scikit-image regionprops.
+mAIcrobe computes shape and size parameters using scikit-image regionprops.
 
 ### 📏 Basic Shape Parameters
 
@@ -102,7 +102,7 @@ Use deep learning models to automatically classify cells.
 
 ### 🔬 Pre-trained Models
 
-napari-mAIcrobe includes **6 specialized models** for cell cycle determination in *S. aureus*:
+mAIcrobe includes **6 specialized models** for cell cycle determination in *S. aureus*:
 
 **🧬 DNA + Membrane Models:**
 - **S.aureus DNA+Membrane Epi**: Epifluorescence imaging
@@ -150,7 +150,7 @@ Use the **"Filter cells"** widget for real-time quality control:
 
 ### 🔗 Technical References
 - **scikit-image regionprops**: [Documentation](https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.regionprops)
-- **napari-skimage-regionprops plugin**: [GitHub](https://github.com/haesleinhuepf/napari-skimage-regionprops) - napari-mAIcrobe internally uses this plugin to add regionprops tables to the GUI.
+- **napari-skimage-regionprops plugin**: [GitHub](https://github.com/haesleinhuepf/napari-skimage-regionprops) - mAIcrobe internally uses this plugin to add regionprops tables to the GUI.
 
 ---
 

@@ -13,6 +13,11 @@ You will export:
 The \<id> corresponds to the class you will assign to each cell (e.g., "1", "2", "3").
 These files are made to plug directly into the training notebook: [Cell Cycle Model Training](../../notebooks/napari_mAIcrobe_cellcyclemodel.ipynb).
 
+<div align="center">
+    <img src="../Images/Genpickles_filesystem.png" alt="Filesystem screenshot showing example data files">
+</div>
+
+
 ---
 
 ## ✅ Prerequisites
@@ -36,8 +41,7 @@ You will need:
 4) Click Save Pickle
 5) Repeat for each class
 
-> Screenshot placeholder: napari gui with images, labels, and points layers
-
+![Screenshot of napari with points and labels layers](../Images/Genpickles_final.png)
 ---
 
 ## 🧰 Step-by-Step
@@ -46,7 +50,7 @@ You will need:
 - Launch napari (e.g., `napari` in terminal)
 - Load your images and labels into napari (e.g. drag and drop files into the viewer).
 
-> Screenshot placeholder: Viewer with images and labels visible
+![Screenshot of napari with loaded data](../Images/Genpickles_step0.png)
 
 ---
 
@@ -62,7 +66,7 @@ Tips:
 - You can always refine the segmentation manually using napari’s built-in label editing tools.
 - Check the official napari [Labels layer documentation](https://napari.org/dev/howtos/layers/labels.html) for more details on using Labels layers.
 
-> Screenshot placeholder: Compute label panel and resulting Labels layer
+![Screenshot of napari with label generated](../Images/Genpickles_step1.png)
 
 ---
 
@@ -73,21 +77,26 @@ Tips:
 - Add exactly one point inside each labeled cell that belongs to this class
 - Repeat by creating new Points layers for other classes (e.g., “2”, “3”)
 
+<div align="center">
+    <img src="../Images/Genpickles_points.png" alt="Screenshot of napari layer list" width="300">
+</div>
+
 Tips:
 - Check the official napari [Points layer documentation](https://napari.org/dev/howtos/layers/points.html) for more details on using Points layers.
 - One point per cell and one class per cell; do not add multiple points to the same label or assign multiple classes to the same cell
 - Place points well inside the cell region to avoid ambiguity
 - To facilitate visualization, you can hide superfluous layers or change the opacity of the Label layer while annotating.
 
-> Screenshot placeholder: Adding and naming Points layers “1”, “2”, “3”
-> Screenshot placeholder: Points placed inside labeled cells
+![Screenshot of napari with points added](../Images/Genpickles_step2.png)
 
 ---
 
 ### 4) Open the Compute pickles widget
 - Go to Plugins > mAIcrobe > Compute pickles
 
-> Screenshot placeholder: Compute pickles widget UI
+<div align="center">
+    <img src="../Images/Genpickles_widget.png" alt="Screenshot placeholder: Compute pickles widget" width="400">
+</div>
 
 ---
 
@@ -109,7 +118,7 @@ Tips:
 - Rescales intensities to [0, 1]
 - Saves Class_<id>_source.p and Class_<id>_target.p
 
-> Screenshot placeholder: Configured widget ready to export
+![Screenshot of napari with widget filled](../Images/Genpickles_final.png)
 
 ---
 
@@ -147,8 +156,13 @@ print(len(X), len(y), type(X[0]), X[0].shape, y[:5])
 Optional QC (preview a few crops):
 
 ```python
+import pickle, os
 import numpy as np
 import matplotlib.pyplot as plt
+
+path = "/path/to/output"
+with open(os.path.join(path, "Class_1_source.p"), "rb") as f:
+    X = pickle.load(f)
 
 fig, axes = plt.subplots(2, 5, figsize=(10, 4))
 for ax, img in zip(axes.ravel(), X[:10]):

@@ -4,13 +4,13 @@ contributions:
   commands:
     - id: napari-mAIcrobe.phase_example
       python_name: napari_mAIcrobe._sample_data:phase_example
-      title: Load phase contrast S.aureus sample data 
+      title: Load phase contrast S.aureus sample data
     - id: napari-mAIcrobe.membrane_example
       python_name: napari_mAIcrobe._sample_data:membrane_example
       title: Load membrane dye S.aureus sample data
     - id: napari-mAIcrobe.dna_example
       python_name: napari_mAIcrobe._sample_data:dna_example
-      title: Load DNA dye S.aureus sample data 
+      title: Load DNA dye S.aureus sample data
     - id: napari-mAIcrobe.compute_label
       python_name: napari_mAIcrobe._computelabel:compute_label
       title: Compute label
@@ -20,6 +20,9 @@ contributions:
     - id: napari-mAIcrobe.filter_cells
       python_name: napari_mAIcrobe._filtercells:filter_cells
       title: Filter cells
+    - id: napari-mAIcrobe.compute_pickles
+      python_name: napari_mAIcrobe._compute_pickles:compute_pickles
+      title: Save annotated cells as pickles
   sample_data:
     - command: napari-mAIcrobe.phase_example
       display_name: Phase contrast S. aureus
@@ -37,3 +40,5 @@ contributions:
       display_name: Compute cells
     - command: napari-mAIcrobe.filter_cells
       display_name: Filter cells
+    - command: napari-mAIcrobe.compute_pickles
+      display_name: Save annotated cells as pickles

@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - User guide documentation
 - Tutorials and API reference documentation
 - Contributing guidelines and development setup instructions
+- Compute_label widget enhancements - pretrained models for StarDist2D and U-Net
+- Compute_cells widget enhancements - new pretrained classification model
+- Other minor improvements and bug fixes
 
 ### Changed
 - README.md completely rewritten
@@ -20,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 - Added getting started guide with step-by-step tutorial
+- Added generate training data documentation with screenshots
+- Added notebooks for StarDist segmentation and cell classification
 - Created comprehensive segmentation guide
 - Detailed cell analysis documentation
 - Cell classification guide with model descriptions

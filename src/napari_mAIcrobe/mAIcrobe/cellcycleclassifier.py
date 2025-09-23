@@ -4,6 +4,9 @@ Cell-cycle phase classifier helpers.
 Loads prebuilt or custom Keras models and classifies per-cell crops.
 """
 
+import os
+from urllib.parse import urlparse
+
 import numpy as np
 from keras.models import load_model
 from keras.utils import get_file
@@ -54,37 +57,37 @@ class CellCycleClassifier:
             "S.aureus DNA+Membrane Epi": {
                 "max_dim": 50,
                 "model_input": "Membrane+DNA",
-                "model_path": "https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/ClassificationModels/cellcycle_cnn_model?raw=true",
+                "model_path": "https://raw.githubusercontent.com/HenriquesLab/mAIcrobe/main/docs/ClassificationModels/cellcycle_cnn_model",
             },
             "S.aureus DNA+Membrane SIM": {
                 "max_dim": 100,
                 "model_input": "Membrane+DNA",
-                "model_path": "https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/ClassificationModels/cellcycle_cnn_model?raw=true",
+                "model_path": "https://raw.githubusercontent.com/HenriquesLab/mAIcrobe/main/docs/ClassificationModels/cellcycle_cnn_model",
             },
             "S.aureus DNA Epi": {
                 "max_dim": 50,
                 "model_input": "DNA",
-                "model_path": "https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/ClassificationModels/dna_only_cellcycle_model.keras?raw=true",
+                "model_path": "https://raw.githubusercontent.com/HenriquesLab/mAIcrobe/main/docs/ClassificationModels/dna_only_cellcycle_model.keras",
             },
             "S.aureus DNA SIM": {
                 "max_dim": 100,
                 "model_input": "DNA",
-                "model_path": "https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/ClassificationModels/dna_only_cellcycle_model.keras?raw=true",
+                "model_path": "https://raw.githubusercontent.com/HenriquesLab/mAIcrobe/main/docs/ClassificationModels/dna_only_cellcycle_model.keras",
             },
             "S.aureus Membrane Epi": {
                 "max_dim": 50,
                 "model_input": "Membrane",
-                "model_path": "https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/ClassificationModels/membrane_only_cellcycle_model.keras?raw=true",
+                "model_path": "https://raw.githubusercontent.com/HenriquesLab/mAIcrobe/main/docs/ClassificationModels/membrane_only_cellcycle_model.keras",
             },
             "S.aureus Membrane SIM": {
                 "max_dim": 100,
                 "model_input": "Membrane",
-                "model_path": "https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/ClassificationModels/membrane_only_cellcycle_model.keras?raw=true",
+                "model_path": "https://raw.githubusercontent.com/HenriquesLab/mAIcrobe/main/docs/ClassificationModels/membrane_only_cellcycle_model.keras",
             },
             "E.coli DNA+Membrane AB phenotyping": {
                 "max_dim": 100,
                 "model_input": "Membrane+DNA",
-                "model_path": "https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/ClassificationModels/EcoliABpheno.keras?raw=true",
+                "model_path": "https://raw.githubusercontent.com/HenriquesLab/mAIcrobe/main/docs/ClassificationModels/EcoliABpheno.keras",
             },
         }
 
@@ -148,9 +151,10 @@ class CellCycleClassifier:
             self.model_input = model_input
         else:
             self.custom = False
-            self.cnnmodel = get_file(
-                model, self.prebuilts_config[model]["model_path"]
-            )
+            # Use URL basename as fname to preserve file extension (e.g., .keras)
+            origin = self.prebuilts_config[model]["model_path"]
+            fname = os.path.basename(urlparse(origin).path) or model
+            self.cnnmodel = get_file(fname=fname, origin=origin)
             self.model = load_model(self.cnnmodel)
             self.max_dim = self.prebuilts_config[model]["max_dim"]
             self.model_input = self.prebuilts_config[model]["model_input"]

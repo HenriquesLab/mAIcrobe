@@ -165,9 +165,11 @@ You can interactively explore and filter cells based on measurements:
    - Click the "+" button to add filters
    - Choose properties to filter (e.g., Area, Eccentricity, Cell cycle phase)
    - Adjust min/max sliders to refine selection
+   - As an example, filter out cells with low DNA content (DNARatio<0.5).
 3. **Apply filters:**
    - Filters are automatically applied on a new layer called "Filtered cells".
    - Hide the original Labels layer to see only filtered results.
+   - If you filtered cells with low DNA content, you should see that cells without DNA signal (black square in the image) are removed (make sure to hide the original Labels layer to see the effect).
 
 **💻 Programmatic Exploration:**
 

@@ -18,6 +18,7 @@ from magicgui.widgets import (
     FileEdit,
     Label,
     PushButton,
+    RadioButtons,
     SpinBox,
     create_widget,
 )
@@ -27,7 +28,11 @@ from stardist.models import StarDist2D
 
 from .mAIcrobe.mask import mask_alignment, mask_computation
 from .mAIcrobe.segments import SegmentsManager
-from .mAIcrobe.unet import computelabel_unet, normalizePercentile
+from .mAIcrobe.unet import (
+    computelabel_unet,
+    download_github_file_raw,
+    normalizePercentile,
+)
 
 # force classification to happen on CPU to avoid CUDA problems
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -36,6 +41,16 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 
 tf.config.set_visible_devices([], "GPU")
+
+
+__home_folder__ = os.path.expanduser("~")
+__cachemodel_folder__ = os.path.join(__home_folder__, ".maicrobecache")
+if not os.path.exists(__cachemodel_folder__):
+    os.makedirs(__cachemodel_folder__)
+if not os.path.exists(
+    os.path.join(__cachemodel_folder__, "SegmentationModels")
+):
+    os.makedirs(os.path.join(__cachemodel_folder__, "SegmentationModels"))
 
 
 class compute_label(Container):
@@ -104,6 +119,7 @@ class compute_label(Container):
                     ]
                 },
                 label="Mask algorithm",
+                value="Isodata",
             ),
         )
         self._algorithm_combo.changed.connect(self._on_algorithm_changed)
@@ -134,8 +150,44 @@ class compute_label(Container):
         self._offsetinput = SpinBox(
             min=0, max=1, step=0.001, value=0.02, label="Offset", visible=False
         )
+
+        # UNET MODEL TYPE
+        self._unetradio = RadioButtons(
+            choices=["Pretrained", "Custom"],
+            label="Unet Model Type",
+            value="Pretrained",
+            visible=False,
+        )
+        self._unetradio.changed.connect(self._on_pretrainedunet_changed)
+        self._unetpretrained = ComboBox(
+            choices=[
+                "Ph.C. S. pneumo",
+                "WF FtsZ B. subtilis",
+                "Unet S. aureus",
+            ],
+            label="Pretrained Unet Model",
+            value="Ph.C. S. pneumo",
+            visible=False,
+        )
         self._path2unet = FileEdit(
             mode="r", label="Path to UnetModel", visible=False
+        )
+
+        # STARDIST MODEL
+        self._stardistradio = RadioButtons(
+            choices=["Pretrained", "Custom"],
+            label="StarDist Model Type",
+            value="Pretrained",
+            visible=False,
+        )
+        self._stardistradio.changed.connect(
+            self._on_pretrainedstardist_changed
+        )
+        self._stardistpretrained = ComboBox(
+            choices=["StarDist S. aureus"],
+            label="Pretrained StarDist Model",
+            value="StarDist S. aureus",
+            visible=False,
         )
         self._path2stardist = FileEdit(
             mode="d", label="Path to StarDistModel", visible=False
@@ -176,34 +228,38 @@ class compute_label(Container):
 
         super().__init__(
             widgets=[
-                self._baseimg_combo,
-                self._fluor1_combo,
-                self._fluor2_combo,
-                self._closinginput,
-                self._dilationinput,
-                self._fillholesinput,
-                self._autoaligninput,
-                self._algorithm_combo,
-                self._titlemasklabel,
-                self._placeholder,
-                self._blocksizeinput,
-                self._offsetinput,
-                self._path2unet,
-                self._path2stardist,
-                self._titlewatershedlabel,
-                self._peak_min_distance_from_edge,
-                self._peak_min_distance,
-                self._peak_min_height,
-                self._max_peaks,
-                self._run_button,
+                self._baseimg_combo,  # 0
+                self._fluor1_combo,  # 1
+                self._fluor2_combo,  # 2
+                self._closinginput,  # 3
+                self._dilationinput,  # 4
+                self._fillholesinput,  # 5
+                self._autoaligninput,  # 6
+                self._algorithm_combo,  # 7
+                self._titlemasklabel,  # 8
+                self._placeholder,  # 9
+                self._blocksizeinput,  # 10
+                self._offsetinput,  # 11
+                self._unetradio,  # 12
+                self._path2unet,  # 13
+                self._unetpretrained,  # 14
+                self._stardistradio,  # 15
+                self._path2stardist,  # 16
+                self._stardistpretrained,  # 17
+                self._titlewatershedlabel,  # 18
+                self._peak_min_distance_from_edge,  # 19
+                self._peak_min_distance,  # 20
+                self._peak_min_height,  # 21
+                self._max_peaks,  # 22
+                self._run_button,  # 23
             ],
             labels=True,
         )
+        # Initialize visibility according to the current algorithm selection
+        self._on_algorithm_changed(self._algorithm_combo.value)
 
     def _on_algorithm_changed(self, new_algorithm: str):
         """Toggle parameter widgets according to algorithm choice.
-
-        #TODO make this cleaner.
 
         Parameters
         ----------
@@ -212,93 +268,94 @@ class compute_label(Container):
             "CellPose cyto3"}.
         """
 
-        if new_algorithm == "Isodata":
-            self[8].visible = True
-            self[9].visible = True
-            self[10].visible = False
-            self[11].visible = False
-            self[12].visible = False
-            self[13].visible = False
-            # watershed parameters
-            self[14].visible = True
-            self[15].visible = True
-            self[16].visible = True
-            self[17].visible = True
-            self[18].visible = True
-            # binary operations
-            self[3].visible = True
-            self[4].visible = True
-            self[5].visible = True
-        elif new_algorithm == "Local Average":
-            self[8].visible = True
-            self[9].visible = False
-            self[10].visible = True
-            self[11].visible = True
-            self[12].visible = False
-            self[13].visible = False
-            # watershed parameters
-            self[14].visible = True
-            self[15].visible = True
-            self[16].visible = True
-            self[17].visible = True
-            self[18].visible = True
-            # binary operations
-            self[3].visible = True
-            self[4].visible = True
-            self[5].visible = True
-        elif new_algorithm == "Unet":
-            self[8].visible = True
-            self[9].visible = False
-            self[10].visible = False
-            self[11].visible = False
-            self[12].visible = True
-            self[13].visible = False
-            # watershed parameters
-            self[14].visible = False
-            self[15].visible = False
-            self[16].visible = False
-            self[17].visible = False
-            self[18].visible = False
-            # binary operations
-            self[3].visible = True
-            self[4].visible = True
-            self[5].visible = True
-        elif new_algorithm == "StarDist":
-            self[8].visible = True
-            self[9].visible = False
-            self[10].visible = False
-            self[11].visible = False
-            self[12].visible = False
-            self[13].visible = True
-            # watershed parameters
-            self[14].visible = False
-            self[15].visible = False
-            self[16].visible = False
-            self[17].visible = False
-            self[18].visible = False
-            # binary operations
-            self[3].visible = False
-            self[4].visible = False
-            self[5].visible = False
-        elif new_algorithm == "CellPose cyto3":
-            self[8].visible = False
-            self[9].visible = False
-            self[10].visible = False
-            self[11].visible = False
-            self[12].visible = False
-            self[13].visible = False
-            # watershed parameters
-            self[14].visible = False
-            self[15].visible = False
-            self[16].visible = False
-            self[17].visible = False
-            self[18].visible = False
-            # binary operations
-            self[3].visible = False
-            self[4].visible = False
-            self[5].visible = False
+        # Mask post-processing controls
+        show_basic_ops = new_algorithm in {"Isodata", "Local Average", "Unet"}
+        self._closinginput.visible = show_basic_ops
+        self._dilationinput.visible = show_basic_ops
+        self._fillholesinput.visible = show_basic_ops
+
+        # Mask parameter title and per-algorithm params
+        self._titlemasklabel.visible = new_algorithm in {
+            "Isodata",
+            "Local Average",
+            "Unet",
+            "StarDist",
+        }
+        self._placeholder.visible = new_algorithm == "Isodata"
+        self._blocksizeinput.visible = new_algorithm == "Local Average"
+        self._offsetinput.visible = new_algorithm == "Local Average"
+
+        # Unet: show radio + corresponding input
+        is_unet = new_algorithm == "Unet"
+        self._unetradio.visible = is_unet
+        if is_unet:
+            self._unetpretrained.visible = (
+                self._unetradio.value == "Pretrained"
+            )
+            self._path2unet.visible = self._unetradio.value == "Custom"
+        else:
+            self._unetpretrained.visible = False
+            self._path2unet.visible = False
+
+        # StarDist: show radio + corresponding input
+        is_stardist = new_algorithm == "StarDist"
+        self._stardistradio.visible = is_stardist
+        if is_stardist:
+            self._stardistpretrained.visible = (
+                self._stardistradio.value == "Pretrained"
+            )
+            self._path2stardist.visible = self._stardistradio.value == "Custom"
+        else:
+            self._stardistpretrained.visible = False
+            self._path2stardist.visible = False
+
+        # Watershed params only for Isodata/Local Average
+        show_ws = new_algorithm in {"Isodata", "Local Average"}
+        self._titlewatershedlabel.visible = show_ws
+        self._peak_min_distance_from_edge.visible = show_ws
+        self._peak_min_distance.visible = show_ws
+        self._peak_min_height.visible = show_ws
+        self._max_peaks.visible = show_ws
 
         return
+
+    def _on_pretrainedunet_changed(self, new_value: str):
+        """Toggle Unet model path/pretrained selection.
+
+        Parameters
+        ----------
+        new_value : str
+            One of {"Pretrained", "Custom"}.
+        """
+        # make sure unet is selected
+        if self._algorithm_combo.value != "Unet":
+            return
+
+        if new_value == "Pretrained":
+            self._unetpretrained.visible = True
+            self._path2unet.visible = False
+        else:
+            self._unetpretrained.visible = False
+            self._path2unet.visible = True
+
+    def _on_pretrainedstardist_changed(self, new_value: str):
+        """Toggle StarDist model path/pretrained selection.
+
+        Parameters
+        ----------
+        new_value : str
+            One of {"Pretrained", "Custom"}.
+        """
+        # make sure stardist is selected
+        if self._algorithm_combo.value != "StarDist":
+            return
+
+        if new_value == "Pretrained":
+            self._stardistpretrained.visible = True
+            self._path2stardist.visible = False
+        else:
+            self._stardistpretrained.visible = False
+            self._path2stardist.visible = True
 
     def compute(self):
         """Run mask/label computation, optional channel alignment and
@@ -344,9 +401,26 @@ class compute_label(Container):
         }
 
         if _algorithm == "Unet":
+            # if pretrained, check if model file exists in cache, if not download it
+            if self._unetradio.value == "Pretrained":
+                if self._unetpretrained.value == "Ph.C. S. pneumo":
+                    model_filename = "UNet4strep_20250922.hdf5"
+                elif self._unetpretrained.value == "WF FtsZ B. subtilis":
+                    model_filename = "UNet4bsub_20250922.hdf5"
+                elif self._unetpretrained.value == "Unet S. aureus":
+                    model_filename = "UNet4staph_20250922.hdf5"
+
+                model_filename = os.path.join(
+                    "SegmentationModels", model_filename
+                )
+                _path2unet = download_github_file_raw(
+                    model_filename, __cachemodel_folder__, branch="rh-dev"
+                )
+            else:
+                _path2unet = self._path2unet.value
 
             mask, labels = computelabel_unet(
-                path2model=self._path2unet.value,
+                path2model=_path2unet,
                 base_image=_baseimg.data,
                 closing=_binary_closing,
                 dilation=_binary_dilation,
@@ -354,8 +428,43 @@ class compute_label(Container):
             )
 
         elif _algorithm == "StarDist":
+            # if pretrained, check if model dir exists in cache, if not download it
+            # be careful, stardist needs a folder with config.json, weights_best.h5 and thresholds.json not a single model file like U-Net
+            if self._stardistradio.value == "Pretrained":
+                if self._stardistpretrained.value == "StarDist S. aureus":
+                    model_dirname = os.path.join(
+                        "SegmentationModels", "StarDistSaureus_20250922"
+                    )
+                    if not os.path.exists(
+                        os.path.join(__cachemodel_folder__, model_dirname)
+                    ):
+                        os.makedirs(
+                            os.path.join(__cachemodel_folder__, model_dirname)
+                        )
+                    # download files if they don't exist
+                    download_github_file_raw(
+                        os.path.join(model_dirname, "config.json"),
+                        __cachemodel_folder__,
+                        branch="rh-dev",
+                    )
+                    download_github_file_raw(
+                        os.path.join(model_dirname, "weights_best.h5"),
+                        __cachemodel_folder__,
+                        branch="rh-dev",
+                    )
+                    download_github_file_raw(
+                        os.path.join(model_dirname, "thresholds.json"),
+                        __cachemodel_folder__,
+                        branch="rh-dev",
+                    )
 
-            basedir, name = os.path.split(self._path2stardist.value)
+                    _path2stardist = os.path.join(
+                        __cachemodel_folder__, model_dirname
+                    )
+            else:
+                _path2stardist = self._path2stardist.value
+
+            basedir, name = os.path.split(_path2stardist)
             model = StarDist2D(None, name=name, basedir=basedir)
 
             labels, _ = model.predict_instances(

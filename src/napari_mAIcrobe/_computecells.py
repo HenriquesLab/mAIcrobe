@@ -23,6 +23,7 @@ from .mAIcrobe.cells import CellManager
             "S.aureus DNA SIM",
             "S.aureus Membrane Epi",
             "S.aureus Membrane SIM",
+            "E.coli DNA+Membrane AB phenotyping",
             "custom",
         ]
     },

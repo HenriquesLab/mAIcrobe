@@ -81,6 +81,11 @@ class CellCycleClassifier:
                 "model_input": "Membrane",
                 "model_path": "https://github.com/HenriquesLab/napari-mAIcrobe/blob/main/docs/ClassificationModels/membrane_only_cellcycle_model.keras?raw=true",
             },
+            "E.coli DNA+Membrane AB phenotyping": {
+                "max_dim": 100,
+                "model_input": "Membrane+DNA",
+                "model_path": "https://github.com/HenriquesLab/napari-mAIcrobe/blob/main/docs/ClassificationModels/EcoliABpheno.keras.keras?raw=true",
+            },
         }
 
         # depth = 11

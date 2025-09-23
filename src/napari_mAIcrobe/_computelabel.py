@@ -414,7 +414,7 @@ class compute_label(Container):
                     "SegmentationModels", model_filename
                 )
                 _path2unet = download_github_file_raw(
-                    model_filename, __cachemodel_folder__, branch="rh-dev"
+                    model_filename, __cachemodel_folder__
                 )
             else:
                 _path2unet = self._path2unet.value
@@ -445,17 +445,14 @@ class compute_label(Container):
                     download_github_file_raw(
                         os.path.join(model_dirname, "config.json"),
                         __cachemodel_folder__,
-                        branch="rh-dev",
                     )
                     download_github_file_raw(
                         os.path.join(model_dirname, "weights_best.h5"),
                         __cachemodel_folder__,
-                        branch="rh-dev",
                     )
                     download_github_file_raw(
                         os.path.join(model_dirname, "thresholds.json"),
                         __cachemodel_folder__,
-                        branch="rh-dev",
                     )
 
                     _path2stardist = os.path.join(

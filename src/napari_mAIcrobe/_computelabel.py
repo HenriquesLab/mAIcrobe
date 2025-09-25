@@ -441,30 +441,27 @@ class compute_label(Container):
                         )
                     # download files if they don't exist
                     download_github_file_raw(
-                        os.path.join(
-                            "SegmentationModels"
-                            + "/"
-                            + "StarDistSaureus_20250922",
-                            "config.json",
-                        ),
+                        "SegmentationModels"
+                        + "/"
+                        + "StarDistSaureus_20250922"
+                        + "/"
+                        + "config.json",
                         __cachemodel_folder__,
                     )
                     download_github_file_raw(
-                        os.path.join(
-                            "SegmentationModels"
-                            + "/"
-                            + "StarDistSaureus_20250922",
-                            "weights_best.h5",
-                        ),
+                        "SegmentationModels"
+                        + "/"
+                        + "StarDistSaureus_20250922"
+                        + "/"
+                        + "weights_best.h5",
                         __cachemodel_folder__,
                     )
                     download_github_file_raw(
-                        os.path.join(
-                            "SegmentationModels"
-                            + "/"
-                            + "StarDistSaureus_20250922",
-                            "thresholds.json",
-                        ),
+                        "SegmentationModels"
+                        + "/"
+                        + "StarDistSaureus_20250922"
+                        + "/"
+                        + "thresholds.json",
                         __cachemodel_folder__,
                     )
 

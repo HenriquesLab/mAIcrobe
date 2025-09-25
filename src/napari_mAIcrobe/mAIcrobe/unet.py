@@ -265,12 +265,17 @@ def download_github_file_raw(filename, cachepath, branch="main"):
     branch : str, optional
         GitHub branch to download from, by default 'main'.
     """
-    if os.path.exists(os.path.join(cachepath, filename)):
-        return os.path.join(cachepath, filename)
+
+    # substitute / in filename with os.path.join
+    if "/" in filename:
+        filename_path = os.path.join(*filename.split("/"))
+
+    if os.path.exists(os.path.join(cachepath, filename_path)):
+        return os.path.join(cachepath, filename_path)
 
     url = f"https://raw.githubusercontent.com/HenriquesLab/mAIcrobe/{branch}/docs/{filename}"
     r = requests.get(url, timeout=30)
     r.raise_for_status()
-    with open(os.path.join(cachepath, filename), "wb") as f:
+    with open(os.path.join(cachepath, filename_path), "wb") as f:
         f.write(r.content)
-    return os.path.join(cachepath, filename)
+    return os.path.join(cachepath, filename_path)

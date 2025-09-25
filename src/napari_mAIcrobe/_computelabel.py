@@ -410,11 +410,9 @@ class compute_label(Container):
                 elif self._unetpretrained.value == "Unet S. aureus":
                     model_filename = "UNet4staph_20250922.hdf5"
 
-                model_filename = os.path.join(
-                    "SegmentationModels", model_filename
-                )
                 _path2unet = download_github_file_raw(
-                    model_filename, __cachemodel_folder__
+                    "SegmentationModels/" + model_filename,
+                    __cachemodel_folder__,
                 )
             else:
                 _path2unet = self._path2unet.value
@@ -443,15 +441,30 @@ class compute_label(Container):
                         )
                     # download files if they don't exist
                     download_github_file_raw(
-                        os.path.join(model_dirname, "config.json"),
+                        os.path.join(
+                            "SegmentationModels"
+                            + "/"
+                            + "StarDistSaureus_20250922",
+                            "config.json",
+                        ),
                         __cachemodel_folder__,
                     )
                     download_github_file_raw(
-                        os.path.join(model_dirname, "weights_best.h5"),
+                        os.path.join(
+                            "SegmentationModels"
+                            + "/"
+                            + "StarDistSaureus_20250922",
+                            "weights_best.h5",
+                        ),
                         __cachemodel_folder__,
                     )
                     download_github_file_raw(
-                        os.path.join(model_dirname, "thresholds.json"),
+                        os.path.join(
+                            "SegmentationModels"
+                            + "/"
+                            + "StarDistSaureus_20250922",
+                            "thresholds.json",
+                        ),
                         __cachemodel_folder__,
                     )
 

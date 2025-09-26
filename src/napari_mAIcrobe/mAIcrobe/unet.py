@@ -269,6 +269,8 @@ def download_github_file_raw(filename, cachepath, branch="main"):
     # substitute / in filename with os.path.join
     if "/" in filename:
         filename_path = os.path.join(*filename.split("/"))
+    else:
+        filename_path = filename
 
     if os.path.exists(os.path.join(cachepath, filename_path)):
         return os.path.join(cachepath, filename_path)

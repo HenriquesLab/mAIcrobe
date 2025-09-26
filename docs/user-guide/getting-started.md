@@ -8,7 +8,6 @@ Welcome to mAIcrobe! This guide will get you up and running with bacterial cell 
 
 Before installing mAIcrobe, ensure you have:
 
-- **Python 3.10 or 3.11** (required for TensorFlow compatibility)
 - **Miniconda** (strongly recommended for dependency management)
 
 ### Installing Miniconda (Recommended)
@@ -26,6 +25,7 @@ We **strongly recommend** using miniconda to manage your Python environment and 
    - Accept the license agreement
    - Choose installation location (default is recommended)
    - **Important**: When asked "Do you wish the installer to initialize Miniconda3?", choose **Yes**
+   - **Important**: Do NOT install miniconda, or allow the environments to be managed, in a folder that contains spaces.
 
 3. **Restart** your terminal/command prompt after installation
 
@@ -51,9 +51,6 @@ conda activate mAIcrobe
 With your conda environment activated, install mAIcrobe:
 
 ```bash
-# Install napari with conda for best compatibility
-conda install -c conda-forge napari pyqt
-
 # Install napari-mAIcrobe with pip
 pip install napari-mAIcrobe
 ```
@@ -63,9 +60,10 @@ pip install napari-mAIcrobe
  mAIcrobe is now installed! 🎉
  To use, just activate your conda environment and launch napari. See below for more details.
 
-### Alternative Installation Methods
+<details>
+<summary><strong>Alternative Installation Methods (click to expand)</strong></summary>
 
-#### Standard pip Installation
+#### Standard pip Installation (without conda)
 
 If you prefer not to use conda (not recommended):
 
@@ -73,9 +71,7 @@ If you prefer not to use conda (not recommended):
 pip install napari-mAIcrobe
 ```
 
-**Note**: This method may encounter dependency conflicts, especially with Qt and OpenGL libraries.
-
-#### Development Installation
+#### Development Installation (from source)
 
 For contributors or advanced users:
 
@@ -84,6 +80,8 @@ git clone https://github.com/HenriquesLab/mAIcrobe.git
 cd mAIcrobe
 pip install -e .[testing]
 ```
+
+</details>
 
 ## ✅ Verify Installation
 

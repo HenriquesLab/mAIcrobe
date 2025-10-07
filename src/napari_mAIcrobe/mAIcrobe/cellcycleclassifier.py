@@ -90,7 +90,7 @@ class CellCycleClassifier:
             "E.coli DNA+Membrane AB phenotyping": {
                 "max_dim": 100,
                 "model_input": "Membrane+DNA",
-                "model_path": "https://raw.githubusercontent.com/HenriquesLab/mAIcrobe/main/docs/ClassificationModels/EcoliABpheno.keras",
+                "model_path": "https://raw.githubusercontent.com/HenriquesLab/mAIcrobe/main/docs/ClassificationModels/EcoliABpheno.h5",
             },
         }
 

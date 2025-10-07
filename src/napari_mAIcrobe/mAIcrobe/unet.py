@@ -11,6 +11,7 @@ from math import ceil
 
 import numpy as np
 import requests
+import tensorflow as tf
 from scipy import ndimage
 from scipy.ndimage import label as lbl
 from skimage.morphology import (
@@ -21,6 +22,8 @@ from skimage.morphology import (
 )
 from skimage.segmentation import watershed
 from tensorflow.keras.models import load_model
+
+tf.config.set_visible_devices([], "GPU")
 
 
 ############################################################################

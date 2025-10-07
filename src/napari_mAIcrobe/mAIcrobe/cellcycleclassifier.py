@@ -8,11 +8,14 @@ import os
 from urllib.parse import urlparse
 
 import numpy as np
+import tensorflow as tf
 from keras.models import load_model
 from keras.utils import get_file
 from skimage.exposure import rescale_intensity
 from skimage.transform import resize as skresize
 from skimage.util import img_as_float
+
+tf.config.set_visible_devices([], "GPU")
 
 
 class CellCycleClassifier:

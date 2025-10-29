@@ -57,8 +57,8 @@ You will need:
 ### 2) Segment cells (if needed)
 If you don’t have segmentation we can use mAIcrobe to generate Labels layer:
 - Go to Plugins > mAIcrobe > Compute label
-- Set Base Image, (optionally) Fluor channels and other parameters.
-- Choose a segmentation model (e.g., Isodata or CellPose cyto3)
+- Set Base Image, (optionally) Fluorescence channels for alignment and other parameters.
+- Choose a segmentation model (e.g., Isodata or CellPose cyto3 for the phase contrast sample data)
 - Click Run
 
 Tips:
@@ -102,10 +102,10 @@ Tips:
 
 ### 5) Configure the export
 - Labels layer: Select your Labels layer
-- Points layer: Select one class Points layer (e.g., “1”)
+- Points layer: Select a Points layer corresponding to a single class (e.g., “1”)
 - Number of channels:
-  - One Channel → choose Channel 1 (e.g., Membrane or DNA)
-  - Two Channels → choose Channel 1 and Channel 2 (e.g., Membrane + DNA)
+  - One Channel → choose Channel 1 (e.g., Membrane OR DNA)
+  - Two Channels → choose Channel 1 and Channel 2 (e.g., Membrane AND DNA)
 - Path to save pickles: Choose an empty or dedicated folder
 - Click Save Pickle
 
@@ -113,8 +113,8 @@ Tips:
 - Finds the label under each point
 - Crops the cell with a small margin (default 5 px)
 - Masks the crop by the cell shape defined by the label
-- Pads the crop with zero to a square, resizes to 100×100
-- If two channels, concatenates side‑by‑side into 100×200
+- Pads the crop with zero to a square then resizes it to 100×100
+- If two channels, concatenates the squares side‑by‑side into 100×200
 - Rescales intensities to [0, 1]
 - Saves Class_<id>_source.p and Class_<id>_target.p
 
@@ -133,10 +133,10 @@ Tips:
 
 ## 📦 Understanding the Outputs
 
-- Class_<id>_source.p: list of NumPy arrays
+- Class_<id>_source.p: pickle of a list of NumPy arrays
   - One channel → arrays shaped (100, 100)
   - Two channels → arrays shaped (100, 200) with channels concatenated horizontally
-- Class_<id>_target.p: list of integers equal to the class id (same length as source)
+- Class_<id>_target.p: pickle of a list of integers equal to the class id (same length as source)
 
 Quick check:
 
@@ -165,7 +165,7 @@ with open(os.path.join(path, "Class_1_source.p"), "rb") as f:
     X = pickle.load(f)
 
 fig, axes = plt.subplots(2, 5, figsize=(10, 4))
-for ax, img in zip(axes.ravel(), X[:10]):
+for ax, img in zip(axes.ravel(), X[:10]): # Change the 10 to preview other cells
     ax.imshow(img, cmap="gray")
     ax.axis("off")
 plt.tight_layout()

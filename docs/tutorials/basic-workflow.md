@@ -16,7 +16,7 @@ By the end of this tutorial, you will:
 We'll use the included _S. aureus_ sample data featuring:
 - **📸 Phase contrast**: Cell morphology and boundaries
 - **🔴 Membrane fluorescence**: NileRed staining of cell membranes
-- **🧬 DNA fluorescence**: Hoechst staining of DNA (note that there is a black square in the image. It is on purpose to show how to filter cells without DNA signal!)
+- **🧬 DNA fluorescence**: Hoechst staining of DNA (note that there is a black square in the image. This was done on purpose to show how to filter cells without DNA signal!)
 
 ---
 

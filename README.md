@@ -17,8 +17,8 @@ mAIcrobe is a comprehensive napari plugin that facilitates image analysis workfl
 ## ✨ Why mAIcrobe?
 
 ### 🔬 **For Microbiologists**
-- **Automated Cell Segmentation**: StarDist2D, Cellpose, and custom U-Net models
-- **Deep learning classification**: 6 pre-trained CNN models for *S. aureus* cell cycle determination plus support for custom models
+- **Automated Cell Segmentation**: StarDist2D, Cellpose, and custom U-Net models. Several pre-trained models also included.
+- **Deep learning classification**: 6 pre-trained CNN models for *S. aureus* cell cycle determination, a pre-trained model for *E. coli* antibiotic phenotyping plus support for custom models.
 - **Morphological Analysis**: Comprehensive measurements using scikit-image regionprops
 - **Interactive Filtering**: Real-time cell selection based on computed statistics
 

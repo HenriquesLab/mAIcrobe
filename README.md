@@ -80,7 +80,7 @@ pip install -e .
 ## 🎯 Analysis Workflow
 
 ### 📄 **Single Image Analysis**
-1. **Load Images**: Phase contrast and/or fluorescence
+1. **Load Images**: Microscopy images of bacteria
 2. **Segment Cells**: Choose segmentation algorithm and parameters
 3. **Analyze Cells**: Extract morphological and intensity features and choose classification model
 4. **Filter Results**: Interactive filtering of cell populations
@@ -100,9 +100,10 @@ Access via napari: `File > Open Sample > napari-mAIcrobe`
 ## 🏃‍♀️ Example Analysis
 
 **Input Data:**
-- Phase contrast image
-- Membrane fluorescence
-- DNA fluorescence
+mAIcrobe Sample images accessible by `File > Open Sample > napari-mAIcrobe`
+- Phase contrast image of _S. aureus_ cells
+- Membrane fluorescence image of _S. aureus_ cells (NileRed stain)
+- DNA fluorescence image of _S. aureus_ cells (Hoechst stain)
 
 **Analysis Pipeline:**
 1. **Segmentation**: Isodata or CellPose's cyto3 identifies individual cells in the phase contrast image

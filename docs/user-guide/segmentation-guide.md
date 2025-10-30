@@ -13,6 +13,10 @@ mAIcrobe offers four main segmentation approaches:
 | **🧠 U-Net** | Deep Learning | ✅ Custom model | Medium | High |
 | **⚡ Thresholding** | Classical | ❌ None | Fast | Medium |
 
+Although StarDist and U-Net models require custom training, mAIcrobe includes a pre-trained models for several bacterial species and modalities. The models are downloaded from our GitHub repository on first use and stored inside your user folder under `.maicrobecache`.
+
+**Tip**: You can always refine the segmentation manually using napari’s built-in label editing tools. Check the official napari [Labels layer documentation](https://napari.org/dev/howtos/layers/labels.html) for more details on using Labels layers.
+
 ---
 
 ## 🌟 StarDist Models
@@ -21,15 +25,14 @@ mAIcrobe offers four main segmentation approaches:
 
 ### Key Features
 - 🎯 **Purpose**: Deep learning-based segmentation for star-convex shapes
-- 📊 **Performance**: High accuracy for bacterial cells
-- 🔧 **Requirement**: Custom trained model needed
+- 🔧 **Requirement**: Custom trained model needed.
 
 ### Getting Started
 1. **Learn more**: Check the [StarDist paper](https://arxiv.org/abs/1806.03535) and [repository](https://github.com/stardist/stardist)
 2. **Training**: Use our example notebook at [`notebooks/StarDistSegmentationTraining.ipynb`](../../notebooks/StarDistSegmentationTraining.ipynb)
 3. **Examples**: See [StarDist training examples](https://github.com/stardist/stardist/tree/main/examples/2D)
 
-> **Note**: mAIcrobe doesn't include pre-trained StarDist models - you must provide your own.
+> **Note**: mAIcrobe provides a pre-trained StarDist model for *S. aureus* SIM images stained with NileRed membrane dye. Select "StarDist S.aureus SIM" in the segmentation widget.
 
 ---
 
@@ -44,7 +47,7 @@ mAIcrobe offers four main segmentation approaches:
 
 ### Getting Started
 1. **Learn more**: Check the [Cellpose paper](https://www.nature.com/articles/s41592-020-01018-x) and [repository](https://github.com/MouseLand/cellpose)
-2. **First run**: Model weights download automatically on first use
+2. **First run**: Model weights download automatically on first use (can take several minutes depending on your internet connection)
 3. **Usage**: Select "CellPose cyto3" in the segmentation widget
 
 > **Tip**: Cellpose is great for getting started quickly without training custom models.
@@ -56,9 +59,10 @@ mAIcrobe offers four main segmentation approaches:
 **Best for:** Custom applications with specific imaging conditions
 
 ### Key Features
-- 🎯 **Purpose**: Convolutional neural network for precise segmentation
+- 🎯 **Purpose**: Convolutional neural network
 - 🔧 **Format**: Requires Keras model files (`.keras`)
 - 🎨 **Flexible**: Can be trained for specific cell types and conditions
+- ⚙️ **ZeroCostDL4Mic**: Recommended tool for training U-Net models that integrate with mAIcrobe
 
 ### Model Requirements
 Your U-Net model should output:
@@ -67,6 +71,11 @@ Your U-Net model should output:
 - **2**: Cell interior
 
 mAIcrobe converts this to individual cell labels using watershed segmentation.
+
+**Note**: mAIcrobe provides several pre-trained U-Net models for different bacterial species and imaging modalities. In the compute_label widget, select from the following options:
+  - "Ph.C. S. pneumo" : Phase contrast *S. pneumoniae*
+  - "WF FtsZ B. subtilis": Widefield fluorescence *B. subtilis* expressing FtsZ-GFP
+  - "Unet S. aureus": Membrane labeled SIM *S. aureus*
 
 ### Getting Started
 1. **Learn more**: Read the [U-Net paper](https://arxiv.org/abs/1505.04597)
@@ -89,7 +98,7 @@ mAIcrobe converts this to individual cell labels using watershed segmentation.
 #### 📊 Isodata Thresholding
 - **Type**: Global automatic threshold
 - **How it works**: Analyzes image histogram to find optimal threshold
-- **Best for**: Images with clear intensity separation
+- **Best for**: Images with clear intensity separation. Phase contrast is a typical example.
 - **Reference**: [scikit-image documentation](https://scikit-image.org/docs/0.25.x/api/skimage.filters.html#skimage.filters.threshold_isodata)
 
 #### 🎯 Local Average Thresholding
@@ -111,8 +120,8 @@ mAIcrobe converts this to individual cell labels using watershed segmentation.
 
 Always validate segmentation results:
 
-- [ ] **Sample size**: Check 50-100 cells randomly
-- [ ] **Visual inspection**: Look for common segmentation errors:
+- **Sample size**: Check 50-100 cells randomly
+- **Visual inspection**: Look for common segmentation errors:
   - Under-segmentation (multiple cells as one)
   - Over-segmentation (one cell split into multiple)
   - Boundary accuracy
@@ -121,24 +130,9 @@ Always validate segmentation results:
 ### 📊 Automated Quality Metrics
 
 **Key indicators to monitor:**
-
-| Metric | Good Range | Red Flags |
-|--------|------------|-----------|
-| Cell count consistency | ±10% between similar images | >20% variation |
-| Size distribution | Normal/log-normal shape | Many outliers |
-| Circularity | Species-appropriate | Too many non-circular shapes |
-
----
-
-## 🏆 Choosing the Right Method
-
-| Your Situation | Recommended Method |
-|----------------|-------------------|
-| 🚀 **Quick start, no training** | Cellpose cyto3 |
-| ⚡ **Very fast, simple images** | Isodata thresholding |
-| 🎯 **Best accuracy, have training data** | StarDist (custom) |
-| 🔬 **Specific imaging conditions** | U-Net (custom) |
-| 🌈 **Uneven illumination** | Local average thresholding |
+  - Cell count consistency across similar images
+  - Size distribution of segmented cells - look for outliers
+  - Circularity of segmented cells - should be species-appropriate |
 
 ---
 

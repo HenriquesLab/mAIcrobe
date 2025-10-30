@@ -8,9 +8,9 @@ The **"Compute cells"** widget provides:
 
 - 📏 **Morphological analysis** - Shape and size measurements
 - 💡 **Intensity analysis** - Fluorescence quantification
-- 🧠 **Cell classification** - Deep learning classification with default models for cell cycle phase determination in *S. aureus*
-- 🔗 **Colocalization analysis** - Multi-channel correlation
-- 📊 **Report generation** - Professional HTML output
+- 🧠 **Cell classification** - Deep learning single-cell classification. Custom models or pre-trained.
+- 🔗 **Colocalization analysis** - PCC analysis across channels
+- 📊 **Report generation** - HTML and CSV output
 
 ---
 
@@ -20,22 +20,22 @@ The **"Compute cells"** widget provides:
 
 Before running cell analysis, ensure you have:
 
-1. 🏷️ **Segmented cells** - Labels layer from Segmentation step
-2. 🖼️ **Image channels** - Phase contrast, membrane, DNA (as needed)
+1. 🏷️ **Segmented cells** - Labels layer either loaded externally or computed from the `compute_label` widget. (See [segmentation guide](segmentation-guide.md))
+2. 🖼️ **Image channels** - Fluorescence channels to be analyzed (as needed)
 
 ### Step 2: Configure Analysis Parameters
 
-#### ⚙️ Essential Settings
+#### ⚙️ Settings
 
 **Image Selection:**
 - **Label Image**: Segmentation results (required)
-- **Membrane Image**: Fluorescence channel
-- **DNA Image**: Nuclear/nucleoid staining
+- **Fluorescence 1**: Fluorescence channel (e.g., Membrane stain)
+- **Fluorescence 2**: Optional, in case it's not needed set to the same channel as Fluorescence 1 (e.g., Nuclear/nucleoid staining)
 - **Pixel size**: Physical pixel size (e.g., 0.065 μm/pixel) (optional)
 
 **Subcellular Segmentation:**
 - **Inner mask thickness**: Membrane thickness for cytoplasmic measurements (default: 4)
-- **Find septum**: Detect division septa
+- **Find septum**: Whether to detect division septa
 - **Septum algorithm**: "Isodata" or "Box" thresholding
 - **Find open septum**: Detect incomplete septa
 
@@ -43,7 +43,10 @@ Before running cell analysis, ensure you have:
 - **Baseline margin**: Background region size (default: 30)
 
 **Cell Cycle Classification:**
-- **Classify cell cycle**: Enable cell cycle classification
+
+Check [cell classification guide](cell-classification.md) for details.
+
+- **Classify cell cycle**: Enable single cell classification
 - **Model**: Choose appropriate pre-trained model or choose a custom model
     - **Pre-trained models:**
         - S.aureus DNA+Membrane Epi
@@ -52,82 +55,64 @@ Before running cell analysis, ensure you have:
         - S.aureus DNA SIM
         - S.aureus Membrane Epi
         - S.aureus Membrane SIM
+        - E.coli DNA+Membrane AB phenotyping
+    - **Custom**: Use your own trained model
 - **Custom model path**: If you selected custom, provide the path to your own model file (.keras)
 - **Custom model input**: Specify input type for custom model (Membrane, DNA, or Membrane+DNA)
 - **Custom model max size**: Maximum cell size for custom model (default: 50 pixels)
 
-**Analysis Options:**
-- **Compute Colocalization**: Multi-channel colocalization analysis via PCC's.
-- **Generate Report**: Create HTML report.
-- **Report path**: Directory to save the report.
-- **Compute Heatmap**: Spatial analysis visualization of a fluorescence channel.
+**Other Options:**
+- **Compute Colocalization**: Multi-channel colocalization analysis via PCC's. Only works if two different fluorescence channels are provided.
+- **Generate Report**: Whether to create a report folder with an HTML report and CSV.
+- **Report path**: Directory to save the report folder.
+- **Compute Heatmap**: Spatial analysis visualization of a fluorescence channel. Corresponds to an average intensity heatmap over all cells aligned according to their major axis. Outputs a new Image layer.
 
 ---
 
-## 📊 Morphological Measurements
+## 📊 Outputs
+
+### Morphological Measurements
 
 mAIcrobe computes shape and size parameters using scikit-image regionprops.
 
-### 📏 Basic Shape Parameters
+#### Basic Shape Parameters
 
 **Area and Size:**
-- **Area**: Cell area in pixels and μm²
+- **Area**: Cell area (in pixels or μm² depending on the pixel size setting)
 - **Perimeter**: Cell boundary length
 
 **Shape Descriptors:**
 - **Eccentricity**: Ellipse eccentricity (0=circle, 1=line)
+    -  `ecc = sqrt(1 - (b²/a²))` where `a` is the semi-major axis and `b` is the semi-minor axis
 
----
-
-## 💡 Intensity Analysis
+### Intensity Analysis
 
 Quantify fluorescence signals in subcellular compartments.
 
-### 📈 Channel Measurements
-
 **Basic Statistics:**
-- **Baseline intensity**: Local background signal. This value is subtracted from all other intensity measurements.
-- **Cell Median intensity**: Median fluorescence within the entire cell
-- **Membrane Median intensity**: Median fluorescence in the membrane region
-- **Cytoplasm Median intensity**: Median fluorescence in the cytoplasmic region
-- **Septum Median intensity**: Median fluorescence in the septum region (if detected and enabled otherwise 0)
-- **Fluorescence Ratios 100%, 75%, 25%, 10% percentiles**: Ratios between septum and membrane (if septum detected and enabled otherwise 0)
-- **DNA Ratio**: Relative DNA content compared to baseline background fluorescence (if DNA channel provided, otherwise 0)
+- **Baseline intensity**: Local background signal in Fluorescence 1 channel.
 
----
+**IMPORTANT**: This value is subtracted from all other intensity measurements
 
-## 🧠 Cell Classification
+- **Cell Median intensity**: Median fluorescence within the entire cell in Fluorescence 1 channel
+- **Membrane Median intensity**: Median fluorescence in the membrane region in Fluorescence 1 channel
+- **Cytoplasm Median intensity**: Median fluorescence in the cytoplasmic region in Fluorescence 1 channel
+- **Septum Median intensity**: Median fluorescence in the septum region (if detected and enabled otherwise 0) in Fluorescence 1 channel
+- **Fluorescence Ratios 100%, 75%, 25%, 10% percentiles**: Ratios between septum and membrane (if septum detected and enabled otherwise 0) in Fluorescence 1 channel
+- **DNA Ratio**: Relative DNA content compared to baseline background fluorescence (if Fluorescence 1 channel provided, otherwise 0)
 
-Use deep learning models to automatically classify cells.
+### 🧠 Cell Classification
 
-### 🔬 Pre-trained Models
+Use deep learning models to automatically classify cells. Classification is given in the form of a integer per cell corresponding to the predicted class.
 
-mAIcrobe includes **6 specialized models** for cell cycle determination in *S. aureus*:
+mAIcrobe includes pretrained models or you can use your own custom trained models. Check the [Cell Classification Guide](cell-classification.md) for details on the available models. To train your own model check the [training notebook](../../notebooks/napari_mAIcrobe_cellcyclemodel.ipynb) and [Generate Training Data tutorial](../tutorials/generate_trainingdata.md) for details.
 
-**🧬 DNA + Membrane Models:**
-- **S.aureus DNA+Membrane Epi**: Epifluorescence imaging
-- **S.aureus DNA+Membrane SIM**: Super-resolution SIM
 
-**🧬 DNA Only Models:**
-- **S.aureus DNA Epi**: Nuclear staining, epifluorescence
-- **S.aureus DNA SIM**: Nuclear staining, super-resolution SIM
-
-**🔴 Membrane Only Models:**
-- **S.aureus Membrane Epi**: Membrane staining, epifluorescence
-- **S.aureus Membrane SIM**: Membrane staining, super-resolution SIM
-
-> **Note:** To build your own training dataset from annotated cells, export pickles via `Plugins > mAIcrobe > Compute pickles`. See the [Cell Classification Guide](cell-classification.md) for details.
-
----
-
-## 📈 Colocalization Analysis
+### 📈 Colocalization Analysis
 
 Quantify spatial relationships between two fluorescence channels.
 
-### 🔗 Colocalization Metrics
-
-**Correlation Coefficients:**
-- **Pearson correlation coefficient**: Linear relationship strength
+- **Pearson correlation coefficient**
 
 ---
 
@@ -140,13 +125,19 @@ Use the **"Filter cells"** widget for real-time quality control:
 3. 👁️ **Preview filtered population** in real-time
 4. ✅ **Use the filtered results for further analysis** The new layer "Filtered cells" contains only the selected cells.
 
+**Tips**
+- Hide the original Labels layer to visualize only the filtered results.
+- Combine multiple filters to refine your selection. For example, filter by area to remove badly segmented cells and by cell classification to focus on a specific cell cycle phase.
+- Compute septum option works best when combined with filtering by classification by cell cycle phase to focus on cells with actual division septa.
+
+
 ---
 
 ## 📚 Further Reading
 
 - **[Cell Classification](cell-classification.md)** - Detailed cell classification guide
 - **[API Reference](../api/api-reference.md)** - Programmatic analysis
-- **[Tutorials](../tutorials/basic-workflow.md)** - Step-by-step examples
+- **[Basic workflow](../tutorials/basic-workflow.md)** - Step-by-step examples
 
 ### 🔗 Technical References
 - **scikit-image regionprops**: [Documentation](https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.regionprops)

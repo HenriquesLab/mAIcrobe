@@ -6,14 +6,13 @@ This step-by-step tutorial will guide you through a complete bacterial cell anal
 
 By the end of this tutorial, you will:
 - 🖼️ Load and display bacterial images
-- 🔬 Segment individual cells using Isodata thresholding or CellPose cyto3 model
-- 📏 Perform morphological analysis
-- 🧠 Perform cell cycle classification
+- 🔬 Segment individual cells
+- 📏 Perform single cell analysis including morphological analysis and single cell classification
 - 📊 Generate a report
 
 ## 📊 Dataset Overview
 
-We'll use the included _S. aureus_ sample data featuring:
+We will use the included _S. aureus_ sample data featuring:
 - **📸 Phase contrast**: Cell morphology and boundaries
 - **🔴 Membrane fluorescence**: NileRed staining of cell membranes
 - **🧬 DNA fluorescence**: Hoechst staining of DNA (note that there is a black square in the image. This was done on purpose to show how to filter cells without DNA signal!)
@@ -77,13 +76,18 @@ Now we'll segment individual cells using the Compute label widget:
    - Go to `Plugins > mAIcrobe > Compute label`
 
 2. **Configure segmentation parameters:**
+
+   Choose the following parameters:
+
    ```
    Base Image: Phase (select the phase contrast layer)
    Fluor 1: Membrane (select the membrane layer)
    Fluor 2: DNA (select the DNA layer)
    Model: Isodata (or CellPose cyto3)
    ```
-   The GUI should automatically change the available parameter options based on the selected model. For the purpose of this tutorial, independent of the selected model, leave all other parameters as default.
+   For the purpose of this tutorial, independent of the selected model, leave all other parameters as default.
+
+   For all types of supported segmentation approaches the GUI should automatically change the available parameter options based on the selected model. If you'd like to learn more about the different segmentation models and their parameters, check the [Segmentation Guide](../user-guide/segmentation-guide.md).
 
 3. **Run segmentation:**
    - Click the **Run** button
@@ -127,7 +131,7 @@ With segmented cells, we can now perform detailed analysis:
    Report path: [choose output directory]
    ```
 
-   For the purpose of this tutorial, leave all other parameters as default.
+   For the purpose of this tutorial, leave all other parameters as default. If you'd like to learn more about the different analysis options and parameters, check the [Cell Analysis Guide](../user-guide/cell-analysis.md) and the [Cell Classification Guide](../user-guide/cell-classification.md).
 
 3. **Run analysis:**
    - Click **Run**
@@ -150,8 +154,10 @@ With segmented cells, we can now perform detailed analysis:
 2. **Available measurements:**
    - **📏 Morphology:** area, perimeter, eccentricity
    - **💡 Intensity:** Baseline, and median intensity for the cell, membrane, cytoplasm and septum (if find septum is enabled). Fluorescent ratios betweens septa and membrane are also available if find septum is enabled.
-   - **🧠 Cell cycle:** predicted phase
-   - **🧬 DNA:** relative DNA content when compared to the baseline background fluorescence (DNARatio)
+   - **🧠 Cell classification:** For this specific case predicted cell cycle phase phase.
+   - **🧬 DNA:** relative DNA content when compared to the baseline background fluorescence (DNARatio).
+
+   For a full list of available measurements check the [Cell Analysis Guide](../user-guide/cell-analysis.md).
 
 #### 🔍 Interactive Data Exploration
 
@@ -169,7 +175,7 @@ You can interactively explore and filter cells based on measurements:
 3. **Apply filters:**
    - Filters are automatically applied on a new layer called "Filtered cells".
    - Hide the original Labels layer to see only filtered results.
-   - If you filtered cells with low DNA content, you should see that cells without DNA signal (black square in the image) are removed (make sure to hide the original Labels layer to see the effect).
+   - **BONUS**: If you filtered cells with low DNA content, you should see that cells without DNA signal (black square in the image) are removed (make sure to hide the original Labels layer to see the effect).
 
 **💻 Programmatic Exploration:**
 
@@ -207,7 +213,7 @@ If you enabled report generation, examine the HTML output:
 
 ### 🥒 Optional: Export Training Data for Custom Classifiers
 
-You can create pickle files with per-cell crops for training your own models:
+You can create pickle files with per-cell crops for training your own models. For a more thorough guide, check the [Generate Training Data for Cell Classification tutorial](generate_trainingdata.md) for more details.
 
 #### 🛠️ Workflow:
 

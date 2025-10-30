@@ -4,13 +4,16 @@ This guide provides comprehensive information about mAIcrobe's cell classificati
 
 ## 🧠 Overview
 
-mAIcrobe uses deep learning models to automatically classify cells phases based on morphological and fluorescence features. The plugin includes **6 pre-trained models** optimized for the cell cycle stage detection of _Staphylococcus aureus_ under various imaging conditions, but it also has support for user-trained custom models.
+mAIcrobe uses deep learning models to automatically classify cells based on their morphological and fluorescence features. The plugin includes:
+ - **6 pre-trained models** optimized for the cell cycle stage detection of _Staphylococcus aureus_ under various imaging conditions
+ - **1 pre-trained model** for *E. coli* antibiotic phenotyping
+ - **Support for user-trained custom models**
 
 ---
 
 ## 🔬 Pre-trained Models
 
-mAIcrobe includes 6 specialized models optimized for different imaging conditions and channel availability.
+mAIcrobe includes 7 specialized models optimized for different imaging conditions and channel availability.
 
 ### 🧬🔴 DNA + Membrane Models
 
@@ -40,7 +43,7 @@ mAIcrobe includes 6 specialized models optimized for different imaging condition
 #### **E.coli DNA+Membrane AB phenotyping**
 - **Imaging**: Epifluorescence microscopy
 - **Channels**: DNA stain + Membrane stain
-- **Use case**: Phenotyping antibiotic-treated _E.coli_ cells
+- **Use case**: Phenotyping antibiotic-treated _E.coli_ cells. Distinguishes between control cells and those treated with Mecillinam or Nalidixate.
 
 | Actual \ Predicted (%) | Class 1 (control) | Class 2 (Mecillinam) | Class 3 (Nalidixate) |
 |------------------------|-------------------|----------------------|----------------------|
@@ -108,29 +111,6 @@ mAIcrobe includes 6 specialized models optimized for different imaging condition
 
 ---
 
-## 📊 Model Selection Guide
-
-Choose the appropriate model based on your experimental setup.
-
-### 🔄 Decision Tree
-
-Here's a simple decision tree to help you select the right model if you are aiming to classify **_S. aureus_ cell cycle phases**:
-```
-Do you have both DNA and membrane staining?
-├── Yes: DNA+Membrane models
-│   ├── Super-resolution imaging? → S.aureus DNA+Membrane SIM
-│   └── Standard resolution? → S.aureus DNA+Membrane Epi
-└── No: Single-channel models
-    ├── DNA staining only?
-    │   ├── Super-resolution? → S.aureus DNA SIM
-    │   └── Standard resolution? → S.aureus DNA Epi
-    └── Membrane staining only?
-        ├── Super-resolution? → S.aureus Membrane SIM
-        └── Standard resolution? → S.aureus Membrane Epi
-```
-
----
-
 ## 🎨 Custom Model Integration
 
 Load and use your own trained TensorFlow models.
@@ -150,6 +130,8 @@ Load and use your own trained TensorFlow models.
 To train your own models and assure seamless integration with the plugin, refer to the jupyter notebook: [Cell Cycle Model Training](../../notebooks/napari_mAIcrobe_cellcyclemodel.ipynb)
 
 ### 🥒 Build Your Own Training Data (Pickles)
+
+#### For more detailed information refer to the tutorial: [Generate Training Data for Cell Classification](../tutorials/generate_trainingdata.md)
 
 Use the Compute pickles widget to export standardized per-cell crops:
 

@@ -2,70 +2,85 @@
 
 Welcome to mAIcrobe! This guide will get you up and running with bacterial cell analysis in under 10 minutes.
 
-## 🚀 Installation
+## 🚀 Installation (Recommended)
 
 ### Prerequisites
 
-Before installing mAIcrobe, ensure you have:
+Before installing mAIcrobe we strongly recommend setting up a dedicated Python environment. This prevents dependency conflicts and ensures reproducibility. Any of the conda distributions (Anaconda, Miniconda, Miniforge) will work.
 
-- **Miniconda** (strongly recommended for dependency management)
+### Step 1: Install a Conda Distribution
 
-### Installing Miniconda (Recommended)
-
-We **strongly recommend** using miniconda to manage your Python environment and dependencies. This prevents conflicts and ensures a smooth installation experience.
+**SKIP TO [STEP 2](#step-2-create-a-dedicated-environment) IF YOU ALREADY HAVE A CONDA DISTRIBUTION INSTALLED**
 
 #### Download and Install Miniconda
 
-1. **Download** the appropriate installer for your system from [miniconda.org](https://docs.conda.io/en/latest/miniconda.html):
-   - **Windows**: Download the `.exe` installer
-   - **macOS**: Download the `.pkg` installer (Intel) or `.sh` script (Apple Silicon)
-   - **Linux**: Download the `.sh` script
+1. **Download** the appropriate installer for your system from [https://docs.conda.io/en/latest](https://docs.conda.io/en/latest/):
 
 2. **Install** by following the installer prompts:
    - Accept the license agreement
    - Choose installation location (default is recommended)
    - **Important**: When asked "Do you wish the installer to initialize Miniconda3?", choose **Yes**
-   - **Important**: Do NOT install miniconda, or allow the environments to be managed, in a folder that contains spaces.
+   - **Important**: Do **NOT** install miniconda, or allow the environments to be managed, in a folder that contains spaces. If your user folder (default installation location)contains spaces, choose a different installation location.
 
 3. **Restart** your terminal/command prompt after installation
 
-4. **Verify** installation by running the following in your terminal (macOS/Linux) or miniconda command prompt (Windows):
+4. **Verify** installation by running the following in your terminal (macOS/Linux) or anaconda/miniconda/miniforge command prompt (Windows):
    ```bash
    conda --version
    ```
+   You should also see `base` in your terminal prompt, indicating the base conda environment is active.
 
-#### Create a Dedicated Environment
+### Step 2: Create a Dedicated Environment
 
-Create a clean environment specifically for mAIcrobe. In your terminal (macOS/Linux) or miniconda command prompt (Windows), run:
+To keep your system organized, create a clean environment specifically for mAIcrobe. You only need to create theis environment once. After the environment is created and mAIcrobe is installed you just need to activate the environment to use mAIcrobe.
+
+To create an environment, in your terminal (macOS/Linux) or miniconda command prompt (Windows), run:
 
 ```bash
 # Create new environment with Python 3.11
 conda create -n mAIcrobe python=3.11
+```
 
+This creates a new conda environment named `mAIcrobe` with Python 3.11 installed. The name of the environment can be changed if desired.
+
+To activate the environment, run:
+
+```bash
 # Activate the environment
 conda activate mAIcrobe
 ```
 
-### Recommended Installation (Using Conda)
+Substitute `mAIcrobe` with your chosen environment name if you chose a different name.
+You should now see your environment name in your terminal prompt, indicating the environment is active.
+**Subsequent installation commands should be run with the environment activated.**
 
-With your conda environment activated, install mAIcrobe:
+
+### Step 3: mAIcrobe installation
+
+With your conda environment **activated**, install mAIcrobe using pip:
 
 ```bash
 # Install napari-mAIcrobe with pip
 pip install napari-mAIcrobe
 ```
 
-**Important** Make sure your conda environment is activated whenever you want to use mAIcrobe! You should see `(mAIcrobe)` in your terminal prompt.
+**Important** Make sure your conda environment is activated whenever you want to install and use mAIcrobe! You should see `(mAIcrobe)` or the name you chose in [Step 2](#step-2-create-a-dedicated-environment) in your terminal prompt.
 
- mAIcrobe is now installed! 🎉
- To use, just activate your conda environment and launch napari. See below for more details.
+ #### mAIcrobe is now installed! 🎉
+To use, just open your terminal or anaconda/miniconda/miniforge command prompt, activate your conda environment using the name you chose in [Step 2](#step-2-create-a-dedicated-environment) and launch napari. See below for more details.
+
+**TIP**: If you forgot the name of your conda environment, you can list all your conda environments with:
+
+```bash
+conda env list
+```
 
 <details>
 <summary><strong>Alternative Installation Methods (click to expand)</strong></summary>
 
 #### Standard pip Installation (without conda)
 
-If you prefer not to use conda (not recommended):
+If you prefer not to use conda, or are using a different environment manager, you can install mAIcrobe directly with pip.:
 
 ```bash
 pip install napari-mAIcrobe
@@ -102,11 +117,11 @@ import napari
 viewer = napari.Viewer()
 ```
 
-Then check if "mAIcrobe" appears under `Plugins` in the menu bar.
+In both cases the `napari` window should open, and you can check if the "mAIcrobe" plugin is listed under the `Plugins` menu.
 
 ## 🔥 First Analysis
 
-Let's perform your first bacterial cell analysis using the included sample data.
+Let's perform a quick bacterial cell analysis using the included sample data. For a more detailed walkthrough, refer to the [basic-workflow tutorial](../tutorials/basic-workflow.md).
 
 ### Step 1: Launch napari
 
@@ -129,7 +144,7 @@ mAIcrobe includes _S. aureus_ test images. Load them via:
 
 **Option A: GUI Method**
 1. Go to `File > Open Sample > mAIcrobe`
-2. Select:
+2. Select the following samples one by one:
    - "Phase contrast S. aureus"
    - "Membrane dye S.aureus"
    - "DNA dye S.aureus"
@@ -167,7 +182,7 @@ dna_layer = viewer.add_image(dna_data[0], **dna_data[1])
    Fluor 2: DNA (select the DNA layer)
    Model: Isodata (or CellPose cyto3)
    ```
-   For the purpose of this tutorial, leave all other parameters as default.
+   For the purpose of this example, leave all other parameters as default. For more details on segmentation methods, see the [Segmentation Guide](segmentation-guide.md).
 3. Click **Run**
 
 The segmentation will create a new "Labels" layer with individual cells outlined.
@@ -176,15 +191,15 @@ The segmentation will create a new "Labels" layer with individual cells outlined
 
 1. Go to `Plugins > mAIcrobe > Compute cells`
 2. Configure analysis parameters:
-   - **Label Image**: Select the labels layer from Step 3
+   - **Label Image**: Select the labels layer from [Step 3](#step-3-segment-cells)
    - **Membrane Image**: Select membrane layer
    - **DNA Image**: Select DNA layer
-   - **Pixel size**: Enter your pixel size (e.g., 0.065 μm/pixel) (optional)
+   - **Pixel size**: Enter your pixel size (e.g., 0.065 μm/pixel - optional)
    - **Classify cell cycle**: Check this box
    - **Model**: Select "S.aureus DNA+Membrane Epi"
 3. Click **Run**
 
-This will add statistical measurements to the Labels layer properties. For the purpose of this tutorial, leave all other parameters as default.
+This will add statistical measurements to the Labels layer properties. For the purpose of this simple example, leave all other parameters as default. For more details on cell analysis, see the [Cell Analysis Guide](cell-analysis.md).
 
 ### Step 5: View Results
 
@@ -192,7 +207,7 @@ After analysis completes, you can:
 
 - **View cell statistics**: Check the layer properties panel
 - **Filter cells**: Use `Plugins > napari-mAIcrobe > Filter cells`
-- **Generate reports**: Enable "Generate Report" in Step 4
+- **Generate reports**: Enable "Generate Report" in [Step 4](#step-4-analyze-cells) to create HTML/CSV reports
 
 
 ## 📚 Next Steps

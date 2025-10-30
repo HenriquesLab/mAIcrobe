@@ -44,81 +44,51 @@ cd mAIcrobe
 pip install -e .
 ```
 
+We recommend using an environment manager like [conda](https://docs.conda.io/en/latest/) to handle dependencies and assure reproducibility.
 
-**🎯 [Complete Tutorial →](docs/tutorials/basic-workflow.md)**
+**🎯 [Installation instructions →](docs/user-guide/getting-started.md#-installation)**
 
 ## 🏆 Key Features
 
 ### 🎨 **Cell Segmentation**
 - **Thresholding**: Isodata and Local Average methods with watershed
-- **StarDist2D**: custom models
+- **StarDist2D**: custom models (pretrained available for *S. aureus*)
 - **Cellpose**: cyto3 model
-- **Custom U-Net Models**: custom models
+- **Custom U-Net Models**: custom models (pretrained available for *S. aureus*, *B. subtilis*, and *S. pneumoniae*)
 
 ### 🧠 **Single cell Classification**
-- **Pre-trained Models**: 6 specialized models for cell cycle determination in *S. aureus*:
-  - DNA+Membrane (Epifluorescence & SIM)
-  - DNA-only (Epifluorescence & SIM)
-  - Membrane-only (Epifluorescence & SIM)
-- **Custom Model Support**: Load your own TensorFlow models
+- **Pre-trained Models**: *S. aureus* cell cycle and *E. coli* antibiotic phenotyping
+- **Custom Model Support**: Build your training dataset in napari with out custom [widget](docs/tutorials/generate_trainingdata.md), train using our jupyter notebook and load your own TensorFlow models,
 
 ### 📊 **Comprehensive Morphometry**
 - **Shape Analysis**: Area, perimeter, eccentricity
 - **Intensity Measurements**: Fluorescence statistics
-- **Custom Measurements**: Septum detection
+- **Custom Measurements**: Septum detection, colocalization, and more
 
 ## 📖 Documentation
 
 | Guide | Purpose |
 |-------|---------|
-| **[🚀 Getting Started](docs/user-guide/getting-started.md)** | Installation to first analysis |
-| **[🔬 Segmentation Guide](docs/user-guide/segmentation-guide.md)** | Choose the right segmentation method |
-| **[📊 Cell Analysis](docs/user-guide/cell-analysis.md)** | Complete analysis workflows |
-| **[🧠 Cell Classification Guide](docs/user-guide/cell-classification.md)** | Cell cycle classification setup |
-| **[⚙️ API Reference](docs/api/api-reference.md)** | Programmatic usage |
+| **[🚀 Getting Started](docs/user-guide/getting-started.md)** | Installation to first analysis using sample data|
+| **[🔬 Segmentation Guide](docs/user-guide/segmentation-guide.md)** | Explore the available segmentation methods|
+| **[📊 Cell Analysis](docs/user-guide/cell-analysis.md)** | Explore complete analysis workflow and check the metrics measured |
+| **[🧠 Cell Classification Guide](docs/user-guide/cell-classification.md)** | Explore the available classification models |
 
-## 🎯 Analysis Workflow
+| Tutorial | Purpose |
+|-------|---------|
+| **[🎨 Basic Workflow](docs/tutorials/basic-workflow.md)** | Step-by-step guide with a simple example |
+| **[🛠️ Generate Training Data](docs/tutorials/generate_trainingdata.md)** | Create annotated datasets for custom model training |
 
-### 📄 **Single Image Analysis**
-1. **Load Images**: Microscopy images of bacteria
-2. **Segment Cells**: Choose segmentation algorithm and parameters
-3. **Analyze Cells**: Extract morphological and intensity features and choose classification model
-4. **Filter Results**: Interactive filtering of cell populations
-5. **Generate Report**: Create comprehensive analysis report
-
-
-## 🧪 Sample Data
-
-The plugin includes test datasets for method validation:
-
-- **Phase Contrast**: _S. aureus_ cells in exponential growth
-- **Membrane Stain**: NileRed fluorescence imaging
-- **DNA Stain**: Hoechst nuclear labeling
-
-Access via napari: `File > Open Sample > napari-mAIcrobe`
-
-## 🏃‍♀️ Example Analysis
-
-**Input Data:**
-mAIcrobe Sample images accessible by `File > Open Sample > napari-mAIcrobe`
-- Phase contrast image of _S. aureus_ cells
-- Membrane fluorescence image of _S. aureus_ cells (NileRed stain)
-- DNA fluorescence image of _S. aureus_ cells (Hoechst stain)
-
-**Analysis Pipeline:**
-1. **Segmentation**: Isodata or CellPose's cyto3 identifies individual cells in the phase contrast image
-2. **Morphology**: Calculate morphological and intensity measurements
-3. **Classification**: Cell cycle phase determination using pre-trained CNN model
-4. **Quality Control**: Interactive filtering of analysis results. Select subpopulations based on size, intensity, or classification
-5. **Report Generation**: HTML output
+**For programmatic usage:**
+| **[⚙️ API Reference](docs/api/api-reference.md)**
 
 
 ## 📚 Available Jupyter Notebooks
 
 Explore advanced functionality with included notebooks:
 
-- **[Cell Cycle Model Training](notebooks/napari_mAIcrobe_cellcyclemodel.ipynb)**: Train custom classification models
-- **[StarDist Segmentation](notebooks/StarDistSegmentationTraining.ipynb)**: Retrain a StarDist segmentation model
+- **[Cell Cycle Model Training](notebooks/napari_mAIcrobe_cellcyclemodel.ipynb)**: To train custom classification models
+- **[StarDist Segmentation](notebooks/StarDistSegmentationTraining.ipynb)**: To retrain a StarDist segmentation model
 
 ## 🤝 Community
 
@@ -181,6 +151,6 @@ mAIcrobe is developed in the [Henriques](https://henriqueslab.org) and [Pinho](h
 
 *"Advancing microbiology through AI-powered image analysis."*
 
-**[🚀 Get Started →](docs/user-guide/getting-started.md)** | **[📚 Learn More →](docs/user-guide/segmentation-guide.md)** | **[⚙️ API Docs →](docs/api/api-reference.md)**
+**[🚀 Get Started →](docs/user-guide/getting-started.md)** | **[📚 Learn More →](docs/tutorials/basic-workflow.md)** | **[⚙️ API Docs →](docs/api/api-reference.md)**
 
 </div>

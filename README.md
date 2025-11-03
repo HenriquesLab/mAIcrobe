@@ -33,6 +33,10 @@ mAIcrobe is a comprehensive napari plugin that facilitates image analysis workfl
 
 **Standard Installation:**
 
+We recommend using an environment manager like [conda](https://docs.conda.io/en/latest/) to handle dependencies and assure reproducibility.
+
+Regardless of environment, you can install via pip in Python 3.10 or 3.11. This should handle all dependencies and take a couple of minutes depending on your internet connection.
+
 ```bash
 pip install napari-mAIcrobe
 ```
@@ -45,9 +49,7 @@ cd mAIcrobe
 pip install -e .
 ```
 
-We recommend using an environment manager like [conda](https://docs.conda.io/en/latest/) to handle dependencies and assure reproducibility.
-
-**🎯 [Installation instructions →](docs/user-guide/getting-started.md#-installation)**
+**🎯 [Detailed Installation Instructions →](docs/user-guide/getting-started.md#-installation)**
 
 ## 🏆 Key Features
 

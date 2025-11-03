@@ -9,6 +9,21 @@ mAIcrobe uses deep learning models to automatically classify cells based on thei
  - **1 pre-trained model** for *E. coli* antibiotic phenotyping
  - **Support for user-trained custom models**
 
+### 🔬 How It Works
+
+The classification model is a CNN implemented in TensorFlow/Keras. The architecture was previously described in the [eHooke publication](https://www.cambridge.org/core/journals/biological-imaging/article/ehooke-a-tool-for-automated-image-analysis-of-spherical-bacteria-based-on-cell-cycle-progression/8A379B5479A59FFBFD7D0A346C5FD7CC?utm_campaign=shareaholic&utm_medium=copy_link&utm_source=bookmark).
+Classification is performed at the single-cell level using cropped images extracted from segmented cells.
+
+For each cell, the following preprocessing steps are applied before feeding it to the model:
+
+- Crops the cell with a small margin (user defined and model dependent but defaults to 5 px).
+
+- Masks the crop by the cell shape defined by the label and rescales intensities to [0, 1].
+
+- Pads the crop with zero to a square shape (final shape model dependent).
+
+- Resizes images to 100×100. If two channels, concatenates the channels side‑by‑side into a 100×200 image.
+
 ---
 
 ## 🔬 Pre-trained Models

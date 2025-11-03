@@ -73,7 +73,7 @@ Check [cell classification guide](cell-classification.md) for details.
 
 ### Morphological Measurements
 
-mAIcrobe computes shape and size parameters using scikit-image regionprops.
+mAIcrobe computes shape and size parameters using scikit-image [regionprops](https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.regionprops). Furthermore it adds custom measurements relevant for bacterial cells such as subcellular segmentation (membrane, cytoplasm, and septum when requested).
 
 #### Basic Shape Parameters
 

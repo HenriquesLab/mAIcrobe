@@ -70,7 +70,7 @@ Your U-Net model should output:
 - **1**: Cell boundary
 - **2**: Cell interior
 
-mAIcrobe converts this to individual cell labels using watershed segmentation.
+mAIcrobe converts this to individual cell labels using scikit-image [watershed segmentation](https://scikit-image.org/docs/stable/api/skimage.segmentation.html#skimage.segmentation.watershed).
 
 **Note**: mAIcrobe provides several pre-trained U-Net models for different bacterial species and imaging modalities. In the compute_label widget, select from the following options:
   - "Ph.C. S. pneumo" : Phase contrast *S. pneumoniae*
@@ -109,8 +109,8 @@ mAIcrobe converts this to individual cell labels using watershed segmentation.
 
 ### Processing Pipeline
 1. **Threshold** → Binary image
-2. **Distance transform** → Separate touching cells
-3. **Watershed** → Individual cell labels
+2. **Distance transform** → Separate touching cells. See [scipy distance transform docs](https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.distance_transform_edt.html#scipy.ndimage.distance_transform_edt)
+3. **Watershed** → Individual cell labels. See [scikit-image watershed docs](https://scikit-image.org/docs/stable/api/skimage.segmentation.html#skimage.segmentation.watershed).
 
 ---
 

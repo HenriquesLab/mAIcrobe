@@ -112,10 +112,9 @@ Tips:
 **What happens under the hood:**
 - Finds the label under each point
 - Crops the cell with a small margin (default 5 px)
-- Masks the crop by the cell shape defined by the label
+- Masks the crop by the cell shape defined by the label, and rescales intensities to [0, 1]
 - Pads the crop with zero to a square then resizes it to 100×100
 - If two channels, concatenates the squares side‑by‑side into 100×200
-- Rescales intensities to [0, 1]
 - Saves Class_<id>_source.p and Class_<id>_target.p
 
 ![Screenshot of napari with widget filled](../Images/Genpickles_final.png)

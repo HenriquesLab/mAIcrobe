@@ -10,9 +10,10 @@
 
 **mAIcrobe: a napari plugin for microbial image analysis.**
 
-mAIcrobe is a comprehensive napari plugin that facilitates image analysis workflows of bacterial cells. Combining state-of-the-art segmentation approaches, morphological analysis and adaptable classification models into a napari-plugin, mAIcrobe aims to deliver a user-friendly interface that helps inexperienced users perform image analysis tasks regardless of the bacterial species and microscopy modality.
+mAIcrobe is a comprehensive napari plugin that facilitates image analysis workflows of bacterial cells. Combining state-of-the-art segmentation approaches, morphological analysis and adaptable classification models into a napari-plugin, mAIcrobe aims to deliver a user-friendly interface that helps inexperienced users perform image analysis tasks regardless of the bacterial species and microscopy modality. Built using Python 3.10 and 3.11 and tested on Windows, and macOS.
 
 **You can read more about mAIcrobe in our [preprint](https://www.biorxiv.org/content/10.1101/2025.10.21.683709v1).**
+
 
 ## ✨ Why mAIcrobe?
 

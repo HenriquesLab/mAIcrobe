@@ -35,7 +35,7 @@ mAIcrobe is a comprehensive napari plugin that facilitates image analysis workfl
 
 We recommend using an environment manager like [conda](https://docs.conda.io/en/latest/) to handle dependencies and assure reproducibility.
 
-Regardless of environment, you can install via pip in Python 3.10 or 3.11. This should handle all dependencies and take a couple of minutes depending on your internet connection.
+Regardless of environment, you can install via pip in Python 3.10 or 3.11. This should handle all dependencies and might take a couple of minutes depending on your internet connection.
 
 ```bash
 pip install napari-mAIcrobe
@@ -79,7 +79,7 @@ pip install -e .
 
 | Tutorial | Purpose |
 |-------|---------|
-| **[🎨 Basic Workflow](docs/tutorials/basic-workflow.md)** | Step-by-step guide with a simple example |
+| **[🎨 Basic Workflow](docs/tutorials/basic-workflow.md)** | Step-by-step guide with a simple example (<5 minutes)|
 | **[🛠️ Generate Training Data](docs/tutorials/generate_trainingdata.md)** | Create annotated datasets for custom model training |
 
 **For programmatic usage:**

@@ -14,6 +14,9 @@ mAIcrobe is a comprehensive napari plugin that facilitates image analysis workfl
 
 **You can read more about mAIcrobe in our [preprint](https://www.biorxiv.org/content/10.1101/2025.10.21.683709v1).**
 
+## Video Showcase
+
+[![Video](docs/Images/Screenshotyoutube.png)](https://youtu.be/UQ-dgATCgkU)
 
 ## ✨ Why mAIcrobe?
 
@@ -81,11 +84,6 @@ pip install -e .
 |-------|---------|
 | **[🎨 Basic Workflow](docs/tutorials/basic-workflow.md)** | Step-by-step guide with a simple example (<5 minutes)|
 | **[🛠️ Generate Training Data](docs/tutorials/generate_trainingdata.md)** | Create annotated datasets for custom model training |
-
-
-| Videos |  |
-|-------|---------|
-| **[🎥 Showcase Basic Workflow](https://youtu.be/UQ-dgATCgkU)** | [![Video Tutorial](docs/Images/Screenshotyoutube.png)](https://youtu.be/UQ-dgATCgkU) |
 
 **For programmatic usage:**
 | **[⚙️ API Reference](docs/api/api-reference.md)**

@@ -82,6 +82,11 @@ pip install -e .
 | **[🎨 Basic Workflow](docs/tutorials/basic-workflow.md)** | Step-by-step guide with a simple example (<5 minutes)|
 | **[🛠️ Generate Training Data](docs/tutorials/generate_trainingdata.md)** | Create annotated datasets for custom model training |
 
+
+| Video Tutorials |  |
+|-------|---------|
+| **[🎥 Video Tutorial: Basic Workflow](https://youtu.be/UQ-dgATCgkU)** | [![Video Tutorial](docs/Images/Screenshotyoutube.png)](https://youtu.be/UQ-dgATCgkU) |
+
 **For programmatic usage:**
 | **[⚙️ API Reference](docs/api/api-reference.md)**
 

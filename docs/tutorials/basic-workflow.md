@@ -2,6 +2,8 @@
 
 This step-by-step tutorial will guide you through a complete bacterial cell analysis workflow using mAIcrobe, from image loading to final report generation.
 
+Check out the [video version of this tutorial](https://youtu.be/UQ-dgATCgkU) for a quick walkthrough!
+
 ## 🎯 Tutorial Goals
 
 By the end of this tutorial, you will:

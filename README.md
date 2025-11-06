@@ -83,9 +83,9 @@ pip install -e .
 | **[🛠️ Generate Training Data](docs/tutorials/generate_trainingdata.md)** | Create annotated datasets for custom model training |
 
 
-| Video Tutorials |  |
+| Videos |  |
 |-------|---------|
-| **[🎥 Video Tutorial: Basic Workflow](https://youtu.be/UQ-dgATCgkU)** | [![Video Tutorial](docs/Images/Screenshotyoutube.png)](https://youtu.be/UQ-dgATCgkU) |
+| **[🎥 Showcase Basic Workflow](https://youtu.be/UQ-dgATCgkU)** | [![Video Tutorial](docs/Images/Screenshotyoutube.png)](https://youtu.be/UQ-dgATCgkU) |
 
 **For programmatic usage:**
 | **[⚙️ API Reference](docs/api/api-reference.md)**

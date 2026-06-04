@@ -9,8 +9,6 @@ if TYPE_CHECKING:
 
 import os
 
-import tensorflow as tf
-from cellpose import models
 from magicgui.widgets import (
     CheckBox,
     ComboBox,
@@ -24,33 +22,23 @@ from magicgui.widgets import (
 )
 from qtpy import QtWidgets
 from qtpy.QtCore import Qt
-from stardist.models import StarDist2D
 
-from .mAIcrobe.mask import mask_alignment, mask_computation
-from .mAIcrobe.segments import SegmentsManager
-from .mAIcrobe.unet import (
-    computelabel_unet,
-    download_github_file_raw,
-    normalizePercentile,
+from .mAIcrobe.mask import mask_alignment
+from .mAIcrobe.segmentation import (
+    batch_cellpose_segmentation,
+    batch_classical_segmentation,
+    batch_stardist_segmentation,
+    batch_unet_segmentation,
+    cellpose_segmentation,
+    classical_segmentation,
+    stardist_segmentation,
+    unet_segmentation,
 )
 
 # force classification to happen on CPU to avoid CUDA problems
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 # Remove some extraneous log outputs
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-
-
-tf.config.set_visible_devices([], "GPU")
-
-
-__home_folder__ = os.path.expanduser("~")
-__cachemodel_folder__ = os.path.join(__home_folder__, ".maicrobecache")
-if not os.path.exists(__cachemodel_folder__):
-    os.makedirs(__cachemodel_folder__)
-if not os.path.exists(
-    os.path.join(__cachemodel_folder__, "SegmentationModels")
-):
-    os.makedirs(os.path.join(__cachemodel_folder__, "SegmentationModels"))
 
 
 class compute_label(Container):
@@ -87,6 +75,8 @@ class compute_label(Container):
                 annotation="napari.layers.Image", label="Base Image"
             ),
         )
+        self._baseimg_combo.changed.connect(self._on_baseimg_changed)
+
         self._fluor1_combo = cast(
             ComboBox,
             create_widget(annotation="napari.layers.Image", label="Fluor 1"),
@@ -222,6 +212,9 @@ class compute_label(Container):
             min=0, max=100000, step=100, value=100000, label="Max Peaks"
         )
 
+        # TIME LAPSE
+        self._timelapse = CheckBox(label="Run analysis for all time points")
+
         # RUN
         self._run_button = PushButton(label="Run")
         self._run_button.clicked.connect(self.compute)
@@ -251,12 +244,33 @@ class compute_label(Container):
                 self._peak_min_distance,  # 20
                 self._peak_min_height,  # 21
                 self._max_peaks,  # 22
-                self._run_button,  # 23
+                self._timelapse,  # 23
+                self._run_button,  # 24
             ],
             labels=True,
         )
         # Initialize visibility according to the current algorithm selection
         self._on_algorithm_changed(self._algorithm_combo.value)
+
+        # Initialize visibility of timelapse checkbox according to number of time points in base image (only show if more than 1 time point)
+        self._on_baseimg_changed(self._baseimg_combo.value)
+
+    def _on_baseimg_changed(self, new_baseimg):
+        """Toggle timelapse checkbox visibility according to number of time points in base image.
+
+        Parameters
+        ----------
+        new_baseimg : napari.layers.Image
+            The newly selected base image layer.
+        """
+        if new_baseimg is None:
+            self._timelapse.visible = False
+            return
+
+        if len(new_baseimg.data.shape) == 3:
+            self._timelapse.visible = True
+        else:
+            self._timelapse.visible = False
 
     def _on_algorithm_changed(self, new_algorithm: str):
         """Toggle parameter widgets according to algorithm choice.
@@ -377,8 +391,6 @@ class compute_label(Container):
         enabled, updates fluor channels with aligned images.
         """
 
-        # TODO some code should be moved to mAIcrobe folder to isolate logic
-
         _algorithm = self._algorithm_combo.value
 
         _baseimg = self._baseimg_combo.value
@@ -400,118 +412,100 @@ class compute_label(Container):
             "max_peaks": self._max_peaks.value,
         }
 
-        if _algorithm == "Unet":
-            # if pretrained, check if model file exists in cache, if not download it
-            if self._unetradio.value == "Pretrained":
-                if self._unetpretrained.value == "Ph.C. S. pneumo":
-                    model_filename = "UNet4strep_20250922.hdf5"
-                elif self._unetpretrained.value == "WF FtsZ B. subtilis":
-                    model_filename = "UNet4bsub_20250922.hdf5"
-                elif self._unetpretrained.value == "Unet S. aureus":
-                    model_filename = "UNet4staph_20250922.hdf5"
+        _timelapse = self._timelapse.value and len(_baseimg.data.shape) == 3
 
-                _path2unet = download_github_file_raw(
-                    "SegmentationModels/" + model_filename,
-                    __cachemodel_folder__,
+        if _algorithm == "Unet":
+            if _timelapse:
+                mask, labels = batch_unet_segmentation(
+                    _baseimg.data,
+                    self._unetradio.value,
+                    self._unetpretrained.value,
+                    self._path2unet.value,
+                    _binary_closing,
+                    _binary_dilation,
+                    _binary_fillholes,
                 )
             else:
-                _path2unet = self._path2unet.value
-
-            mask, labels = computelabel_unet(
-                path2model=_path2unet,
-                base_image=_baseimg.data,
-                closing=_binary_closing,
-                dilation=_binary_dilation,
-                fillholes=_binary_fillholes,
-            )
+                mask, labels = unet_segmentation(
+                    _baseimg.data,
+                    self._unetradio.value,
+                    self._unetpretrained.value,
+                    self._path2unet.value,
+                    _binary_closing,
+                    _binary_dilation,
+                    _binary_fillholes,
+                )
 
         elif _algorithm == "StarDist":
-            # if pretrained, check if model dir exists in cache, if not download it
-            # be careful, stardist needs a folder with config.json, weights_best.h5 and thresholds.json not a single model file like U-Net
-            if self._stardistradio.value == "Pretrained":
-                if self._stardistpretrained.value == "StarDist S. aureus":
-                    model_dirname = os.path.join(
-                        "SegmentationModels", "StarDistSaureus_20250922"
-                    )
-                    if not os.path.exists(
-                        os.path.join(__cachemodel_folder__, model_dirname)
-                    ):
-                        os.makedirs(
-                            os.path.join(__cachemodel_folder__, model_dirname)
-                        )
-                    # download files if they don't exist
-                    download_github_file_raw(
-                        "SegmentationModels"
-                        + "/"
-                        + "StarDistSaureus_20250922"
-                        + "/"
-                        + "config.json",
-                        __cachemodel_folder__,
-                    )
-                    download_github_file_raw(
-                        "SegmentationModels"
-                        + "/"
-                        + "StarDistSaureus_20250922"
-                        + "/"
-                        + "weights_best.h5",
-                        __cachemodel_folder__,
-                    )
-                    download_github_file_raw(
-                        "SegmentationModels"
-                        + "/"
-                        + "StarDistSaureus_20250922"
-                        + "/"
-                        + "thresholds.json",
-                        __cachemodel_folder__,
-                    )
-
-                    _path2stardist = os.path.join(
-                        __cachemodel_folder__, model_dirname
-                    )
+            if _timelapse:
+                mask, labels = batch_stardist_segmentation(
+                    _baseimg.data,
+                    self._stardistradio.value,
+                    self._stardistpretrained.value,
+                    self._path2stardist.value,
+                )
             else:
-                _path2stardist = self._path2stardist.value
-
-            basedir, name = os.path.split(_path2stardist)
-            model = StarDist2D(None, name=name, basedir=basedir)
-
-            labels, _ = model.predict_instances(
-                normalizePercentile(_baseimg.data)
-            )
-            mask = labels > 0
-            mask = mask.astype("uint16")
+                mask, labels = stardist_segmentation(
+                    _baseimg.data,
+                    self._stardistradio.value,
+                    self._stardistpretrained.value,
+                    self._path2stardist.value,
+                )
 
         elif _algorithm == "CellPose cyto3":
-            model = models.Cellpose(gpu=True, model_type="cyto3")
-            labels, flows, styles, diams = model.eval(
-                _baseimg.data, diameter=None
-            )
-            mask = labels > 0
-            mask = mask.astype("uint16")
+            if _timelapse:
+                mask, labels = batch_cellpose_segmentation(_baseimg.data)
+            else:
+                mask, labels = cellpose_segmentation(_baseimg.data)
 
         else:
-            mask = mask_computation(
-                base_image=_baseimg.data,
-                algorithm=_algorithm,
-                blocksize=_LAblocksize,
-                offset=_LAoffset,
-                closing=_binary_closing,
-                dilation=_binary_dilation,
-                fillholes=_binary_fillholes,
-            )
-
-            seg_man = SegmentsManager()
-            seg_man.compute_segments(_pars, mask)
-
-            labels = seg_man.labels
+            if _timelapse:
+                mask, labels = batch_classical_segmentation(
+                    _baseimg.data,
+                    _algorithm,
+                    _LAblocksize,
+                    _LAoffset,
+                    _binary_closing,
+                    _binary_dilation,
+                    _binary_fillholes,
+                    _pars,
+                )
+            else:
+                mask, labels = classical_segmentation(
+                    _baseimg.data,
+                    _algorithm,
+                    _LAblocksize,
+                    _LAoffset,
+                    _binary_closing,
+                    _binary_dilation,
+                    _binary_fillholes,
+                    _pars,
+                )
 
         # add mask to viewer
         self._viewer.add_labels(mask, name="Mask")
         # add labelimg to viewer
         self._viewer.add_labels(labels, name="Labels")
 
-        if _autoalign:
+        if _autoalign and (not _timelapse):
             aligned_fluor_1 = mask_alignment(mask, _fluor1.data)
             aligned_fluor_2 = mask_alignment(mask, _fluor2.data)
 
             self._viewer.layers[_fluor1.name].data = aligned_fluor_1
             self._viewer.layers[_fluor2.name].data = aligned_fluor_2
+
+        elif _autoalign and _timelapse:
+            for i in range(mask.shape[0]):
+                aligned_fluor_1 = mask_alignment(
+                    mask[i, :, :], _fluor1.data[i, :, :]
+                )
+                aligned_fluor_2 = mask_alignment(
+                    mask[i, :, :], _fluor2.data[i, :, :]
+                )
+
+                self._viewer.layers[_fluor1.name].data[
+                    i, :, :
+                ] = aligned_fluor_1
+                self._viewer.layers[_fluor2.name].data[
+                    i, :, :
+                ] = aligned_fluor_2

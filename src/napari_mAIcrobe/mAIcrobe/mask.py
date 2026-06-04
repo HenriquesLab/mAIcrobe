@@ -96,6 +96,15 @@ def mask_alignment(mask: np.ndarray, fluor_image: np.ndarray):
         Aligned fluorescence image (same shape as input).
     """
 
+    if mask.shape != fluor_image.shape:
+        raise ValueError(
+            "Mask and fluorescence image must have the same shape."
+        )
+
+    if mask.shape == 3:
+        mask = mask[0, :, :]
+        fluor_image = fluor_image[0, :, :]
+
     corr = signal.fftconvolve(mask, fluor_image[::-1, ::-1])
     deviation = np.unravel_index(np.argmax(corr), corr.shape)
     cm = ndimage.center_of_mass(np.ones(corr.shape))

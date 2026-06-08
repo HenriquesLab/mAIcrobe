@@ -35,7 +35,7 @@ def compute_cells(
     Viewer: "napari.Viewer",
     Label_Image: "napari.layers.Labels",
     Membrane_Image: "napari.layers.Image",
-    DNA_Image: "napari.layers.Image",
+    DNA_Image: "napari.layers.Image" = None,
     Pixel_size: float = 1,
     Inner_mask_thickness: int = 4,
     Septum_algorithm="Isodata",
@@ -52,11 +52,12 @@ def compute_cells(
     Report_path: os.PathLike = "",
     Compute_Heatmap: bool = False,
 ):
-    """Compute per-cell features, generate reports. Optionally build
-    average heatmap, classification and colocalization.
+    """Compute per-cell morphological features, classification and optional reports from 2D images or
+    timelapse 2D+t data. Additionally supports optional heatmap generation for 2D inputs.
 
-    #TODO check parameter order in the GUI and in the docstring. It
-    should make sense to the user.
+    Supports 2D inputs `(Y, X)` and timelapse inputs `(T, Y, X)`. In
+    timelapse mode, each frame is analyzed independently (NO TRACKING),
+    and results are aggregated with a `frame` column.
 
     Parameters
     ----------
@@ -66,8 +67,10 @@ def compute_cells(
         Labels layer with segmented cells.
     Membrane_Image : napari.layers.Image
         Primary fluorescence image (e.g., membrane).
-    DNA_Image : napari.layers.Image
-        Optional fluorescence image (e.g., DNA).
+    DNA_Image : napari.layers.Image, optional
+        Optional secondary fluorescence image (e.g., DNA). If omitted,
+        DNA-dependent metrics are NaN, colocalization is
+        skipped and classification is limited to one channel.
     Pixel_size : float, optional
         Pixel size passed to analysis (if used downstream), by default 1.
     Inner_mask_thickness : int, optional
@@ -104,10 +107,14 @@ def compute_cells(
 
     Notes
     -----
-    - Updates `Label_Image.properties` and opens a properties table.
-    - Adds "Cell Averager" image if heatmap is computed.
+        - In 2D mode, updates `Label_Image.properties` and opens a
+            properties table.
+        - In timelapse mode, skips table attachment and processes all
+            frames into one combined output.
+    - Adds "Cell Averager" image if heatmap is computed (2D mode only).
     - Saves report files if requested and path is valid.
-    - Colocalization requires two channels.
+        - Colocalization requires two channels and is skipped when
+            `DNA_Image` is not provided.
     - Custom model requires a valid Keras model file (.keras)
     """
 
@@ -129,17 +136,49 @@ def compute_cells(
         "coloc": Compute_Colocalization,
     }
 
+    label_data = Label_Image.data
+    membrane_data = Membrane_Image.data
+    dna_data = DNA_Image.data if DNA_Image is not None else None
+
+    if label_data.ndim not in (2, 3):
+        raise ValueError("Label image must be 2D or 3D (T, Y, X).")
+
+    if membrane_data.ndim != label_data.ndim:
+        raise ValueError(
+            "Label and membrane images must have matching dimensions."
+        )
+
+    if membrane_data.shape != label_data.shape:
+        raise ValueError(
+            "Label and membrane images must have matching shapes."
+        )
+
+    if dna_data is not None:
+        if dna_data.ndim != label_data.ndim:
+            raise ValueError(
+                "Optional image must have matching dimensions with label image."
+            )
+        if dna_data.shape != label_data.shape:
+            raise ValueError(
+                "Optional image must have matching shape with label image."
+            )
+
     cell_man = CellManager(
-        label_img=Label_Image.data,
-        fluor=Membrane_Image.data,
-        optional=DNA_Image.data,
+        label_img=label_data,
+        fluor=membrane_data,
+        optional=dna_data,
         params=params,
     )
     cell_man.compute_cell_properties()
 
-    Label_Image.properties = cell_man.properties
-
-    add_table(Label_Image, Viewer)
+    if label_data.ndim == 2:
+        Label_Image.properties = cell_man.properties
+        add_table(Label_Image, Viewer)
+    else:
+        print(
+            "Timelapse mode detected: skipping napari table attachment; "
+            "combined results are available in reports/output properties."
+        )
 
     if Compute_Heatmap:
         Viewer.add_image(cell_man.heatmap_model, name="Cell Averager")

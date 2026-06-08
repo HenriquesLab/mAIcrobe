@@ -231,7 +231,7 @@ def computelabel_unet(path2model, base_image, closing, dilation, fillholes):
 
     # edges = prediction==1
     insides = prediction == 2
-    for _ in range(0):  # TODO
+    for _ in range(0):
         insides = binary_erosion(insides)
     insides = insides.astype(np.uint16)
     insides, _ = lbl(insides)

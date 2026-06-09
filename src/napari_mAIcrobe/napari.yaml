@@ -23,6 +23,9 @@ contributions:
     - id: napari-mAIcrobe.compute_pickles
       python_name: napari_mAIcrobe._compute_pickles:compute_pickles
       title: Save annotated cells as pickles
+    - id: napari-mAIcrobe.batch_analysis
+      python_name: napari_mAIcrobe._batchanalysis:batch_analysis
+      title: Batch analysis
   sample_data:
     - command: napari-mAIcrobe.phase_example
       display_name: Phase contrast S. aureus
@@ -42,3 +45,5 @@ contributions:
       display_name: Filter cells
     - command: napari-mAIcrobe.compute_pickles
       display_name: Save annotated cells as pickles
+    - command: napari-mAIcrobe.batch_analysis
+      display_name: Batch analysis

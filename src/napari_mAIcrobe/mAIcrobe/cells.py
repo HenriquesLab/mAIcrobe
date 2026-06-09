@@ -1358,24 +1358,24 @@ class CellManager:
             optional,
         )
 
-        def compute_cell_properties(self):
-            """Compute per-cell properties from 2D or 2D+t timelapse data.
+    def compute_cell_properties(self):
+        """Compute per-cell properties from 2D or 2D+t timelapse data.
 
-            The method validates input shapes, processes each image or each frame
-            independently for 2D+t inputs, and stores property arrays in
-            `self.properties`.
+        The method validates input shapes, processes each image or each frame
+        independently for 2D+t inputs, and stores property arrays in
+        `self.properties`.
 
-            Notes
-            -----
-            - Timelapse mode is enabled for `(T, Y, X)` arrays and adds a
-                `frame` property column.
-            - No tracking is performed; labels are treated independently per
-                frame.
-            - DNA-dependent metrics (`DNA Ratio`, colocalization) are
-                skipped or set to NaN when optional input is unavailable.
-            - Classification raises a ValueError when the selected model
-                requires DNA but no optional input is provided.
-            """
+        Notes
+        -----
+        - Timelapse mode is enabled for `(T, Y, X)` arrays and adds a
+            `frame` property column.
+        - No tracking is performed; labels are treated independently per
+            frame.
+        - DNA-dependent metrics (`DNA Ratio`, colocalization) are
+            skipped or set to NaN when optional input is unavailable.
+        - Classification raises a ValueError when the selected model
+            requires DNA but no optional input is provided.
+        """
 
         if self.label_img.ndim not in (2, 3):
             raise ValueError("label_img must be 2D or 3D (T, Y, X)")

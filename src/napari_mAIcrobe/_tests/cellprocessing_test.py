@@ -29,7 +29,9 @@ def test_rotation_matrices_respect_step_and_identity_first():
 
     assert len(matrices) == 4
     np.testing.assert_allclose(matrices[0], np.eye(2))
-    np.testing.assert_allclose(matrices[2], np.array([[0, 1], [-1, 0]]), atol=1e-7)
+    np.testing.assert_allclose(
+        matrices[2], np.array([[0, 1], [-1, 0]]), atol=1e-7
+    )
 
 
 def test_stats_format_toggles_optional_columns():

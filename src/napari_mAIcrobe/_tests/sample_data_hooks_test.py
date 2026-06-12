@@ -17,7 +17,9 @@ def test_sample_data_hooks_return_napari_layer_tuples(monkeypatch):
     dna = _sample_data.dna_example()
 
     assert phase[0][1]["name"] == "Example S.aureus phase contrast"
-    assert membrane[0][1]["name"] == "Example S.aureus labeled with membrane dye"
+    assert (
+        membrane[0][1]["name"] == "Example S.aureus labeled with membrane dye"
+    )
     assert dna[0][1]["name"] == "Example S.aureus labeled with DNA dye"
     assert phase[0][2] == membrane[0][2] == dna[0][2] == "image"
     assert len(calls) == 3

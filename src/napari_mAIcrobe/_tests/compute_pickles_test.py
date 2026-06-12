@@ -15,7 +15,9 @@ def _widget(tmp_path, channel_mode="One Channel"):
 
     widget = compute_pickles.__new__(compute_pickles)
     widget.box_margin = 2
-    widget._label_combo = SimpleNamespace(value=SimpleNamespace(data=label_data))
+    widget._label_combo = SimpleNamespace(
+        value=SimpleNamespace(data=label_data)
+    )
     widget._points_combo = SimpleNamespace(
         value=SimpleNamespace(
             data=np.array([[5, 5], [13, 13], [0, 0], [5, 5]]),

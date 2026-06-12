@@ -10,7 +10,9 @@ def test_unet_segmentation_uses_custom_model_path(monkeypatch):
         calls.update(kwargs)
         return np.ones((3, 3), dtype=np.uint16), np.arange(9).reshape(3, 3)
 
-    monkeypatch.setattr(segmentation, "computelabel_unet", fake_computelabel_unet)
+    monkeypatch.setattr(
+        segmentation, "computelabel_unet", fake_computelabel_unet
+    )
 
     mask, labels = segmentation.unet_segmentation(
         np.zeros((2, 3, 3)),
@@ -34,7 +36,9 @@ def test_batch_unet_segmentation_stacks_frame_results(monkeypatch):
     def fake_unet_segmentation(img, *args):
         return img.astype(np.uint16), (img + 10).astype(np.uint16)
 
-    monkeypatch.setattr(segmentation, "unet_segmentation", fake_unet_segmentation)
+    monkeypatch.setattr(
+        segmentation, "unet_segmentation", fake_unet_segmentation
+    )
     stack = np.stack([np.ones((2, 2)), np.full((2, 2), 2)])
 
     masks, labels = segmentation.batch_unet_segmentation(
@@ -46,7 +50,9 @@ def test_batch_unet_segmentation_stacks_frame_results(monkeypatch):
     np.testing.assert_array_equal(labels[0], np.full((2, 2), 11))
 
 
-def test_stardist_segmentation_uses_custom_model_and_normalization(monkeypatch):
+def test_stardist_segmentation_uses_custom_model_and_normalization(
+    monkeypatch,
+):
     seen = {}
 
     class FakeStarDist2D:
@@ -59,7 +65,9 @@ def test_stardist_segmentation_uses_custom_model_and_normalization(monkeypatch):
             return np.array([[0, 1], [2, 0]]), None
 
     monkeypatch.setattr(segmentation, "StarDist2D", FakeStarDist2D)
-    monkeypatch.setattr(segmentation, "normalizePercentile", lambda image: image + 1)
+    monkeypatch.setattr(
+        segmentation, "normalizePercentile", lambda image: image + 1
+    )
 
     mask, labels = segmentation.stardist_segmentation(
         np.zeros((2, 2)),
@@ -72,7 +80,9 @@ def test_stardist_segmentation_uses_custom_model_and_normalization(monkeypatch):
     assert seen["basedir"] == "/tmp"
     np.testing.assert_array_equal(seen["image"], np.ones((2, 2)))
     np.testing.assert_array_equal(labels, np.array([[0, 1], [2, 0]]))
-    np.testing.assert_array_equal(mask, np.array([[0, 1], [1, 0]], dtype=np.uint16))
+    np.testing.assert_array_equal(
+        mask, np.array([[0, 1], [1, 0]], dtype=np.uint16)
+    )
 
 
 def test_cellpose_segmentation_uses_first_frame_for_3d_input(monkeypatch):
@@ -96,7 +106,9 @@ def test_cellpose_segmentation_uses_first_frame_for_3d_input(monkeypatch):
     assert seen["model_type"] == "cyto3"
     np.testing.assert_array_equal(seen["image"], np.ones((2, 2)))
     np.testing.assert_array_equal(labels, np.array([[0, 4], [0, 5]]))
-    np.testing.assert_array_equal(mask, np.array([[0, 1], [0, 1]], dtype=np.uint16))
+    np.testing.assert_array_equal(
+        mask, np.array([[0, 1], [0, 1]], dtype=np.uint16)
+    )
 
 
 def test_classical_segmentation_delegates_to_mask_and_segments(monkeypatch):

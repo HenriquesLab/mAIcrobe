@@ -44,7 +44,9 @@ def test_compute_dna_threshold_returns_nan_without_signal():
     labels = np.ones((3, 3), dtype=int)
 
     assert np.isnan(CellManager._compute_dna_threshold(labels, None))
-    assert np.isnan(CellManager._compute_dna_threshold(labels, np.zeros((3, 3))))
+    assert np.isnan(
+        CellManager._compute_dna_threshold(labels, np.zeros((3, 3)))
+    )
 
 
 def test_frame_data_returns_2d_or_requested_stack_frame():
@@ -61,7 +63,9 @@ def test_frame_data_returns_2d_or_requested_stack_frame():
 
 
 def test_rows_to_properties_converts_lists_to_arrays():
-    properties = CellManager._rows_to_properties({"label": [1, 2], "Area": [3, 4]})
+    properties = CellManager._rows_to_properties(
+        {"label": [1, 2], "Area": [3, 4]}
+    )
 
     assert all(isinstance(value, np.ndarray) for value in properties.values())
     np.testing.assert_array_equal(properties["label"], np.array([1, 2]))

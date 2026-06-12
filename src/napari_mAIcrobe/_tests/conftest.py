@@ -1,7 +1,7 @@
-import pytest
 from pathlib import Path
-from skimage.io import imread
 
+import pytest
+from skimage.io import imread
 
 DOCS_DIR = Path(__file__).resolve().parents[3] / "docs"
 

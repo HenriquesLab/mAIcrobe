@@ -32,7 +32,9 @@ def test_normalize_mi_ma_supports_clipping_and_dtype():
     )
 
     assert result.dtype == np.float32
-    np.testing.assert_array_equal(result, np.array([0, 0, 1], dtype=np.float32))
+    np.testing.assert_array_equal(
+        result, np.array([0, 0, 1], dtype=np.float32)
+    )
 
 
 def test_normalize_percentile_maps_values_between_percentiles():
@@ -94,7 +96,9 @@ def test_download_github_file_raw_returns_cached_path(tmp_path):
     assert result == str(cached)
 
 
-def test_download_github_file_raw_writes_response_content(monkeypatch, tmp_path):
+def test_download_github_file_raw_writes_response_content(
+    monkeypatch, tmp_path
+):
     calls = {}
 
     class FakeResponse:

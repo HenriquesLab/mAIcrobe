@@ -25,14 +25,22 @@ def _instance(algorithm="Isodata", timelapse=False, autoalign=False):
     base_data = np.ones((2, 4, 4)) if timelapse else np.ones((4, 4))
     fluor_data = np.ones_like(base_data)
     viewer = DummyViewer()
-    viewer.layers["fluor1"] = SimpleNamespace(data=fluor_data.copy(), name="fluor1")
-    viewer.layers["fluor2"] = SimpleNamespace(data=fluor_data.copy(), name="fluor2")
+    viewer.layers["fluor1"] = SimpleNamespace(
+        data=fluor_data.copy(), name="fluor1"
+    )
+    viewer.layers["fluor2"] = SimpleNamespace(
+        data=fluor_data.copy(), name="fluor2"
+    )
 
     obj = _computelabel.compute_label.__new__(_computelabel.compute_label)
     obj._viewer = viewer
     obj._baseimg_combo = DummyWidget(SimpleNamespace(data=base_data))
-    obj._fluor1_combo = DummyWidget(SimpleNamespace(data=fluor_data.copy(), name="fluor1"))
-    obj._fluor2_combo = DummyWidget(SimpleNamespace(data=fluor_data.copy(), name="fluor2"))
+    obj._fluor1_combo = DummyWidget(
+        SimpleNamespace(data=fluor_data.copy(), name="fluor1")
+    )
+    obj._fluor2_combo = DummyWidget(
+        SimpleNamespace(data=fluor_data.copy(), name="fluor2")
+    )
     obj._closinginput = DummyWidget(0)
     obj._dilationinput = DummyWidget(0)
     obj._fillholesinput = DummyWidget(False)

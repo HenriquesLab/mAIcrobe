@@ -62,27 +62,6 @@ class ReportManager:
             self.max_shape = np.max(
                 [cell.shape for cell in self.cells], axis=0
             )
-
-            paddiffx = [
-                (self.max_shape[0] - cell.shape[0]) for cell in self.cells
-            ]
-            paddiffy = [
-                (self.max_shape[1] - cell.shape[1]) for cell in self.cells
-            ]
-
-            padx = [(p // 2, p - p // 2) for p in paddiffx]
-            # pady = [(p//2,p-p//2) for p in paddiffy]
-
-            padded_cells = [
-                np.pad(
-                    cell,
-                    [(padx[idx][0], padx[idx][1]), (0, paddiffy[idx])],
-                    mode="constant",
-                    constant_values=1,
-                )
-                for idx, cell in enumerate(self.cells)
-            ]
-            self.cells = padded_cells
         else:
             self.max_shape = (1, 1)
 
@@ -132,27 +111,20 @@ class ReportManager:
 
             print("Total Cells: " + str(len(cells)))
 
-            imsave(
-                filename + "/_images" + os.sep + "all_cells.png",
-                img_as_ubyte(np.concatenate(cells, axis=0)),
-            )
-
             for idx, cell in enumerate(cells):
+                cell_filename = f"cell_{idx}.png"
+                imsave(
+                    filename + "/_images" + os.sep + cell_filename,
+                    img_as_ubyte(cell),
+                    check_contrast=False,
+                )
 
                 lin = (
                     "<tr><td>"
                     + str(self.properties["label"][idx])
-                    + '</td><td><div style="width: '
-                    + str(self.max_shape[1])
-                    + "px; height: "
-                    + str(self.max_shape[0])
-                    + 'px; overflow: hidden;"><img src="./_images/'
-                    + "all_cells"
-                    + '.png" alt="pic" style="width: '
-                    + str(self.max_shape[1])
-                    + "; height: auto; transform: translateY(-"
-                    + str(idx * self.max_shape[0])
-                    + 'px);"></div></td>'
+                    + '</td><td><img src="./_images/'
+                    + cell_filename
+                    + '" alt="pic" style="max-width: 240px; height: auto;"></td>'
                 )
 
                 for stat in self.keys:

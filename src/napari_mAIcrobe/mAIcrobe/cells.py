@@ -9,7 +9,6 @@ from skimage.measure import label, regionprops_table
 from skimage.util import img_as_float
 
 from .cellaverager import CellAverager
-from .cellcycleclassifier import CellCycleClassifier
 from .cellprocessing import bound_rectangle, bounded_point, rotation_matrices
 from .colocmanager import ColocManager
 from .reports import ReportManager
@@ -211,7 +210,8 @@ class Cell:
         self.compute_fluor_stats(self.params, regionmask, intensity)
 
         self.image = None
-        self.set_image(intensity, optional)
+        if self.params.get("generate_report", False):
+            self.set_image(intensity, optional)
 
     def image_box(self, image):
         """Return an image crop corresponding to the cell bounding box.
@@ -1408,12 +1408,21 @@ class CellManager:
 
         rows = self._init_rows_dict()
         all_cells = []
+        report_image_limit = int(self.params.get("report_image_limit", 5000))
+        dropped_report_images = 0
 
         ccc = None
-        if self.params["classify_cell_cycle"] and not timelapse:
+        if self.params["classify_cell_cycle"]:
+            from .cellcycleclassifier import CellCycleClassifier
+
+            # For timelapse, use the first frame for initialisation — the model
+            # is loaded once here and the per-frame FOV images are updated
+            # inside the loop.  This avoids re-loading TF/Keras weights on
+            # every frame
+            init_label, init_fluor, init_optional = self._frame_data(0)
             ccc = CellCycleClassifier(
-                self.fluor_img,
-                self.optional_img,
+                init_fluor,
+                init_optional,
                 self.params["model"],
                 self.params["custom_model_path"],
                 self.params["custom_model_input"],
@@ -1439,14 +1448,9 @@ class CellManager:
             label_img, fluor_img, optional_img = self._frame_data(frame_index)
 
             if self.params["classify_cell_cycle"] and timelapse:
-                ccc = CellCycleClassifier(
-                    fluor_img,
-                    optional_img,
-                    self.params["model"],
-                    self.params["custom_model_path"],
-                    self.params["custom_model_input"],
-                    self.params["custom_model_maxsize"],
-                )
+                # Update the FOV images for this frame; no model reload needed.
+                ccc.fluor_fov = fluor_img
+                ccc.optional_fov = optional_img
 
             dnathresh = self._compute_dna_threshold(label_img, optional_img)
 
@@ -1483,7 +1487,10 @@ class CellManager:
                 )
 
                 if self.params["generate_report"]:
-                    all_cells.append(c.image)
+                    if len(all_cells) < report_image_limit:
+                        all_cells.append(c.image)
+                    else:
+                        dropped_report_images += 1
 
                 if self.params["cell_averager"]:
                     ca.fluor = fluor_img
@@ -1521,6 +1528,12 @@ class CellManager:
             self.heatmap_model = ca.model
 
         if self.params["generate_report"]:
+            if dropped_report_images > 0:
+                print(
+                    "Report image limit reached; "
+                    f"skipped {dropped_report_images} cell thumbnails "
+                    "to reduce memory usage. CSV contains all cells."
+                )
             self.all_cells = all_cells
             rm = ReportManager(
                 parameters=self.params,

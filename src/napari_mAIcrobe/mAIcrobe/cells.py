@@ -38,7 +38,8 @@ class Cell:
         Analysis parameters dict controlling region computation and
         other params.
     optional : numpy.ndarray, optional
-        Optional fluorescence image (e.g., DNA), by default None.
+        Optional fluorescence image (e.g., DNA), by default None. If
+        None, DNA visualization panels are rendered as zeros.
 
     Attributes
     ----------
@@ -176,7 +177,7 @@ class Cell:
         # NOTE THE SWAP ON X AND Y
         self.short_axis = np.rint(np.array([[y1, x1], [y2, x2]])).astype(int)
 
-        # CHECK IF SHORT AXIS AND LONG AXIS ARE OUTSIDE OF BOX TODO
+        # TODO: check if short/long axis can fall outside box.
 
         self.cell_mask = self.image_box(regionmask)
         self.fluor_mask = self.image_box(intensity)
@@ -1033,12 +1034,16 @@ class Cell:
         ----------
         fluor : numpy.ndarray
             Fluorescence image.
-        optional : numpy.ndarray
-            Optional fluorescence image.
+        optional : numpy.ndarray or None
+            Optional fluorescence image. If None, a zero-valued image
+            is used for DNA panels.
         """
 
         fluor = img_as_float(fluor)
         fluor = exposure.rescale_intensity(fluor)
+
+        if optional is None:
+            optional = np.zeros_like(fluor)
 
         optional = img_as_float(optional)
         optional = exposure.rescale_intensity(optional)
@@ -1103,13 +1108,13 @@ class CellManager:
     Parameters
     ----------
     label_img : ndarray
-        Labeled image where each cell is represented by a unique
-        integer.
+        Labeled image. Supported shapes are 2D `(Y, X)` and timelapse
+        2D+t `(T, Y, X)`.
     fluor : ndarray
-        Fluorescence image corresponding to the labeled image.
-    optional : ndarray
-        Optional image used for additional calculations (e.g., DNA
-        content).
+        Primary fluorescence image matching `label_img` shape.
+    optional : ndarray or None
+        Optional secondary image (e.g., DNA) matching `label_img`
+        shape. Can be None.
     params : dict
         Dictionary of parameters controlling the behavior of the class.
         Keys include:
@@ -1156,8 +1161,10 @@ class CellManager:
     params : dict
         Dictionary of parameters controlling the behavior of the class.
     properties : dict or None
-        Dictionary containing computed properties for each cell. Keys
-        include:
+        Dictionary containing per-cell properties. In
+        timelapse mode, cells from all frames are combined and include a `frame`
+        key. Keys include:
+        - "frame"
         - "label"
         - "Area"
         - "Perimeter"
@@ -1181,7 +1188,7 @@ class CellManager:
     Methods
     -------
     compute_cell_properties()
-        Computes various properties for each cell in the labeled image.
+        Computes various properties for each cell in the labeled image(s).
     calculate_DNARatio(cell_object, dna_fov, thresh)
         Static method to calculate the ratio of area that has
         discernable DNA signal for a given cell.
@@ -1197,17 +1204,16 @@ class CellManager:
         """
         Initialize the class with the provided images and parameters.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         label_img : ndarray
-            The labeled image where each unique integer represents a
-            different object or cell.
+            Label image `(Y, X)` or timelapse label stack `(T, Y, X)`.
         fluor : ndarray
-            A fluorescence image to be analysed. Fluorescence metrics
-            and heatmaps will be computed from this image.
-        optional : ndarray
-            An optional image that can be used for additional processing
-            or analysis, mainly PCC calculations, or classification
+            Primary fluorescence image/stack with shape matching
+            `label_img`.
+        optional : ndarray or None
+            Optional secondary fluorescence image/stack with shape
+            matching `label_img`.
         params : dict
             A dictionary of parameters used for processing or analysis.
 
@@ -1240,72 +1246,171 @@ class CellManager:
 
         self.all_cells = None
 
+    def _model_requires_dna(self):
+        """Return True if the configured classifier input needs DNA."""
+
+        if self.params["model"] == "custom":
+            return "DNA" in self.params["custom_model_input"]
+
+        return "DNA" in self.params["model"]
+
+    @staticmethod
+    def _compute_dna_threshold(label_img, optional_img):
+        """Compute DNA threshold for one frame.
+
+        Returns NaN when no optional image is available or when no
+        positive optional signal is present.
+        """
+
+        if optional_img is None:
+            return np.nan
+
+        optional_img_cells = optional_img * (label_img > 0).astype(int)
+        nonzero = optional_img_cells[np.nonzero(optional_img_cells)]
+        if nonzero.size == 0:
+            return np.nan
+
+        histcounts, binedges = np.histogram(nonzero, bins="auto")
+        maxintensity = binedges[np.argmax(histcounts) + 1]
+
+        optimg = optional_img.copy()
+        optimg[optimg >= maxintensity] = maxintensity
+        opt_nonzero = optimg[np.nonzero(optimg)]
+        if opt_nonzero.size == 0:
+            return np.nan
+
+        return threshold_isodata(opt_nonzero)
+
+    def _append_cell_row(self, rows, c, frame_index, dna_img, dnathresh):
+        """Append one cell row to accumulator lists.
+
+        DNA ratio is stored as NaN when DNA data is unavailable for the
+        frame.
+        """
+
+        rows["frame"].append(frame_index)
+        rows["label"].append(c.label)
+        rows["Area"].append(c.stats["Area"])
+        rows["Perimeter"].append(c.stats["Perimeter"])
+        rows["Eccentricity"].append(c.stats["Eccentricity"])
+        rows["Baseline"].append(c.stats["Baseline"])
+        rows["Cell Median"].append(c.stats["Cell Median"])
+        rows["Membrane Median"].append(c.stats["Membrane Median"])
+        rows["Septum Median"].append(c.stats["Septum Median"])
+        rows["Cytoplasm Median"].append(c.stats["Cytoplasm Median"])
+        rows["Fluor Ratio"].append(c.stats["Fluor Ratio"])
+        rows["Fluor Ratio 75%"].append(c.stats["Fluor Ratio 75%"])
+        rows["Fluor Ratio 25%"].append(c.stats["Fluor Ratio 25%"])
+        rows["Fluor Ratio 10%"].append(c.stats["Fluor Ratio 10%"])
+        rows["Cell Cycle Phase"].append(c.stats["Cell Cycle Phase"])
+
+        if dna_img is None or np.isnan(dnathresh):
+            rows["DNA Ratio"].append(np.nan)
+        else:
+            rows["DNA Ratio"].append(
+                self.calculate_DNARatio(c, dna_img, dnathresh)
+            )
+
+    @staticmethod
+    def _init_rows_dict():
+        """Create property accumulators for output rows."""
+        return {
+            "frame": [],
+            "label": [],
+            "Area": [],
+            "Perimeter": [],
+            "Eccentricity": [],
+            "Baseline": [],
+            "Cell Median": [],
+            "Membrane Median": [],
+            "Septum Median": [],
+            "Cytoplasm Median": [],
+            "Fluor Ratio": [],
+            "Fluor Ratio 75%": [],
+            "Fluor Ratio 25%": [],
+            "Fluor Ratio 10%": [],
+            "Cell Cycle Phase": [],
+            "DNA Ratio": [],
+        }
+
+    @staticmethod
+    def _rows_to_properties(rows):
+        """Convert list in dicts to np arrays."""
+        return {key: np.array(values) for key, values in rows.items()}
+
+    def _frame_data(self, frame_index):
+        """Return one frame as 2D arrays.
+
+        For 2D inputs, returns the original arrays regardless of
+        `frame_index`.
+        """
+
+        if self.label_img.ndim == 2:
+            return self.label_img, self.fluor_img, self.optional_img
+
+        optional = None
+        if self.optional_img is not None:
+            optional = self.optional_img[frame_index]
+
+        return (
+            self.label_img[frame_index],
+            self.fluor_img[frame_index],
+            optional,
+        )
+
     def compute_cell_properties(self):
-        """
-        Compute various properties of cells from a label img and
-        fluorescence data, including morphology and intensity metrics. It
-        also supports optional functionalities such as cell cycle
-        classification, cell averaging, and colocalization analysis.
+        """Compute per-cell properties from 2D or 2D+t timelapse data.
 
-        Attributes:
-            self.properties (dict): A dictionary containing computed cell
-            properties, including:
-                - label: Array of cell labels.
-                - Area: Array of cell areas.
-                - Perimeter: Array of cell perimeters.
-                - Eccentricity: Array of cell eccentricities.
-                - Baseline: Array of baseline fluorescence intensities.
-                - Cell Median: Array of median fluorescence intensities
-                  for cells.
-                - Membrane Median: Array of median fluorescence
-                  intensities for membranes.
-                - Septum Median: Array of median fluorescence
-                  intensities for septa.
-                - Cytoplasm Median: Array of median fluorescence
-                  intensities for cytoplasm.
-                - Fluor Ratio: Array of fluorescence ratios.
-                - Fluor Ratio 75%: Array of 75th percentile fluorescence
-                  ratios.
-                - Fluor Ratio 25%: Array of 25th percentile fluorescence
-                  ratios.
-                - Fluor Ratio 10%: Array of 10th percentile fluorescence
-                  ratios.
-                - Cell Cycle Phase: Array of cell cycle phase
-                  classifications.
-                - DNA Ratio: Array of DNA ratios.
+        The method validates input shapes, processes each image or each frame
+        independently for 2D+t inputs, and stores property arrays in
+        `self.properties`.
 
-        Parameters:
-            None
-
-        Outputs:
-            - Updates `self.properties` with computed cell properties.
-            - Optionally updates `self.all_cells` with mosaics of cell
-              images for report generation.
-            - Optionally generates a report if
-              `self.params["generate_report"]` is True.
+        Notes
+        -----
+        - Timelapse mode is enabled for `(T, Y, X)` arrays and adds a
+            `frame` property column.
+        - No tracking is performed; labels are treated independently per
+            frame.
+        - DNA-dependent metrics (`DNA Ratio`, colocalization) are
+            skipped or set to NaN when optional input is unavailable.
+        - Classification raises a ValueError when the selected model
+            requires DNA but no optional input is provided.
         """
 
-        Label = []
-        Area = []
-        Perimeter = []
-        Eccentricity = []
-        Baseline = []
-        CellMedian = []
-        Membrane_Median = []
-        Septum_Median = []
-        Cytoplasm_Median = []
-        Fluor_Ratio = []
-        Fluor_Ratio_75 = []
-        Fluor_Ratio_25 = []
-        Fluor_Ratio_10 = []
-        CellCyclePhase = []
-        DNARatio = []
-        All_Cells = []  # TODO consider always saving
+        if self.label_img.ndim not in (2, 3):
+            raise ValueError("label_img must be 2D or 3D (T, Y, X)")
 
-        CellsImage = []
+        if self.fluor_img.ndim != self.label_img.ndim:
+            raise ValueError("label_img and fluor_img must have same dims")
 
-        if self.params["classify_cell_cycle"]:
-            print("Cell cycle...")
+        if self.fluor_img.shape != self.label_img.shape:
+            raise ValueError("label_img and fluor_img must have same shape")
+
+        if self.optional_img is not None:
+            if self.optional_img.ndim != self.label_img.ndim:
+                raise ValueError(
+                    "optional_img and label_img must have same dims"
+                )
+            if self.optional_img.shape != self.label_img.shape:
+                raise ValueError(
+                    "optional_img and label_img must have same shape"
+                )
+
+        if self.params["classify_cell_cycle"] and self.optional_img is None:
+            if self._model_requires_dna():
+                raise ValueError(
+                    "Selected cell cycle model requires DNA image, "
+                    "but DNA image is missing."
+                )
+
+        timelapse = self.label_img.ndim == 3
+        self.params["include_frame"] = timelapse
+
+        rows = self._init_rows_dict()
+        all_cells = []
+
+        ccc = None
+        if self.params["classify_cell_cycle"] and not timelapse:
             ccc = CellCycleClassifier(
                 self.fluor_img,
                 self.optional_img,
@@ -1314,125 +1419,119 @@ class CellManager:
                 self.params["custom_model_input"],
                 self.params["custom_model_maxsize"],
             )
-        if self.params["cell_averager"]:
+
+        ca = None
+        if self.params["cell_averager"] and not timelapse:
             print("Cell averager...")
             ca = CellAverager(self.fluor_img)
 
-        if self.params["coloc"]:
+        coloc = None
+        coloc_enabled = self.params["coloc"] and self.optional_img is not None
+        if self.params["coloc"] and self.optional_img is None:
+            print("Colocalization skipped: Optional image not provided.")
+        if coloc_enabled:
             coloc = ColocManager()
 
-        optional_img_cells = self.optional_img * (self.label_img > 0).astype(
-            int
-        )
-        histcounts, binedges = np.histogram(
-            optional_img_cells[np.nonzero(optional_img_cells)], bins="auto"
-        )
-        maxintensity = binedges[np.argmax(histcounts) + 1]
-
-        optimg = self.optional_img.copy()
-        optimg[optimg >= maxintensity] = maxintensity
-        dnathresh = threshold_isodata(optimg[np.nonzero(optimg)])
-
-        proptable = pd.DataFrame(
-            regionprops_table(
-                self.label_img,
-                properties=[
-                    "label",
-                    "bbox",
-                    "centroid",
-                    "orientation",
-                    "axis_minor_length",
-                    "axis_major_length",
-                    "area",
-                    "perimeter",
-                    "eccentricity",
-                ],
-            )
-        )
-
+        n_frames = self.label_img.shape[0] if timelapse else 1
         print("Per cell stats...")
-        label_list = np.unique(self.label_img)
-        for i, l in enumerate(label_list):
 
-            if l == 0:  # BG
-                continue
+        for frame_index in range(n_frames):
+            label_img, fluor_img, optional_img = self._frame_data(frame_index)
 
-            mask = (self.label_img == l).astype(int)
-            c = Cell(
-                label=l,
-                regionmask=mask,
-                intensity=self.fluor_img,
-                properties=proptable[proptable["label"] == l],
-                params=self.params,
-                optional=self.optional_img,
-            )
-
-            if self.params["generate_report"]:
-                All_Cells.append(c.image)
-            if self.params["cell_averager"]:
-                ca.align(c)
-
-            Label.append(c.label)
-            Area.append(c.stats["Area"])
-            Perimeter.append(c.stats["Perimeter"])
-            Eccentricity.append(c.stats["Eccentricity"])
-            Baseline.append(c.stats["Baseline"])
-            CellMedian.append(c.stats["Cell Median"])
-            Membrane_Median.append(c.stats["Membrane Median"])
-            Septum_Median.append(c.stats["Septum Median"])
-            Cytoplasm_Median.append(c.stats["Cytoplasm Median"])
-            Fluor_Ratio.append(c.stats["Fluor Ratio"])
-            Fluor_Ratio_75.append(c.stats["Fluor Ratio 75%"])
-            Fluor_Ratio_25.append(c.stats["Fluor Ratio 25%"])
-            Fluor_Ratio_10.append(c.stats["Fluor Ratio 10%"])
-            if self.params["classify_cell_cycle"]:
-                c.stats["Cell Cycle Phase"] = ccc.classify_cell(c)
-            else:
-                c.stats["Cell Cycle Phase"] = 0
-            CellCyclePhase.append(c.stats["Cell Cycle Phase"])
-            DNARatio.append(
-                self.calculate_DNARatio(c, self.optional_img, dnathresh)
-            )
-            if self.params["coloc"]:
-                coloc.computes_cell_pcc(
-                    self.fluor_img, self.optional_img, c, self.params
+            if self.params["classify_cell_cycle"] and timelapse:
+                ccc = CellCycleClassifier(
+                    fluor_img,
+                    optional_img,
+                    self.params["model"],
+                    self.params["custom_model_path"],
+                    self.params["custom_model_input"],
+                    self.params["custom_model_maxsize"],
                 )
 
-        properties = {}
-        properties["label"] = np.array(Label)
-        properties["Area"] = np.array(Area)
-        properties["Perimeter"] = np.array(Perimeter)
-        properties["Eccentricity"] = np.array(Eccentricity)
-        properties["Baseline"] = np.array(Baseline)
-        properties["Cell Median"] = np.array(CellMedian)
-        properties["Membrane Median"] = np.array(Membrane_Median)
-        properties["Septum Median"] = np.array(Septum_Median)
-        properties["Cytoplasm Median"] = np.array(Cytoplasm_Median)
-        properties["Fluor Ratio"] = np.array(Fluor_Ratio)
-        properties["Fluor Ratio 75%"] = np.array(Fluor_Ratio_75)
-        properties["Fluor Ratio 25%"] = np.array(Fluor_Ratio_25)
-        properties["Fluor Ratio 10%"] = np.array(Fluor_Ratio_10)
-        properties["Cell Cycle Phase"] = np.array(CellCyclePhase)
-        properties["DNA Ratio"] = np.array(DNARatio)
+            dnathresh = self._compute_dna_threshold(label_img, optional_img)
 
-        self.properties = properties
+            proptable = pd.DataFrame(
+                regionprops_table(
+                    label_img,
+                    properties=[
+                        "label",
+                        "bbox",
+                        "centroid",
+                        "orientation",
+                        "axis_minor_length",
+                        "axis_major_length",
+                        "area",
+                        "perimeter",
+                        "eccentricity",
+                    ],
+                )
+            )
 
-        if self.params["cell_averager"]:
+            label_list = np.unique(label_img)
+            for l in label_list:
+                if l == 0:
+                    continue
+
+                mask = (label_img == l).astype(int)
+                c = Cell(
+                    label=l,
+                    regionmask=mask,
+                    intensity=fluor_img,
+                    properties=proptable[proptable["label"] == l],
+                    params=self.params,
+                    optional=optional_img,
+                )
+
+                if self.params["generate_report"]:
+                    all_cells.append(c.image)
+
+                if self.params["cell_averager"]:
+                    ca.fluor = fluor_img
+                    ca.align(c)
+
+                if self.params["classify_cell_cycle"]:
+                    c.stats["Cell Cycle Phase"] = ccc.classify_cell(c)
+                else:
+                    c.stats["Cell Cycle Phase"] = 0
+
+                self._append_cell_row(
+                    rows,
+                    c,
+                    frame_index,
+                    optional_img,
+                    dnathresh,
+                )
+
+                if coloc_enabled:
+                    report_key = str(c.label)
+                    if timelapse:
+                        report_key = f"{frame_index}:{c.label}"
+                    coloc.computes_cell_pcc(
+                        fluor_img,
+                        optional_img,
+                        c,
+                        self.params,
+                        cell_label=report_key,
+                    )
+
+        self.properties = self._rows_to_properties(rows)
+
+        if self.params["cell_averager"] and len(ca.aligned_fluor_masks) > 0:
             ca.average()
             self.heatmap_model = ca.model
 
         if self.params["generate_report"]:
-            self.all_cells = All_Cells
+            self.all_cells = all_cells
             rm = ReportManager(
                 parameters=self.params,
                 properties=self.properties,
-                allcells=All_Cells,
+                allcells=all_cells,
             )
             rm.generate_report(
                 self.params["report_path"],
                 report_id=self.params.get("report_id", None),
             )
-            if self.params["coloc"]:
+            if coloc_enabled:
                 coloc.save_report(
                     rm.cell_data_filename, self.params["find_septum"]
                 )
@@ -1446,16 +1545,20 @@ class CellManager:
         ----------
         cell_object : Cell
             The cell object for which to calculate the DNA ratio.
-        dna_fov : np.ndarray
-            The field of view image containing the DNA signal.
+        dna_fov : np.ndarray or None
+            The field-of-view image containing the DNA signal.
         thresh : float
             The threshold value for determining discernable DNA signal.
 
         Returns
         -------
         float
-            The ratio of discernable DNA signal area to total cell area.
+            The ratio of discernable DNA signal area to total cell area,
+            or NaN when DNA data/threshold is unavailable.
         """
+
+        if dna_fov is None or np.isnan(thresh):
+            return np.nan
 
         x0, y0, x1, y1 = cell_object.box
         cell_mask = cell_object.cell_mask

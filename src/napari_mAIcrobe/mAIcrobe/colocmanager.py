@@ -10,7 +10,8 @@ class ColocManager:
     Attributes
     ----------
     report : dict
-        Mapping of cell label (str) to computed metrics
+        Mapping of identifiers (cell label) (str) to computed metrics. In
+        timelapse mode, uses frame:cell_label as key to distinguish cells across frames.
     """
 
     def __init__(self):
@@ -80,7 +81,9 @@ class ColocManager:
 
         return pearsonr(filtered_1, filtered_2)
 
-    def computes_cell_pcc(self, fluor_image, optional_image, cell, parameters):
+    def computes_cell_pcc(
+        self, fluor_image, optional_image, cell, parameters, cell_label=None
+    ):
         """Compute and store Pearson metrics for a single cell.
 
         Parameters
@@ -93,9 +96,12 @@ class ColocManager:
             Cell object with region masks and bounding box.
         parameters : dict
             Analysis parameters including `find_septum`.
+        cell_label : str or None, optional
+            Optional identifier used as key in `self.report`. Defaults
+            to `cell.label`.
         """
 
-        key = str(cell.label)
+        key = str(cell.label) if cell_label is None else str(cell_label)
         self.report[key] = {}
         x0, y0, x1, y1 = cell.box
 

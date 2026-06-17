@@ -57,4 +57,87 @@ def test_cellmanager_single_cell(membrane_example, dna_example):
     assert lbl.sum() == props["Area"][0]
 
 
+def test_cellmanager_timelapse_combines_frames(membrane_example, dna_example):
+    h, w = membrane_example.shape
+
+    lbl_t0 = np.zeros((h, w), dtype=np.int32)
+    lbl_t1 = np.zeros((h, w), dtype=np.int32)
+    lbl_t0[10:30, 10:30] = 1
+    lbl_t1[20:45, 50:75] = 1
+
+    lbl = np.stack([lbl_t0, lbl_t1], axis=0)
+    membrane = np.stack([membrane_example, membrane_example], axis=0)
+    dna = np.stack([dna_example, dna_example], axis=0)
+
+    params = {
+        "pixel_size": 1.0,
+        "inner_mask_thickness": 4,
+        "septum_algorithm": "Isodata",
+        "baseline_margin": 30,
+        "find_septum": False,
+        "find_openseptum": False,
+        "classify_cell_cycle": False,
+        "model": "S.aureus DNA+Membrane Epi",
+        "custom_model_path": "",
+        "custom_model_input": "Membrane",
+        "custom_model_maxsize": 50,
+        "generate_report": False,
+        "report_path": "",
+        "cell_averager": False,
+        "coloc": False,
+    }
+
+    cm = CellManager(
+        label_img=lbl,
+        fluor=membrane,
+        optional=dna,
+        params=params,
+    )
+    cm.compute_cell_properties()
+
+    props = cm.properties
+    assert props is not None
+    assert "frame" in props
+    assert len(props["label"]) == 2
+    assert set(props["frame"].tolist()) == {0, 1}
+
+
+def test_cellmanager_missing_dna_is_supported(membrane_example):
+    h, w = membrane_example.shape
+    lbl = np.zeros((h, w), dtype=np.int32)
+    lbl[12:44, 18:52] = 1
+
+    params = {
+        "pixel_size": 1.0,
+        "inner_mask_thickness": 4,
+        "septum_algorithm": "Isodata",
+        "baseline_margin": 30,
+        "find_septum": False,
+        "find_openseptum": False,
+        "classify_cell_cycle": False,
+        "model": "S.aureus Membrane Epi",
+        "custom_model_path": "",
+        "custom_model_input": "Membrane",
+        "custom_model_maxsize": 50,
+        "generate_report": False,
+        "report_path": "",
+        "cell_averager": False,
+        "coloc": True,
+    }
+
+    cm = CellManager(
+        label_img=lbl,
+        fluor=membrane_example,
+        optional=None,
+        params=params,
+    )
+    cm.compute_cell_properties()
+
+    props = cm.properties
+    assert props is not None
+    assert "DNA Ratio" in props
+    assert len(props["DNA Ratio"]) == 1
+    assert np.isnan(props["DNA Ratio"][0])
+
+
 # Add more tests that cover different parameters and edge cases

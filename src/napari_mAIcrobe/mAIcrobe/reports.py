@@ -19,7 +19,8 @@ class ReportManager:
     parameters : dict
         Analysis parameters dictionary.
     properties : dict
-        Per-cell properties dictionary (e.g., Label, Area, etc.).
+        Per-cell properties dictionary (e.g., label, frame, Area,
+        etc.).
     allcells : list[numpy.ndarray]
         List of per-cell montage images for visualization.
 
@@ -48,28 +49,42 @@ class ReportManager:
             Per-cell properties.
         allcells : list[numpy.ndarray]
             List of per-cell montage images.
+
+        Notes
+        -----
+        If `allcells` is empty, report metadata is still initialized and
+        CSV export remains available.
         """
 
         self.cells = allcells
 
-        self.max_shape = np.max([cell.shape for cell in self.cells], axis=0)
-
-        paddiffx = [(self.max_shape[0] - cell.shape[0]) for cell in self.cells]
-        paddiffy = [(self.max_shape[1] - cell.shape[1]) for cell in self.cells]
-
-        padx = [(p // 2, p - p // 2) for p in paddiffx]
-        # pady = [(p//2,p-p//2) for p in paddiffy]
-
-        padded_cells = [
-            np.pad(
-                cell,
-                [(padx[idx][0], padx[idx][1]), (0, paddiffy[idx])],
-                mode="constant",
-                constant_values=1,
+        if len(self.cells) > 0:
+            self.max_shape = np.max(
+                [cell.shape for cell in self.cells], axis=0
             )
-            for idx, cell in enumerate(self.cells)
-        ]
-        self.cells = padded_cells
+
+            paddiffx = [
+                (self.max_shape[0] - cell.shape[0]) for cell in self.cells
+            ]
+            paddiffy = [
+                (self.max_shape[1] - cell.shape[1]) for cell in self.cells
+            ]
+
+            padx = [(p // 2, p - p // 2) for p in paddiffx]
+            # pady = [(p//2,p-p//2) for p in paddiffy]
+
+            padded_cells = [
+                np.pad(
+                    cell,
+                    [(padx[idx][0], padx[idx][1]), (0, paddiffy[idx])],
+                    mode="constant",
+                    constant_values=1,
+                )
+                for idx, cell in enumerate(self.cells)
+            ]
+            self.cells = padded_cells
+        else:
+            self.max_shape = (1, 1)
 
         self.properties = properties
         self.params = parameters
@@ -84,6 +99,11 @@ class ReportManager:
         ----------
         filename : str
             Output directory path for the HTML report and images.
+
+        Notes
+        -----
+        HTML content is written only when at least one cell montage is
+        available.
         """
         cells = self.cells
         """generates an html report with the all the cell stats from the
@@ -152,7 +172,7 @@ class ReportManager:
                 selects.append(lin)
 
             report.append(
-                "\n<h1>mAIcrobe Report - <a href='TODO' target='_blank'> https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/user-guide/getting-started.md</a></h1>"
+                "\n<h1>mAIcrobe Report - <a href='https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/user-guide/getting-started.md' target='_blank'> https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/user-guide/getting-started.md</a></h1>"
             )
 
             report.append(

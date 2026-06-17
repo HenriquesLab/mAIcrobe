@@ -114,8 +114,9 @@ def stats_format(params):
     Parameters
     ----------
     params : dict
-        Analysis parameters indicating optional computations (e.g., septum,
-        cell cycle).
+        Analysis parameters indicating optional computations (e.g.,
+        septum, cell cycle). If `include_frame` is True, prepends a
+        `frame` column for report display.
 
     Returns
     -------
@@ -123,12 +124,15 @@ def stats_format(params):
         Pairs of (label, decimals) to include in report.
     """
     result = []
+    if params.get("include_frame", False):
+        result.append(("frame", 0))
+
     result.append(("Area", 3))
     result.append(("Perimeter", 3))
     # result.append(('Length', 3))
     # result.append(('Width', 3))
     result.append(("Eccentricity", 3))
-    # result.append(('Irregularity', 3)) TODO
+    # result.append(('Irregularity', 3))
 
     result.append(("Baseline", 3))
     result.append(("Cell Median", 3))
@@ -141,7 +145,7 @@ def stats_format(params):
         result.append(("Fluor Ratio 75%", 3))
         result.append(("Fluor Ratio 25%", 3))
         result.append(("Fluor Ratio 10%", 3))
-        # result.append(("Memb+Sept Median", 3)) TODO
+        # result.append(("Memb+Sept Median", 3))
 
     if params["classify_cell_cycle"]:
         result.append(("Cell Cycle Phase", 1))

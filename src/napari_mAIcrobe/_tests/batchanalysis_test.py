@@ -96,6 +96,7 @@ def test_run_batch_analysis_outputs(tmp_path):
         binary_closing=0,
         binary_dilation=0,
         binary_fillholes=False,
+        auto_align=False,
         la_blocksize=151,
         la_offset=0.02,
         peak_min_distance_from_edge=10,
@@ -140,3 +141,74 @@ def test_run_batch_analysis_outputs(tmp_path):
 
     assert (output_root / "batch_merged_analysis.csv").exists()
     assert (output_root / "batch_errors.csv").exists()
+
+
+def test_run_batch_analysis_auto_align_applies_alignment(
+    tmp_path, monkeypatch
+):
+    input_root = tmp_path / "batch_input"
+    output_root = tmp_path / "batch_output"
+
+    fov = input_root / "fov_a"
+    base = _make_test_image()
+    membrane = _make_test_image()
+    dna = _make_test_image()
+
+    _write_tif(fov / "phase.tif", base)
+    _write_tif(fov / "mem.tif", membrane)
+    _write_tif(fov / "dna.tif", dna)
+
+    calls = {"count": 0}
+
+    def _fake_align(mask, fluor):
+        calls["count"] += 1
+        return fluor
+
+    monkeypatch.setattr(
+        "napari_mAIcrobe._batchanalysis.mask_alignment", _fake_align
+    )
+
+    summary = run_batch_analysis(
+        input_root=input_root,
+        output_root=output_root,
+        base_pattern="*phase*.tif",
+        membrane_pattern="*mem*.tif",
+        dna_pattern="*dna*.tif",
+        segmentation_algorithm="Isodata",
+        binary_closing=0,
+        binary_dilation=0,
+        binary_fillholes=False,
+        auto_align=True,
+        la_blocksize=151,
+        la_offset=0.02,
+        peak_min_distance_from_edge=10,
+        peak_min_distance=5,
+        peak_min_height=5,
+        max_peaks=100000,
+        unet_model_type="Pretrained",
+        unet_pretrained="Ph.C. S. pneumo",
+        unet_model_path="",
+        stardist_model_type="Pretrained",
+        stardist_pretrained="StarDist S. aureus",
+        stardist_model_path="",
+        pixel_size=1.0,
+        inner_mask_thickness=4,
+        septum_algorithm="Isodata",
+        baseline_margin=30,
+        find_septum=False,
+        find_open_septum=False,
+        classify_cell_cycle=False,
+        model="S.aureus Membrane Epi",
+        custom_model_path="",
+        custom_model_input="Membrane",
+        custom_model_maxsize=50,
+        compute_colocalization=False,
+        generate_per_fov_report=False,
+        save_segmentation_tifs=False,
+        save_merged_csv=False,
+        continue_on_error=False,
+    )
+
+    assert summary["success_fovs"] == 1
+    # One call for membrane + one call for DNA.
+    assert calls["count"] == 2

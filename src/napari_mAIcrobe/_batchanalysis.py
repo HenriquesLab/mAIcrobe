@@ -14,6 +14,7 @@ from magicgui import magic_factory
 from skimage.io import imread, imsave
 
 from .mAIcrobe.cells import CellManager
+from .mAIcrobe.mask import mask_alignment
 from .mAIcrobe.segmentation import (
     cellpose_segmentation,
     classical_segmentation,
@@ -247,6 +248,7 @@ def run_batch_analysis(
     binary_closing: int,
     binary_dilation: int,
     binary_fillholes: bool,
+    auto_align: bool,
     la_blocksize: int,
     la_offset: float,
     peak_min_distance_from_edge: int,
@@ -354,6 +356,11 @@ def run_batch_analysis(
                     labels.astype("uint16"),
                     check_contrast=False,
                 )
+
+            if auto_align:
+                membrane_image = mask_alignment(mask, membrane_image)
+                if dna_image is not None:
+                    dna_image = mask_alignment(mask, dna_image)
 
             params = _cellmanager_params(
                 pixel_size=pixel_size,
@@ -577,6 +584,7 @@ def batch_analysis(
     Binary_closing: int = 0,
     Binary_dilation: int = 0,
     Binary_fillholes: bool = False,
+    Auto_align: bool = False,
     LA_blocksize: int = 151,
     LA_offset: float = 0.02,
     Peak_min_distance_from_edge: int = 10,
@@ -618,6 +626,7 @@ def batch_analysis(
         binary_closing=Binary_closing,
         binary_dilation=Binary_dilation,
         binary_fillholes=Binary_fillholes,
+        auto_align=Auto_align,
         la_blocksize=LA_blocksize,
         la_offset=LA_offset,
         peak_min_distance_from_edge=Peak_min_distance_from_edge,

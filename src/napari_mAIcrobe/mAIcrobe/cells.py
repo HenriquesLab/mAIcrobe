@@ -1,12 +1,14 @@
 import math
+import os
 
 import numpy as np
 import pandas as pd
 from skimage import exposure, morphology
 from skimage.draw import line
 from skimage.filters import threshold_isodata
+from skimage.io import imsave
 from skimage.measure import label, regionprops_table
-from skimage.util import img_as_float
+from skimage.util import img_as_float, img_as_ubyte
 
 from .cellaverager import CellAverager
 from .cellprocessing import bound_rectangle, bounded_point, rotation_matrices
@@ -1407,7 +1409,25 @@ class CellManager:
         self.params["include_frame"] = timelapse
 
         rows = self._init_rows_dict()
-        all_cells = []
+
+        # For timelapse, set up the report directory early so cell images can
+        # be written to disk frame-by-frame without accumulating in memory.
+        # For 2D images, images are still collected in-memory as before.
+        rm_streaming = None
+        streaming_images_dir = None
+        cell_image_counter = 0
+        if self.params["generate_report"] and timelapse:
+            rm_streaming = ReportManager(
+                parameters=self.params,
+                properties={},
+                allcells=[],
+            )
+            streaming_images_dir = rm_streaming.prepare_report_dir(
+                self.params["report_path"],
+                report_id=self.params.get("report_id", None),
+            )
+
+        all_cells = []  # only used for non-timelapse (2D) runs
         report_image_limit = int(self.params.get("report_image_limit", 5000))
         dropped_report_images = 0
 
@@ -1487,7 +1507,19 @@ class CellManager:
                 )
 
                 if self.params["generate_report"]:
-                    if len(all_cells) < report_image_limit:
+                    if timelapse:
+                        # Streaming mode: write directly to disk, don't hold in RAM.
+                        cell_path = os.path.join(
+                            streaming_images_dir,
+                            f"cell_{cell_image_counter}.png",
+                        )
+                        imsave(
+                            cell_path,
+                            img_as_ubyte(c.image),
+                            check_contrast=False,
+                        )
+                        cell_image_counter += 1
+                    elif len(all_cells) < report_image_limit:
                         all_cells.append(c.image)
                     else:
                         dropped_report_images += 1
@@ -1535,11 +1567,21 @@ class CellManager:
                     "to reduce memory usage. CSV contains all cells."
                 )
             self.all_cells = all_cells
-            rm = ReportManager(
-                parameters=self.params,
-                properties=self.properties,
-                allcells=all_cells,
-            )
+
+            if timelapse and rm_streaming is not None:
+                # Streaming mode: images already on disk, just need HTML + CSV.
+                rm_streaming.properties = self.properties
+                rm_streaming.params = self.params
+                from .cellprocessing import stats_format
+
+                rm_streaming.keys = stats_format(self.params)
+                rm = rm_streaming
+            else:
+                rm = ReportManager(
+                    parameters=self.params,
+                    properties=self.properties,
+                    allcells=all_cells,
+                )
             rm.generate_report(
                 self.params["report_path"],
                 report_id=self.params.get("report_id", None),

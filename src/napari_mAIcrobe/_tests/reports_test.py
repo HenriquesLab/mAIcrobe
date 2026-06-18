@@ -29,13 +29,16 @@ def _properties():
 
 
 def test_report_manager_pads_cells_to_common_shape():
+    """Test that max_shape is computed and cells are stored without padding."""
     cells = [np.zeros((2, 3)), np.ones((4, 2))]
 
     report = ReportManager(_params(), _properties(), cells)
 
     assert report.max_shape.tolist() == [4, 3]
-    assert [cell.shape for cell in report.cells] == [(4, 3), (4, 3)]
-    assert report.cells[0][0, 0] == 1
+    # Cells are now stored as-is without padding to save memory
+    assert [cell.shape for cell in report.cells] == [(2, 3), (4, 2)]
+    assert report.cells[0][0, 0] == 0
+    assert report.cells[1][0, 0] == 1
 
 
 def test_generate_report_with_no_cells_still_writes_csv_and_html(tmp_path):
@@ -59,7 +62,8 @@ def test_generate_report_with_cell_writes_image_and_phase_counts(tmp_path):
     report.generate_report(str(tmp_path), report_id="sample")
 
     report_dir = tmp_path / "Report_sample_1"
-    assert (report_dir / "_images" / "all_cells.png").exists()
+    # Per-cell images are now written individually
+    assert (report_dir / "_images" / "cell_0.png").exists()
     html = (report_dir / "html_report_.html").read_text(encoding="utf-16")
     assert "Total cells: 1" in html
     assert "Phase 2 cells: 1" in html

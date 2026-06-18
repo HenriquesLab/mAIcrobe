@@ -72,7 +72,7 @@ class ReportManager:
         self.cell_data_filename = None
 
     def html_report(self, filename):
-        """Write an HTML report composing cell thumbnails and stats.
+        """Write an HTML report with per-cell details or timelapse summary.
 
         Parameters
         ----------
@@ -81,19 +81,33 @@ class ReportManager:
 
         Notes
         -----
-        HTML content is written only when at least one cell montage is
-        available.
+        For timelapse runs with many cells, generates a lightweight summary.
+        For 2D runs, generates detailed per-cell table.
         """
         cells = self.cells
-        """generates an html report with the all the cell stats from the
-        selected cells"""
+        is_timelapse = self.params.get("include_frame", False)
+        num_cells = len(self.properties["label"])
+
+        # For timelapse, cell images were already written to disk per-frame.
+        # Discover them so the HTML table can reference them without re-loading.
+        images_dir = filename + "/_images"
+        if is_timelapse and len(cells) == 0 and os.path.isdir(images_dir):
+            pre_saved_count = len(
+                [
+                    f
+                    for f in os.listdir(images_dir)
+                    if f.startswith("cell_") and f.endswith(".png")
+                ]
+            )
+        else:
+            pre_saved_count = 0
 
         HTML_HEADER = """<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
                         "http://www.w3.org/TR/html4/strict.dtd">
                     <html lang="en">
                       <head>
                         <meta http-equiv="content-type" content="text/html; charset=utf-8">
-                        <title>title</title>
+                        <title>mAIcrobe Report</title>
                         <link rel="stylesheet" type="text/css" href="style.css">
                         <script type="text/javascript" src="script.js"></script>
                       </head>
@@ -101,33 +115,74 @@ class ReportManager:
 
         report = [HTML_HEADER]
 
-        if len(cells) > 0:
-            header = "<table>\n<th>Cell ID</th><th>Images"
-            for k in self.keys:
+        report.append(
+            "\n<h1>mAIcrobe Report - <a href='https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/user-guide/getting-started.md' target='_blank'>mAIcrobe</a></h1>"
+        )
+        report.append("\n<h3>Total cells: " + str(num_cells) + "</h3>")
+
+        if is_timelapse:
+            report.append(
+                "\n<p>Full cell data available in <strong>Analysis.csv</strong></p>"
+            )
+
+        if self.params["classify_cell_cycle"]:
+            _, pcounts = np.unique(
+                list(self.properties["Cell Cycle Phase"]) + [1, 2, 3],
+                return_counts=True,
+            )
+            report.append(
+                "\n<h3>Phase 1 cells: " + str(pcounts[0] - 1) + "</h3>"
+            )
+            report.append(
+                "\n<h3>Phase 2 cells: " + str(pcounts[1] - 1) + "</h3>"
+            )
+            report.append(
+                "\n<h3>Phase 3 cells: " + str(pcounts[2] - 1) + "</h3>"
+            )
+
+        n_display = pre_saved_count if pre_saved_count > 0 else len(cells)
+        if n_display > 0:
+            # Force a dedicated timelapse frame column in HTML output.
+            display_keys = [k for k in self.keys if k[0] != "frame"]
+            header = "<table>\n"
+            if is_timelapse and "frame" in self.properties:
+                header += "<th>Frame</th>"
+            header += "<th>Cell ID</th><th>Images"
+            for k in display_keys:
                 label, digits = k
                 header = header + "</th><th>" + label
             header += "</th>\n"
             selects = ["\n<h1>Selected cells:</h1>\n" + header + "\n"]
 
-            print("Total Cells: " + str(len(cells)))
+            print("Total Cells: " + str(n_display))
 
-            for idx, cell in enumerate(cells):
+            for idx in range(n_display):
                 cell_filename = f"cell_{idx}.png"
-                imsave(
-                    filename + "/_images" + os.sep + cell_filename,
-                    img_as_ubyte(cell),
-                    check_contrast=False,
-                )
+                cell_path = filename + "/_images" + os.sep + cell_filename
 
-                lin = (
-                    "<tr><td>"
+                if pre_saved_count == 0:
+                    # In-memory (2D run): write image now.
+                    cell = cells[idx]
+                    if not os.path.exists(cell_path):
+                        imsave(
+                            cell_path,
+                            img_as_ubyte(cell),
+                            check_contrast=False,
+                        )
+
+                lin = "<tr>"
+                if is_timelapse and "frame" in self.properties:
+                    # Convert to 1-based indexing for easier interpretation.
+                    lin += "<td>" + str(int(self.properties["frame"][idx]) + 1)
+                lin += (
+                    "</td><td>"
                     + str(self.properties["label"][idx])
                     + '</td><td><img src="./_images/'
                     + cell_filename
                     + '" alt="pic" style="max-width: 240px; height: auto;"></td>'
                 )
 
-                for stat in self.keys:
+                for stat in display_keys:
                     lbl, digits = stat
                     number = ("{0:." + str(digits) + "f}").format(
                         self.properties[lbl][idx]
@@ -142,32 +197,6 @@ class ReportManager:
 
                 lin += "</td></tr>\n"
                 selects.append(lin)
-
-            report.append(
-                "\n<h1>mAIcrobe Report - <a href='https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/user-guide/getting-started.md' target='_blank'> https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/user-guide/getting-started.md</a></h1>"
-            )
-
-            report.append(
-                "\n<h3>Total cells: "
-                + str(len(self.properties["label"]))
-                + "</h3>"
-            )
-
-            if self.params["classify_cell_cycle"]:
-                _, pcounts = np.unique(
-                    list(self.properties["Cell Cycle Phase"]) + [1, 2, 3],
-                    return_counts=True,
-                )
-
-                report.append(
-                    "\n<h3>Phase 1 cells: " + str(pcounts[0] - 1) + "</h3>"
-                )
-                report.append(
-                    "\n<h3>Phase 2 cells: " + str(pcounts[1] - 1) + "</h3>"
-                )
-                report.append(
-                    "\n<h3>Phase 3 cells: " + str(pcounts[2] - 1) + "</h3>"
-                )
 
             if len(selects) > 1:
                 report.extend(selects)
@@ -202,6 +231,38 @@ class ReportManager:
         else:
             return filename
 
+    def prepare_report_dir(self, path, report_id=None):
+        """Create the report output directory early for streaming image writes.
+
+        Call this before the analysis loop so cell images can be written to
+        disk frame-by-frame without accumulating them in memory. After the
+        loop, call ``generate_report()`` with the same arguments to write the
+        HTML and CSV; the directory will be reused.
+
+        Parameters
+        ----------
+        path : str
+            Output directory.
+        report_id : str or None, optional
+            Optional report identifier appended to directory name.
+
+        Returns
+        -------
+        str
+            Absolute path to the ``_images`` subdirectory where cell images
+            should be written.
+        """
+        if report_id is None:
+            filename = path + "/Report_1"
+        else:
+            filename = path + "/Report_" + report_id + "_1"
+        filename = self.check_filename(filename)
+        self.cell_data_filename = filename
+        images_dir = filename + "/_images"
+        if not os.path.exists(images_dir):
+            os.makedirs(images_dir)
+        return images_dir
+
     def generate_report(self, path, report_id=None):
         """Generate HTML report and CSV with properties.
 
@@ -217,26 +278,22 @@ class ReportManager:
         Creates directory structure, writes HTML and `Analysis.csv`, and
         sets `self.cell_data_filename`.
         """
-        if report_id is None:
+        # If prepare_report_dir() was already called (streaming mode), reuse
+        # the pre-created directory instead of creating a new one.
+        if self.cell_data_filename is not None:
+            filename = self.cell_data_filename
+        elif report_id is None:
             filename = path + "/Report_1"
             filename = self.check_filename(filename)
             self.cell_data_filename = filename
-
             if not os.path.exists(filename + "/_images"):
                 os.makedirs(filename + "/_images")
-                # os.makedirs(filename + "/_images/membrane")
-                # os.makedirs(filename + "/_images/dna")
-                # os.makedirs(filename + "/_images/crops")
         else:
             filename = path + "/Report_" + report_id + "_1"
             filename = self.check_filename(filename)
             self.cell_data_filename = filename
-
             if not os.path.exists(filename + "/_images"):
                 os.makedirs(filename + "/_images")
-                # os.makedirs(filename + "/_images/membrane")
-                # os.makedirs(filename + "/_images/dna")
-                # os.makedirs(filename + "/_images/crops")
 
         self.html_report(filename)
 

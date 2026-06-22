@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     import napari
 
 import os
+import tempfile
 
 from magicgui.widgets import (
     CheckBox,
@@ -19,6 +20,10 @@ from magicgui.widgets import (
     RadioButtons,
     SpinBox,
     create_widget,
+)
+from nanopyx.methods.drift_alignment import (
+    apply_drift_alignment,
+    estimate_drift_alignment,
 )
 from qtpy import QtWidgets
 from qtpy.QtCore import Qt
@@ -217,6 +222,24 @@ class compute_label(Container):
         self._imgreg = CheckBox(
             label="Perform image registration before segmentation"
         )
+        self._imgreg.changed.connect(self._on_imgreg_changed)
+
+        # Image registration parameters (only show if imgreg is enabled)
+        self._reference = RadioButtons(
+            choices=["First time point", "Previous time point"],
+            label="Reference for image registration",
+            value="First time point",
+        )
+        self._timeaveraging = SpinBox(
+            min=1,
+            max=10000,
+            step=1,
+            value=1,
+            label="Time averaging",
+        )
+        self._maxexpecteddrift = SpinBox(
+            min=0, max=100, step=1, value=0, label="Max expected drift (px)"
+        )
 
         # RUN
         self._run_button = PushButton(label="Run")
@@ -249,7 +272,10 @@ class compute_label(Container):
                 self._max_peaks,  # 22
                 self._timelapse,  # 23
                 self._imgreg,  # 24
-                self._run_button,  # 25
+                self._reference,  # 25
+                self._timeaveraging,  # 26
+                self._maxexpecteddrift,  # 27
+                self._run_button,  # 28
             ],
             labels=True,
         )
@@ -258,6 +284,7 @@ class compute_label(Container):
 
         # Initialize visibility of timelapse checkbox according to number of time points in base image (only show if more than 1 time point)
         self._on_baseimg_changed(self._baseimg_combo.value)
+        self._on_imgreg_changed(self._imgreg.value)
 
     def _on_baseimg_changed(self, new_baseimg):
         """Toggle timelapse checkbox visibility according to number of time points in base image.
@@ -278,6 +305,18 @@ class compute_label(Container):
         else:
             self._timelapse.visible = False
             self._imgreg.visible = False
+
+    def _on_imgreg_changed(self, new_value: bool):
+        """Toggle image registration parameters visibility according to imgreg checkbox.
+
+        Parameters
+        ----------
+        new_value : bool
+            Whether image registration is enabled or not.
+        """
+        self._reference.visible = new_value
+        self._timeaveraging.visible = new_value
+        self._maxexpecteddrift.visible = new_value
 
     def _on_algorithm_changed(self, new_algorithm: str):
         """Toggle parameter widgets according to algorithm choice.
@@ -420,6 +459,44 @@ class compute_label(Container):
         }
 
         _timelapse = self._timelapse.value and len(_baseimg.data.shape) == 3
+        _imgreg = self._imgreg.value and _timelapse
+        _reference = 0 if self._reference.value == "First time point" else 1
+        _timeaveraging = self._timeaveraging.value
+        _maxexpecteddrift = self._maxexpecteddrift.value
+
+        if _imgreg:
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                _registered_base_img = estimate_drift_alignment(
+                    _baseimg.data,
+                    save_as_npy=True,
+                    save_drift_table_path=temp_dir,
+                    ref_option=_reference,
+                    time_averaging=_timeaveraging,
+                    max_expected_drift=_maxexpecteddrift,
+                    apply=True,
+                )
+
+                if _fluor1 != _baseimg and _fluor1 is not None:
+
+                    _registered_fluor1 = apply_drift_alignment(
+                        _fluor1.data,
+                        path=os.path.join(temp_dir, "_drift_table.npy"),
+                    )
+
+                    _fluor1.data = _registered_fluor1
+                    self._viewer.layers[_fluor1.name].data = _registered_fluor1
+
+                if _fluor2 != _baseimg and _fluor2 is not None:
+                    _registered_fluor2 = apply_drift_alignment(
+                        _fluor2.data,
+                        path=os.path.join(temp_dir, "_drift_table.npy"),
+                    )
+                    _fluor2.data = _registered_fluor2
+                    self._viewer.layers[_fluor2.name].data = _registered_fluor2
+
+                _baseimg.data = _registered_base_img
+                self._viewer.layers[_baseimg.name].data = _registered_base_img
 
         if _algorithm == "Unet":
             if _timelapse:

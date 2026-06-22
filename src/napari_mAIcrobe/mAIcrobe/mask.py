@@ -5,8 +5,7 @@ Module that contains the logic for mask computation
 import numpy as np
 from scipy import ndimage, signal
 from skimage.filters import threshold_isodata, threshold_local
-from skimage.morphology import binary_closing, binary_dilation
-from skimage.transform import EuclideanTransform, warp
+from skimage.morphology import binary_closing, binary_dilation, binary_erosion
 
 
 def mask_computation(
@@ -52,8 +51,12 @@ def mask_computation(
         )  # computing where pxs are bigger than zero in case of img registration
         mask = mask.astype(int)
         mask = 1 - mask
-        # mask should not exist where base image is zero, so we set those pixels to zero in the mask
-        mask[base_image == 0] = 0
+        # Zero out the contour
+        support = base_image > 0  # non zero values
+        support_border = support & ~binary_erosion(
+            support
+        )  # erosion removes the border of the nonzero values
+        mask[support_border] = 0
 
     elif algorithm == "Local Average":
         if blocksize % 2 == 0:

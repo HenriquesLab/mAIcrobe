@@ -47,9 +47,14 @@ def mask_computation(
 
     # Binarization
     if algorithm == "Isodata":
-        mask = base_image > threshold_isodata(base_image)
+        mask = base_image > threshold_isodata(
+            base_image[base_image > 0]
+        )  # computing where pxs are bigger than zero in case of img registration
         mask = mask.astype(int)
         mask = 1 - mask
+        # mask should not exist where base image is zero, so we set those pixels to zero in the mask
+        mask[base_image == 0] = 0
+
     elif algorithm == "Local Average":
         if blocksize % 2 == 0:
             blocksize += 1

@@ -24,7 +24,7 @@ def test_mask_computation_local_average_even_blocksize_is_supported():
 
 def test_mask_computation_can_fill_holes():
     image = np.ones((20, 20), dtype=float)
-    image[4:16, 4:16] = 0
+    image[4:16, 4:16] = 0.01
     image[8:12, 8:12] = 1
 
     unfilled = mask_computation(image, closing=0, fillholes=False)

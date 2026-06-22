@@ -19,11 +19,12 @@ from magicgui.widgets import (
     FileEdit,
     PushButton,
     RadioButtons,
+    SpinBox,
     create_widget,
 )
 from skimage.exposure import rescale_intensity
 from skimage.measure import regionprops_table
-from skimage.transform import resize
+from skimage.transform import resize as skresize
 from skimage.util import img_as_float
 
 
@@ -135,6 +136,13 @@ class compute_pickles(Container):
             value="", mode="d", label="Path to save pickles"
         )
 
+        self._max_dim = SpinBox(
+            min=1,
+            max=2048,
+            value=100,
+            label="Max size before resize",
+        )
+
         self._run_button = PushButton(label="Save Pickle")
         self._run_button.clicked.connect(self._on_run)
 
@@ -148,10 +156,60 @@ class compute_pickles(Container):
                 self.channelone_combo,
                 self.channeltwo_combo,
                 self._path2save,
+                self._max_dim,
                 self._run_button,
             ],
             labels=True,
         )
+
+    def _preprocess_image(self, image: np.ndarray, max_dim: int) -> np.ndarray:
+        """Mirror classifier preprocessing before the fixed 100x100 resize.
+
+        Pads or center-crops a 2D image to (max_dim, max_dim), matching
+        CellCycleClassifier.preprocess_image behavior.
+        """
+
+        h, w = image.shape
+        lines_to_add = max_dim - h
+        columns_to_add = max_dim - w
+
+        if lines_to_add > 0:
+            if lines_to_add % 2 == 0:
+                new_line = np.zeros((int(lines_to_add / 2), w))
+                image = np.concatenate((new_line, image, new_line), axis=0)
+            else:
+                new_line_top = np.zeros((int(lines_to_add / 2) + 1, w))
+                new_line_bot = np.zeros((int(lines_to_add / 2), w))
+                image = np.concatenate(
+                    (new_line_top, image, new_line_bot), axis=0
+                )
+        elif lines_to_add < 0:
+            if (lines_to_add * -1) % 2 == 0:
+                cutsize = int((lines_to_add * -1) / 2)
+                image = image[cutsize : h - cutsize, :]
+            else:
+                cutsize = int((lines_to_add * -1) / 2)
+                image = image[cutsize : h - cutsize - 1, :]
+
+        if columns_to_add > 0:
+            if columns_to_add % 2 == 0:
+                columns = np.zeros((max_dim, int(columns_to_add / 2)))
+                image = np.concatenate((columns, image, columns), axis=1)
+            else:
+                columns_left = np.zeros((max_dim, int(columns_to_add / 2) + 1))
+                columns_right = np.zeros((max_dim, int(columns_to_add / 2)))
+                image = np.concatenate(
+                    (columns_left, image, columns_right), axis=1
+                )
+        elif columns_to_add < 0:
+            if (columns_to_add * -1) % 2 == 0:
+                cutsize = int((columns_to_add * -1) / 2)
+                image = image[:, cutsize : w - cutsize]
+            else:
+                cutsize = int((columns_to_add * -1) / 2)
+                image = image[:, cutsize : w - cutsize - 1]
+
+        return img_as_float(image)
 
     def _on_channel_change(self):
         """
@@ -200,6 +258,7 @@ class compute_pickles(Container):
         label_layer = self._label_combo.value
         points_layer = self._points_combo.value
         path2save = self._path2save.value
+        max_dim = int(getattr(getattr(self, "_max_dim", None), "value", 100))
         maxrow, maxcol = label_layer.data.shape
 
         if not os.path.exists(path2save):
@@ -290,67 +349,44 @@ class compute_pickles(Container):
             )
 
             cell_label = (
-                label_layer.data[bbox[0] : bbox[2], bbox[1] : bbox[3]] == label
+                label_layer.data[bbox[0] : bbox[2] + 1, bbox[1] : bbox[3] + 1]
+                == label
             )
             cell_channel1 = rescale_intensity(
                 img_as_float(
-                    membimg[bbox[0] : bbox[2], bbox[1] : bbox[3]] * cell_label
+                    membimg[bbox[0] : bbox[2] + 1, bbox[1] : bbox[3] + 1]
+                    * cell_label
                 )
             )
             if dnaimg is not None:
                 cell_channel2 = rescale_intensity(
                     img_as_float(
-                        dnaimg[bbox[0] : bbox[2], bbox[1] : bbox[3]]
+                        dnaimg[bbox[0] : bbox[2] + 1, bbox[1] : bbox[3] + 1]
                         * cell_label
                     )
                 )
             else:
                 cell_channel2 = None
 
-            cropnrow, cropncol = cell_channel1.shape
-            # Symmetric padding to make the crop square
-            if cropnrow > cropncol:
-                pad = cropnrow - cropncol
-                padleft = pad // 2
-                padright = pad - padleft
-                cell_channel1 = np.pad(
-                    cell_channel1,
-                    ((0, 0), (padleft, padright)),
-                    mode="constant",
-                    constant_values=0,
-                )
-                if cell_channel2 is not None:
-                    cell_channel2 = np.pad(
-                        cell_channel2,
-                        ((0, 0), (padleft, padright)),
-                        mode="constant",
-                        constant_values=0,
-                    )
-            elif cropncol > cropnrow:
-                pad = cropncol - cropnrow
-                padtop = pad // 2
-                padbottom = pad - padtop
-                cell_channel1 = np.pad(
-                    cell_channel1,
-                    ((padtop, padbottom), (0, 0)),
-                    mode="constant",
-                    constant_values=0,
-                )
-                if cell_channel2 is not None:
-                    cell_channel2 = np.pad(
-                        cell_channel2,
-                        ((padtop, padbottom), (0, 0)),
-                        mode="constant",
-                        constant_values=0,
-                    )
-
-            # resize to 100x100
-            cell_channel1 = resize(
-                cell_channel1, (100, 100), anti_aliasing=False
+            cell_channel1 = self._preprocess_image(cell_channel1, max_dim)
+            # Keep final tensor size identical to classifier input expectations.
+            cell_channel1 = skresize(
+                cell_channel1,
+                (100, 100),
+                order=0,
+                preserve_range=True,
+                anti_aliasing=False,
+                anti_aliasing_sigma=None,
             )
             if cell_channel2 is not None:
-                cell_channel2 = resize(
-                    cell_channel2, (100, 100), anti_aliasing=False
+                cell_channel2 = self._preprocess_image(cell_channel2, max_dim)
+                cell_channel2 = skresize(
+                    cell_channel2,
+                    (100, 100),
+                    order=0,
+                    preserve_range=True,
+                    anti_aliasing=False,
+                    anti_aliasing_sigma=None,
                 )
 
             # side by side if needed

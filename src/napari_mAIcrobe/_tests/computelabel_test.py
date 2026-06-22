@@ -62,6 +62,7 @@ def _instance(algorithm="Isodata", timelapse=False, autoalign=False):
     obj._peak_min_height = DummyWidget(1)
     obj._max_peaks = DummyWidget(10)
     obj._timelapse = DummyWidget(timelapse)
+    obj._imgreg = DummyWidget(timelapse)
     return obj
 
 

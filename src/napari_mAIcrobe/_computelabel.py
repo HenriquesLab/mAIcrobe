@@ -214,6 +214,9 @@ class compute_label(Container):
 
         # TIME LAPSE
         self._timelapse = CheckBox(label="Run analysis for all time points")
+        self._imgreg = CheckBox(
+            label="Perform image registration before segmentation"
+        )
 
         # RUN
         self._run_button = PushButton(label="Run")
@@ -245,7 +248,8 @@ class compute_label(Container):
                 self._peak_min_height,  # 21
                 self._max_peaks,  # 22
                 self._timelapse,  # 23
-                self._run_button,  # 24
+                self._imgreg,  # 24
+                self._run_button,  # 25
             ],
             labels=True,
         )
@@ -265,12 +269,15 @@ class compute_label(Container):
         """
         if new_baseimg is None:
             self._timelapse.visible = False
+            self._imgreg.visible = False
             return
 
         if len(new_baseimg.data.shape) == 3:
             self._timelapse.visible = True
+            self._imgreg.visible = True
         else:
             self._timelapse.visible = False
+            self._imgreg.visible = False
 
     def _on_algorithm_changed(self, new_algorithm: str):
         """Toggle parameter widgets according to algorithm choice.

@@ -21,13 +21,14 @@ from magicgui.widgets import (
     SpinBox,
     create_widget,
 )
-from nanopyx.methods.drift_alignment import (
-    apply_drift_alignment,
-    estimate_drift_alignment,
-)
 from qtpy import QtWidgets
 from qtpy.QtCore import Qt
 
+from .mAIcrobe.drift_alignment import (
+    apply_drift_alignment,
+    estimate_drift_alignment,
+)
+from .mAIcrobe.label_assignment import relabel_timelapse_labels
 from .mAIcrobe.mask import mask_alignment
 from .mAIcrobe.segmentation import (
     batch_cellpose_segmentation,
@@ -219,6 +220,11 @@ class compute_label(Container):
 
         # TIME LAPSE
         self._timelapse = CheckBox(label="Run analysis for all time points")
+        self._enable_tracking = CheckBox(
+            label="Enable frame-to-frame cell tracking",
+            value=True,
+            visible=False,
+        )
         self._imgreg = CheckBox(
             label="Perform image registration before segmentation"
         )
@@ -275,7 +281,8 @@ class compute_label(Container):
                 self._reference,  # 25
                 self._timeaveraging,  # 26
                 self._maxexpecteddrift,  # 27
-                self._run_button,  # 28
+                self._enable_tracking,  # 28
+                self._run_button,  # 29
             ],
             labels=True,
         )
@@ -297,14 +304,17 @@ class compute_label(Container):
         if new_baseimg is None:
             self._timelapse.visible = False
             self._imgreg.visible = False
+            self._enable_tracking.visible = False
             return
 
         if len(new_baseimg.data.shape) == 3:
             self._timelapse.visible = True
             self._imgreg.visible = True
+            self._enable_tracking.visible = True
         else:
             self._timelapse.visible = False
             self._imgreg.visible = False
+            self._enable_tracking.visible = False
 
     def _on_imgreg_changed(self, new_value: bool):
         """Toggle image registration parameters visibility according to imgreg checkbox.
@@ -459,6 +469,7 @@ class compute_label(Container):
         }
 
         _timelapse = self._timelapse.value and len(_baseimg.data.shape) == 3
+        _enable_tracking = self._enable_tracking.value and _timelapse
         _imgreg = self._imgreg.value and _timelapse
         _reference = 0 if self._reference.value == "First time point" else 1
         _timeaveraging = self._timeaveraging.value
@@ -565,6 +576,9 @@ class compute_label(Container):
                     _binary_fillholes,
                     _pars,
                 )
+
+        if _enable_tracking:
+            labels = relabel_timelapse_labels(labels)
 
         # add mask to viewer
         self._viewer.add_labels(mask, name="Mask")

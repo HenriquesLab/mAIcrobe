@@ -62,6 +62,8 @@ def _instance(algorithm="Isodata", timelapse=False, autoalign=False):
     obj._peak_min_height = DummyWidget(1)
     obj._max_peaks = DummyWidget(10)
     obj._timelapse = DummyWidget(timelapse)
+    obj._enable_tracking = DummyWidget(True)
+    obj._enable_tracking.visible = False
     obj._imgreg = DummyWidget(False)
     obj._reference = DummyWidget(0)
     obj._timeaveraging = DummyWidget(1)
@@ -147,3 +149,54 @@ def test_compute_dispatches_timelapse_unet_and_autoaligns(monkeypatch):
     assert obj._viewer.layers["fluor1"].data.shape == (2, 4, 4)
     assert np.all(obj._viewer.layers["fluor1"].data == 6)
     assert np.all(obj._viewer.layers["fluor2"].data == 6)
+
+
+def test_compute_timelapse_relabels_labels_for_tracking(monkeypatch):
+    obj = _instance("Unet", timelapse=True, autoalign=False)
+    mask = np.ones((2, 4, 4), dtype=np.uint16)
+    labels = np.zeros((2, 4, 4), dtype=np.uint16)
+    labels[0, 1:3, 1:3] = 1
+    labels[1, 1:3, 1:3] = 9
+
+    monkeypatch.setattr(
+        _computelabel,
+        "batch_unet_segmentation",
+        lambda *args: (mask, labels),
+    )
+
+    obj.compute()
+
+    tracked = obj._viewer.layers["Labels"].data
+    assert tracked.shape == (2, 4, 4)
+    assert set(np.unique(tracked[0]).tolist()) == {0, 1}
+    assert set(np.unique(tracked[1]).tolist()) == {0, 1}
+
+
+def test_tracking_checkbox_visible_for_timelapse():
+    obj = _instance(timelapse=False)
+    assert obj._enable_tracking.visible is False
+
+    obj._on_baseimg_changed(SimpleNamespace(data=np.zeros((2, 3, 3))))
+    assert obj._enable_tracking.visible is True
+
+
+def test_tracking_disabled_skips_relabeling(monkeypatch):
+    obj = _instance("Unet", timelapse=True, autoalign=False)
+    obj._enable_tracking.value = False
+    mask = np.ones((2, 4, 4), dtype=np.uint16)
+    labels = np.zeros((2, 4, 4), dtype=np.uint16)
+    labels[0, 1:3, 1:3] = 1
+    labels[1, 1:3, 1:3] = 9
+
+    monkeypatch.setattr(
+        _computelabel,
+        "batch_unet_segmentation",
+        lambda *args: (mask, labels),
+    )
+
+    obj.compute()
+
+    result = obj._viewer.layers["Labels"].data
+    assert result.shape == (2, 4, 4)
+    assert set(np.unique(result[0]).tolist()) == {0, 1}
+    assert set(np.unique(result[1]).tolist()) == {0, 9}

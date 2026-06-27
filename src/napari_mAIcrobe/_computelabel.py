@@ -468,9 +468,10 @@ class compute_label(Container):
             "max_peaks": self._max_peaks.value,
         }
 
-        _timelapse = self._timelapse.value and len(_baseimg.data.shape) == 3
+        _is_stack = len(_baseimg.data.shape) == 3
+        _timelapse = self._timelapse.value and _is_stack
         _enable_tracking = self._enable_tracking.value and _timelapse
-        _imgreg = self._imgreg.value and _timelapse
+        _imgreg = self._imgreg.value and _is_stack
         _reference = 0 if self._reference.value == "First time point" else 1
         _timeaveraging = self._timeaveraging.value
         _maxexpecteddrift = self._maxexpecteddrift.value
@@ -478,7 +479,8 @@ class compute_label(Container):
         if _imgreg:
 
             with tempfile.TemporaryDirectory() as temp_dir:
-                _registered_base_img = estimate_drift_alignment(
+
+                base_result = estimate_drift_alignment(
                     _baseimg.data,
                     save_as_npy=True,
                     save_drift_table_path=temp_dir,
@@ -486,25 +488,65 @@ class compute_label(Container):
                     time_averaging=_timeaveraging,
                     max_expected_drift=_maxexpecteddrift,
                     apply=True,
+                    return_drift_table=True,
                 )
 
-                if _fluor1 != _baseimg and _fluor1 is not None:
-
-                    _registered_fluor1 = apply_drift_alignment(
-                        _fluor1.data,
-                        path=os.path.join(temp_dir, "_drift_table.npy"),
+                if base_result is None:
+                    raise RuntimeError(
+                        "Drift registration failed for Base Image."
                     )
 
-                    _fluor1.data = _registered_fluor1
-                    self._viewer.layers[_fluor1.name].data = _registered_fluor1
+                _registered_base_img, drift_table = base_result
 
-                if _fluor2 != _baseimg and _fluor2 is not None:
-                    _registered_fluor2 = apply_drift_alignment(
-                        _fluor2.data,
-                        path=os.path.join(temp_dir, "_drift_table.npy"),
-                    )
-                    _fluor2.data = _registered_fluor2
-                    self._viewer.layers[_fluor2.name].data = _registered_fluor2
+                if _fluor1 is not None and _fluor1 is not _baseimg:
+
+                    if (
+                        _fluor1.data.ndim != 3
+                        or _fluor1.data.shape[0] != _baseimg.data.shape[0]
+                    ):
+                        print(
+                            "Image registration skipped for Fluor 1: "
+                            "expected timelapse data with same number of frames as Base Image."
+                        )
+                    else:
+                        _registered_fluor1 = apply_drift_alignment(
+                            _fluor1.data,
+                            drift_table=drift_table,
+                        )
+
+                        _fluor1.data = _registered_fluor1
+                        self._viewer.layers[
+                            _fluor1.name
+                        ].data = _registered_fluor1
+                        self._viewer.layers[_fluor1.name].refresh()
+                        print("Image registration applied to Fluor 1.")
+
+                if (
+                    _fluor2 is not None
+                    and _fluor2 is not _baseimg
+                    and _fluor2 is not _fluor1
+                ):
+
+                    if (
+                        _fluor2.data.ndim != 3
+                        or _fluor2.data.shape[0] != _baseimg.data.shape[0]
+                    ):
+                        print(
+                            "Image registration skipped for Fluor 2: "
+                            "expected timelapse data with same number of frames as Base Image."
+                        )
+                    else:
+                        _registered_fluor2 = apply_drift_alignment(
+                            _fluor2.data,
+                            drift_table=drift_table,
+                        )
+
+                        _fluor2.data = _registered_fluor2
+                        self._viewer.layers[
+                            _fluor2.name
+                        ].data = _registered_fluor2
+                        self._viewer.layers[_fluor2.name].refresh()
+                        print("Image registration applied to Fluor 2.")
 
                 _baseimg.data = _registered_base_img
                 self._viewer.layers[_baseimg.name].data = _registered_base_img
@@ -593,6 +635,7 @@ class compute_label(Container):
             self._viewer.layers[_fluor2.name].data = aligned_fluor_2
 
         elif _autoalign and _timelapse:
+
             for i in range(mask.shape[0]):
                 aligned_fluor_1 = mask_alignment(
                     mask[i, :, :], _fluor1.data[i, :, :]

@@ -19,6 +19,7 @@ def estimate_drift_alignment(
     save_as_npy=True,
     save_drift_table_path=None,
     roi=None,
+    return_drift_table=False,
     **kwargs
 ):
     """
@@ -28,7 +29,10 @@ def estimate_drift_alignment(
     :param save_drift_table_path (optional): str, path to save drift table
     :param roi (optional): in case of use should have shape (x0, y0, x1, y1)
     :param kwargs: additional keyword arguments
-    :return: aligned image as numpy array
+    :param return_drift_table (optional): bool, if True returns
+        `(aligned_image, estimator_table)`.
+    :return: aligned image as numpy array, or tuple with estimator table
+        when `return_drift_table=True`
     """
     estimator = DriftEstimator()
     corrected_img = estimator.estimate(image_array, roi=roi, **kwargs)
@@ -36,6 +40,8 @@ def estimate_drift_alignment(
     estimator.save_drift_table(
         save_as_npy=save_as_npy, path=save_drift_table_path
     )
+    if corrected_img is not None and return_drift_table:
+        return corrected_img, estimator.estimator_table
     if corrected_img is not None:
         return corrected_img
     else:

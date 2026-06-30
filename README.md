@@ -8,7 +8,7 @@
 
 # mAIcrobe
 
-<img src="docs/logowhitebg.png" align="right" width="200" style="margin-left: 20px;"/>
+<img src="https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/logowhitebg.png?raw=true" align="right" width="200" style="margin-left: 20px;"/>
 
 **mAIcrobe: a napari plugin for microbial image analysis.**
 
@@ -18,7 +18,7 @@ mAIcrobe is a comprehensive napari plugin that facilitates image analysis workfl
 
 ## Video Showcase
 
-[![Video](docs/Images/Screenshotyoutube.png)](https://youtu.be/UQ-dgATCgkU)
+[![Video](https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/Images/Screenshotyoutube.png?raw=true)](https://youtu.be/UQ-dgATCgkU)
 
 ## ✨ Why mAIcrobe?
 
@@ -56,7 +56,7 @@ cd mAIcrobe
 pip install -e .
 ```
 
-**🎯 [Detailed Installation Instructions →](docs/user-guide/getting-started.md#-installation)**
+**🎯 [Detailed Installation Instructions →](https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/user-guide/getting-started.md)**
 
 ## 🏆 Key Features
 
@@ -68,7 +68,7 @@ pip install -e .
 
 ### 🧠 **Single cell Classification**
 - **Pre-trained Models**: *S. aureus* cell cycle and *E. coli* antibiotic phenotyping
-- **Custom Model Support**: Build your training dataset in napari with out custom [widget](docs/tutorials/generate_trainingdata.md), train using our jupyter notebook and load your own TensorFlow models,
+- **Custom Model Support**: Build your training dataset in napari with out custom [widget](https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/tutorials/generate_trainingdata.md), train using our jupyter notebook and load your own TensorFlow models,
 
 ### 📊 **Comprehensive Morphometry**
 - **Shape Analysis**: Area, perimeter, eccentricity
@@ -79,17 +79,17 @@ pip install -e .
 
 | Guide | Purpose |
 |-------|---------|
-| **[🚀 Getting Started](docs/user-guide/getting-started.md)** | Installation to first analysis using sample data|
-| **[🔬 Segmentation Guide](docs/user-guide/segmentation-guide.md)** | Explore the available segmentation methods|
-| **[📊 Cell Analysis](docs/user-guide/cell-analysis.md)** | Explore complete analysis workflow and check the metrics measured |
-| **[🧠 Cell Classification Guide](docs/user-guide/cell-classification.md)** | Explore the available classification models |
-| **[⏱️ Timelapse Analysis](docs/user-guide/timelapse-analysis.md)** | Analyze `(T, Y, X)` data with optional registration and relabeling |
-| **[📁 Batch Analysis Workflow](docs/user-guide/batch-analysis-workflow.md)** | Process many FoVs from one root folder and export merged tables |
+| **[🚀 Getting Started](https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/user-guide/getting-started.md)** | Installation to first analysis using sample data|
+| **[🔬 Segmentation Guide](https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/user-guide/segmentation-guide.md)** | Explore the available segmentation methods|
+| **[📊 Cell Analysis](https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/user-guide/cell-analysis.md)** | Explore complete analysis workflow and check the metrics measured |
+| **[🧠 Cell Classification Guide](https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/user-guide/cell-classification.md)** | Explore the available classification models |
+| **[⏱️ Timelapse Analysis](https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/user-guide/timelapse-analysis.md)** | Analyze `(T, Y, X)` data with optional registration and relabeling |
+| **[📁 Batch Analysis Workflow](https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/user-guide/batch-analysis.md)** | Process many FoVs from one root folder and export merged tables |
 
 | Tutorial | Purpose |
 |-------|---------|
-| **[🎨 Basic Workflow](docs/tutorials/basic-workflow.md)** | Step-by-step guide with a simple example (<5 minutes)|
-| **[🛠️ Generate Training Data](docs/tutorials/generate_trainingdata.md)** | Create annotated datasets for custom model training |
+| **[🎨 Basic Workflow](https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/tutorials/basic-workflow.md)** | Step-by-step guide with a simple example (<5 minutes)|
+| **[🛠️ Generate Training Data](https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/tutorials/generate_trainingdata.md)** | Create annotated datasets for custom model training |
 
 
 | Video | Purpose |
@@ -100,15 +100,15 @@ pip install -e .
 
 
 **For programmatic usage:**
-| **[⚙️ API Reference](docs/api/api-reference.md)**
+| **[⚙️ API Reference](https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/api/api-reference.md)**
 
 
 ## 📚 Available Jupyter Notebooks
 
 Explore advanced functionality with included notebooks:
 
-- **[Cell Cycle Model Training](notebooks/napari_mAIcrobe_cellcyclemodel.ipynb)**: To train custom classification models
-- **[StarDist Segmentation](notebooks/StarDistSegmentationTraining.ipynb)**: To retrain a StarDist segmentation model
+- **[Cell Cycle Model Training](https://github.com/HenriquesLab/mAIcrobe/blob/main/notebooks/napari_mAIcrobe_cellcyclemodel.ipynb)**: To train custom classification models
+- **[StarDist Segmentation](https://github.com/HenriquesLab/mAIcrobe/blob/main/notebooks/StarDistSegmentationTraining.ipynb)**: To retrain a StarDist segmentation model
 
 ## 🤝 Community
 
@@ -171,6 +171,6 @@ mAIcrobe is developed in the [Henriques](https://henriqueslab.org) and [Pinho](h
 
 *"Advancing microbiology through AI-powered image analysis."*
 
-**[🚀 Get Started →](docs/user-guide/getting-started.md)** | **[⏱️ Timelapse Guide →](docs/user-guide/timelapse-analysis.md)** | **[📁 Batch Workflow →](docs/user-guide/batch-analysis-workflow.md)** | **[⚙️ API Docs →](docs/api/api-reference.md)**
+**[🚀 Get Started →](https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/user-guide/getting-started.md)** | **[⏱️ Timelapse Guide →](https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/user-guide/timelapse-analysis.md)** | **[📁 Batch Workflow →](https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/user-guide/batch-analysis.md)** | **[⚙️ API Docs →](https://github.com/HenriquesLab/mAIcrobe/blob/main/docs/api/api-reference.md)**
 
 </div>

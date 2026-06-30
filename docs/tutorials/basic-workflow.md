@@ -4,6 +4,9 @@ This step-by-step tutorial will guide you through a complete bacterial cell anal
 
 Check out the [video version of this tutorial](https://youtu.be/UQ-dgATCgkU) for a quick walkthrough!
 
+If you are looking for a more in depth guide you can check our [Full workflow video](https://youtu.be/szYAi0zSKSA)!
+
+
 ## 🎯 Tutorial Goals
 
 By the end of this tutorial, you will:
@@ -250,5 +253,7 @@ Congratulations on completing your first mAIcrobe analysis! 🎉
 ### 🚀 Next Steps:
 - **[Cell Analysis Guide](../user-guide/cell-analysis.md)** - Detailed analysis options
 - **[Cell Classification Guide](../user-guide/cell-classification.md)** - Deep learning classification
+- **[Timelapse Analysis Guide](../user-guide/timelapse-analysis.md)** - Workflows for 2D+t datasets
 - **[Segmentation Guide](../user-guide/segmentation-guide.md)** - Advanced segmentation methods
+- **[Batch Analysis Workflow](batch-analysis-workflow.md)** - Process multiple FoVs from a folder
 - **[API Reference](../api/api-reference.md)** - Programmatic control

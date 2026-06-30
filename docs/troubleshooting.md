@@ -84,6 +84,49 @@ conda install -c conda-forge napari
 pip install napari-mAIcrobe
 ```
 
+## 🧪 Timelapse and Batch Analysis Issues
+
+### Timelapse frame mismatch
+
+**Error:** Timelapse channels fail validation or registration is skipped
+
+**Cause:** Base and fluorescence stacks do not have the same number of frames.
+
+**Solution:**
+- Ensure all timelapse channels have identical shape `(T, Y, X)`
+- Verify that all channels correspond to the same field of view and acquisition order
+
+### Unstable IDs across timelapse frames
+
+**Issue:** Label IDs appear inconsistent from frame to frame
+
+**Cause:** Relabeling was not enabled or overlap between consecutive frames is very low.
+
+**Solution:**
+- Enable label reassignment in timelapse segmentation workflows when available
+- Improve segmentation quality and registration to increase frame-to-frame overlap
+
+### Batch run finds no FoVs
+
+**Error:** No FoV folders with TIFF files were found
+
+**Solution:**
+- Set `Input_root` to the parent directory containing FoV subfolders
+- Ensure FoV folders are direct children of `Input_root`
+- Ensure each FoV folder contains at least one `.tif` or `.tiff` file
+
+### Batch run creates many failed FoVs
+
+**Issue:** `batch_errors.csv` contains many rows
+
+**Common causes:**
+- Channel naming patterns do not match file names
+- Missing required channel files in some FoVs
+
+**Solution:**
+- Validate filename patterns on 2-3 FoVs before running full batches
+- Keep naming conventions consistent across all FoV subfolders
+
 ## 📞 Getting Help
 
 ### Before Asking for Help

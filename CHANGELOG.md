@@ -5,6 +5,25 @@ All notable changes to mAIcrobe will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Timelapse image support for segmentation and analysis workflows
+- Optional timelapse label reassignment to stabilize IDs across consecutive frames
+- Optional timelapse image registration before segmentation
+- Batch analysis workflow for processing one root folder containing multiple FoVs
+- New documentation pages for timelapse and batch workflows
+
+### Changed
+- Updated bundled *E. coli* antibiotic phenotyping classification model
+- Expanded API reference for timelapse and batch-related modules
+
+### Fixed
+- Multiple bug fixes across widget and analysis workflows
+
+### Tests
+- Added and updated automated tests for timelapse, label assignment, and batch analysis paths
+
 ## [0.0.2] - New release
 
 ### Added

@@ -62,9 +62,9 @@ mAIcrobe includes 7 specialized models optimized for different imaging condition
 
 | Actual \ Predicted (%) | Class 1 (control) | Class 2 (Mecillinam) | Class 3 (Nalidixate) |
 |------------------------|-------------------|----------------------|----------------------|
-| **Phase 1**            | 88                | 0                    | 12                   |
-| **Phase 2**            | 14                | 82                   | 4                    |
-| **Phase 3**            | 20                | 0                    | 80                   |
+| **Phase 1**            | 86                | 8                    | 5                    |
+| **Phase 2**            | 4                 | 96                   | 0                    |
+| **Phase 3**            | 2                 | 5                    | 93                   |
 
 ---
 
@@ -171,6 +171,7 @@ These files integrate with the training notebook: [Cell Cycle Model Training](..
 ## 📖 Further Reading
 
 - **[Cell Analysis Guide](cell-analysis.md)** - Complete analysis workflows
+- **[Timelapse Analysis Guide](timelapse-analysis.md)** - Analyze dynamics with stable IDs across frames
 - **[Getting Started](getting-started.md)** - Basic usage tutorial
 - **[API Reference](../api/api-reference.md)** - Programmatic control
 

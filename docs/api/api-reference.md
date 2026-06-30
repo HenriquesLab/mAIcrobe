@@ -13,11 +13,14 @@ and integration into custom analysis pipelines.
 - Widgets
   - _computelabel
   - _computecells
+  - _batchanalysis
   - _filtercells
   - _compute_pickles
 - Sample Data
 - Core Library
   - mask
+  - label_assignment
+  - drift_alignment
   - segments
   - unet
   - cells (Cell, CellManager)
@@ -36,6 +39,8 @@ mAIcrobe provides:
 - Interactive widgets (segment, analyse, filter).
 - Python-callable functions and classes for reproducible workflows.
 - Exportable reports and optional colocalization/classification helpers.
+- Timelapse-focused processing with optional registration and label reassignment.
+- Batch analysis helpers to process one root folder with many FoVs.
 
 ## Module Structure
 
@@ -43,11 +48,14 @@ mAIcrobe provides:
 napari_mAIcrobe/
 ├── _computelabel.py       # Segmentation widget
 ├── _computecells.py       # Cell analysis widget
+├── _batchanalysis.py      # Batch FoV analysis widget/utilities
 ├── _filtercells.py        # Labels property-based filtering widget
 ├── _compute_pickles.py    # Export per-cell crops/targets as pickles for training
 ├── _sample_data.py        # Sample data providers
 └── mAIcrobe/              # Core analysis library
     ├── mask.py            # Thresholding based masks
+    ├── label_assignment.py # Timelapse label reassignment helpers
+    ├── drift_alignment.py # Timelapse drift estimation/application
     ├── segments.py        # Watershed segmentation and labeling for thresholding-based masks
     ├── unet.py            # UNet helpers and prediction
     ├── cells.py           # Cell base class and manager
@@ -77,6 +85,10 @@ compute_label(viewer)
   - UI:
     - Inputs: Base Image, Fluor 1, Fluor 2.
     - Post-processing: Binary Closing, Binary Dilation, Fill Holes; Auto Align (aligns Fluor 1/2 to mask).
+    - Timelapse options:
+      - Run analysis for all time points (for `(T, Y, X)` stacks).
+      - Enable tracking-oriented relabeling across consecutive frames.
+      - Perform image registration before segmentation (reference frame, time averaging, max expected drift).
     - Algorithm-specific parameters:
       - Local Average: Blocksize (odd), Offset.
       - Watershed (Isodata/Local Average only): Peak Min Distance From Edge, Peak Min Distance, Peak Min Height, Max Peaks.
@@ -98,8 +110,69 @@ compute_label(viewer)
       - Unet: load pretrained/custom model, predict, build mask/labels; supports closing/dilation/fill holes.
       - StarDist: load pretrained/custom model directory, predict instances; mask = labels > 0.
       - CellPose cyto3: run CellPose model; mask = labels > 0.
+      - In timelapse mode, uses batch segmentation paths for `(T, Y, X)` arrays.
+      - If tracking is enabled in timelapse mode, applies `relabel_timelapse_labels(labels)`.
+      - If timelapse registration is enabled, uses `estimate_drift_alignment` and `apply_drift_alignment`.
       - If Auto Align: align Fluor 1/2 to the computed mask.
-  - Side effects: adds "Mask" and "Labels" layers; updates Fluor 1/2 if Auto Align is enabled.
+  - Side effects: adds "Mask" and "Labels" layers; may update Base/Fluor channels after registration/alignment.
+
+</details>
+
+<details>
+<summary><code>napari_mAIcrobe._batchanalysis</code></summary>
+
+Source: [../../src/napari_mAIcrobe/_batchanalysis.py](../../src/napari_mAIcrobe/_batchanalysis.py)
+
+```python
+batch_analysis(
+  Viewer,
+  Input_root="", Output_root="", Advanced_mode=False,
+  Base_pattern="*phase*.tif*", Membrane_pattern="*mem*.tif*", DNA_pattern="*dna*.tif*",
+  Segmentation_algorithm="Isodata",
+  Binary_closing=0, Binary_dilation=0, Binary_fillholes=False, Auto_align=False,
+  LA_blocksize=151, LA_offset=0.02,
+  Peak_min_distance_from_edge=10, Peak_min_distance=5,
+  Peak_min_height=5, Max_peaks=100000,
+  Unet_model_type="Pretrained", Unet_pretrained="Ph.C. S. pneumo", Unet_model_path="",
+  StarDist_model_type="Pretrained", StarDist_pretrained="StarDist S. aureus", StarDist_model_path="",
+  Pixel_size=1.0, Inner_mask_thickness=4, Septum_algorithm="Isodata", Baseline_margin=30,
+  Find_septum=False, Find_open_septum=False,
+  Classify_cell_cycle=False, Model="S.aureus DNA+Membrane Epi",
+  Custom_model_path="", Custom_model_input="Membrane", Custom_model_MaxSize=50,
+  Compute_Colocalization=False,
+  Generate_per_fov_report=True, Save_segmentation_tifs=True,
+  Save_merged_csv=True, Continue_on_error=True,
+)
+```
+  - Batch analyze one root folder with one direct subfolder per FoV.
+  - Discovers FoVs as direct child folders containing TIFF files.
+  - Resolves base/membrane/dna files in each FoV via glob patterns (exactly one match for required channels).
+  - Runs segmentation and cell analysis per FoV, then aggregates outputs.
+  - Internal helper `run_batch_analysis(...)` returns a summary dict with counts and output paths.
+  - **Parameters**:
+    - `Viewer`: napari Viewer instance.
+    - `Input_root`: root folder containing one subfolder per FoV.
+    - `Output_root`: output folder for merged/per-FoV artifacts.
+    - `Advanced_mode`: UI toggle for exposing advanced options.
+    - `Base_pattern`, `Membrane_pattern`, `DNA_pattern`: glob patterns used to map channel files in each FoV.
+    - `Segmentation_algorithm`: one of `Isodata`, `Local Average`, `Unet`, `StarDist`, `CellPose cyto3`.
+    - `Binary_closing`, `Binary_dilation`, `Binary_fillholes`: binary post-processing options.
+    - `Auto_align`: align fluorescence channels to mask before analysis.
+    - `LA_blocksize`, `LA_offset`: Local Average threshold parameters.
+    - `Peak_min_distance_from_edge`, `Peak_min_distance`, `Peak_min_height`, `Max_peaks`: watershed peak controls.
+    - `Unet_model_type`, `Unet_pretrained`, `Unet_model_path`: UNet model selection.
+    - `StarDist_model_type`, `StarDist_pretrained`, `StarDist_model_path`: StarDist model selection.
+    - `Pixel_size`, `Inner_mask_thickness`, `Septum_algorithm`, `Baseline_margin`: cell analysis controls.
+    - `Find_septum`, `Find_open_septum`: septum analysis options.
+    - `Classify_cell_cycle`, `Model`, `Custom_model_path`, `Custom_model_input`, `Custom_model_MaxSize`: classification controls.
+    - `Compute_Colocalization`: compute per-cell colocalization metrics.
+    - `Generate_per_fov_report`: generate one report per FoV.
+    - `Save_segmentation_tifs`: write `mask.tif` and `labels.tif` per FoV.
+    - `Save_merged_csv`: write `batch_merged_analysis.csv`.
+    - `Continue_on_error`: continue processing after per-FoV failures.
+  - Key artifacts:
+    - `batch_merged_analysis.csv`
+    - `batch_errors.csv`
 
 </details>
 
@@ -256,6 +329,71 @@ mask_alignment(mask, fluor_image)
     - `fluor_image`: 2D ndarray fluorescence image.
   - **Returns**:
     - Aligned image.
+
+</details>
+
+<details>
+<summary><code>napari_mAIcrobe.mAIcrobe.label_assignment</code></summary>
+
+Source: [../../src/napari_mAIcrobe/mAIcrobe/label_assignment.py](../../src/napari_mAIcrobe/mAIcrobe/label_assignment.py)
+
+```python
+from napari_mAIcrobe.mAIcrobe.label_assignment import relabel_timelapse_labels
+
+tracked = relabel_timelapse_labels(labels, iou_threshold=0.1)
+```
+  - **Parameters**:
+    - `labels`: input label stack with shape `(T, H, W)`.
+    - `iou_threshold`: minimum IoU to accept frame-to-frame correspondence.
+  - Reassign labels across consecutive timelapse frames to stabilize IDs.
+  - Expects a 3D label stack with shape `(T, H, W)`.
+  - IDs are monotonic and never reused.
+  - Preserves one-to-one matches when overlap is strong and assigns new IDs for splits.
+  - Raises `ValueError` for non-3D input.
+
+</details>
+
+<details>
+<summary><code>napari_mAIcrobe.mAIcrobe.drift_alignment</code></summary>
+
+Source: [../../src/napari_mAIcrobe/mAIcrobe/drift_alignment.py](../../src/napari_mAIcrobe/mAIcrobe/drift_alignment.py)
+
+```python
+from napari_mAIcrobe.mAIcrobe.drift_alignment import (
+    estimate_drift_alignment,
+    apply_drift_alignment,
+)
+
+estimate_drift_alignment(
+    image_array,
+    save_as_npy=True,
+    save_drift_table_path=None,
+    roi=None,
+    return_drift_table=False,
+    **kwargs,
+)
+
+apply_drift_alignment(
+    image_array,
+    path=None,
+    drift_table=None,
+)
+```
+  - **Parameters**:
+    - `estimate_drift_alignment`:
+      - `image_array`: timelapse input array (typically `(T, Y, X)`).
+      - `save_as_npy`: save drift table as `.npy` (else `.csv`).
+      - `save_drift_table_path`: destination path for saved drift table.
+      - `roi`: optional region-of-interest tuple `(x0, y0, x1, y1)`.
+      - `return_drift_table`: if `True`, returns `(aligned_image, drift_table)`.
+      - `**kwargs`: forwarded to drift estimator (e.g. `ref_option`, `time_averaging`, `max_expected_drift`, `apply`).
+    - `apply_drift_alignment`:
+      - `image_array`: timelapse array to correct.
+      - `path`: optional path to a saved drift table.
+      - `drift_table`: optional in-memory drift table object.
+  - `estimate_drift_alignment(...)` estimates drift on timelapse arrays and can return `(aligned_image, drift_table)`.
+  - `apply_drift_alignment(...)` applies a precomputed drift table to another timelapse channel.
+  - Used by timelapse registration flows in the segmentation widget.
 
 </details>
 

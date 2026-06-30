@@ -67,6 +67,17 @@ Check [cell classification guide](cell-classification.md) for details.
 - **Report path**: Directory to save the report folder.
 - **Compute Heatmap**: Spatial analysis visualization of a fluorescence channel. Corresponds to an average intensity heatmap over all cells aligned according to their major axis. Outputs a new Image layer.
 
+### Timelapse datasets (2D+t)
+
+mAIcrobe also supports timelapse analysis for `(T, Y, X)` datasets.
+
+- Labels can be generated over all timepoints
+- Optional reassignment can stabilize label IDs across consecutive frames
+- Optional registration can correct drift before segmentation
+- Cell properties include a `frame` column in timelapse workflows
+
+For a complete walkthrough, see the [Timelapse Analysis Guide](timelapse-analysis.md).
+
 ---
 
 ## 📊 Outputs
@@ -136,6 +147,8 @@ Use the **"Filter cells"** widget for real-time quality control:
 ## 📚 Further Reading
 
 - **[Cell Classification](cell-classification.md)** - Detailed cell classification guide
+- **[Timelapse Analysis](timelapse-analysis.md)** - 2D+t workflows with relabeling
+- **[Batch analysis workflow](../user-guide/batch-analysis-workflow.md)** - Multi-FoV processing
 - **[API Reference](../api/api-reference.md)** - Programmatic analysis
 - **[Basic workflow](../tutorials/basic-workflow.md)** - Step-by-step examples
 

@@ -28,6 +28,8 @@ mAIcrobe is a comprehensive napari plugin that facilitates image analysis workfl
 
 ### 📊 **For Quantitative Research**
 - **Colocalization Analysis**: Multi-channel fluorescence quantification
+- **Timelapse Analysis**: 2D+t workflows with optional registration and label reassignment
+- **Batch Processing**: Analyze one folder containing multiple FoVs with merged outputs
 - **Automated Reports**: HTML reports with visualizations and statistics
 - **Data Export**: CSV export for downstream statistical analysis
 
@@ -79,11 +81,21 @@ pip install -e .
 | **[🔬 Segmentation Guide](docs/user-guide/segmentation-guide.md)** | Explore the available segmentation methods|
 | **[📊 Cell Analysis](docs/user-guide/cell-analysis.md)** | Explore complete analysis workflow and check the metrics measured |
 | **[🧠 Cell Classification Guide](docs/user-guide/cell-classification.md)** | Explore the available classification models |
+| **[⏱️ Timelapse Analysis](docs/user-guide/timelapse-analysis.md)** | Analyze `(T, Y, X)` data with optional registration and relabeling |
+| **[📁 Batch Analysis Workflow](docs/user-guide/batch-analysis-workflow.md)** | Process many FoVs from one root folder and export merged tables |
 
 | Tutorial | Purpose |
 |-------|---------|
 | **[🎨 Basic Workflow](docs/tutorials/basic-workflow.md)** | Step-by-step guide with a simple example (<5 minutes)|
 | **[🛠️ Generate Training Data](docs/tutorials/generate_trainingdata.md)** | Create annotated datasets for custom model training |
+
+
+| Video | Purpose |
+|-------|---------|
+| **[🎨 Basic Workflow](https://youtu.be/UQ-dgATCgkU)** | Step-by-step guide with a simple example (<5 minutes)|
+| **[🛠️ Full workflow](https://youtu.be/szYAi0zSKSA)** | Full workflow from installation to export of results |
+| **[🧠 How to retrain the classifier ](https://youtu.be/fO3XxTM3xk8)** | Create annotated datasets, train your custom model and use it in mAIcrobe |
+
 
 **For programmatic usage:**
 | **[⚙️ API Reference](docs/api/api-reference.md)**
@@ -157,6 +169,6 @@ mAIcrobe is developed in the [Henriques](https://henriqueslab.org) and [Pinho](h
 
 *"Advancing microbiology through AI-powered image analysis."*
 
-**[🚀 Get Started →](docs/user-guide/getting-started.md)** | **[📚 Learn More →](docs/tutorials/basic-workflow.md)** | **[⚙️ API Docs →](docs/api/api-reference.md)**
+**[🚀 Get Started →](docs/user-guide/getting-started.md)** | **[⏱️ Timelapse Guide →](docs/user-guide/timelapse-analysis.md)** | **[📁 Batch Workflow →](docs/user-guide/batch-analysis-workflow.md)** | **[⚙️ API Docs →](docs/api/api-reference.md)**
 
 </div>

@@ -2,6 +2,8 @@
 
 Create high‑quality training datasets from your annotated images using the Compute pickles widget. This tutorial walks you through the full process, from preparing layers to exporting standardized crops and targets ready for model training.
 
+Check out a [video version of how to retrain the classifier](https://youtu.be/fO3XxTM3xk8) for a walkthrough from annotation to usage!
+
 ---
 
 ## ✨ What You’ll Build

@@ -3,6 +3,8 @@
 [![Python Version](https://img.shields.io/pypi/pyversions/napari-mAIcrobe.svg?color=green)](https://python.org)
 [![tests](https://github.com/HenriquesLab/mAIcrobe/actions/workflows/test_oncall.yml/badge.svg)](https://github.com/HenriquesLab/mAIcrobe/actions/workflows/test_oncall.yml)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-mAIcrobe)](https://napari-hub.org/plugins/napari-mAIcrobe)
+[![Website](https://img.shields.io/badge/maicrobe.henriqueslab.org-purple)](https://maicrobe.henriqueslab.org)
+[![Preprint](https://img.shields.io/badge/preprint-biorxiv-blue)](https://www.biorxiv.org/content/10.1101/2025.10.21.683709v2)
 
 # mAIcrobe
 
@@ -12,7 +14,7 @@
 
 mAIcrobe is a comprehensive napari plugin that facilitates image analysis workflows of bacterial cells. Combining state-of-the-art segmentation approaches, morphological analysis and adaptable classification models into a napari-plugin, mAIcrobe aims to deliver a user-friendly interface that helps inexperienced users perform image analysis tasks regardless of the bacterial species and microscopy modality. Built using Python 3.10 and 3.11 and tested on Windows, and macOS.
 
-**You can read more about mAIcrobe in our [preprint](https://www.biorxiv.org/content/10.1101/2025.10.21.683709v1).**
+**You can read more about mAIcrobe in our [preprint](https://www.biorxiv.org/content/10.1101/2025.10.21.683709v2).**
 
 ## Video Showcase
 

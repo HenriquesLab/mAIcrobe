@@ -75,6 +75,14 @@ pip install -e .
 - **Intensity Measurements**: Fluorescence statistics
 - **Custom Measurements**: Septum detection, colocalization, and more
 
+## 🔗 Integration with other tools
+
+mAIcrobe is designed to fit into broader image-analysis workflows.
+
+- **napari ecosystem**: Keep working in napari with complementary plugins by reusing the layers generated in mAIcrobe (images, labels, and measurements).
+- **Fiji / TrackMate**: Export labels and measurement tables for downstream tracking and curation workflows in Fiji, including TrackMate-compatible analysis pipelines.
+- **Open outputs**: Use exported CSV tables in Python, R, Prism, or spreadsheet tools for custom analysis and visualization.
+
 ## 📖 Documentation
 
 | Guide | Purpose |

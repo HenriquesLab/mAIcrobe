@@ -48,7 +48,10 @@ class ColocManager:
 
             results += "\n"
 
-        open(reportID + os.sep + "_pcc_report.csv", "w").writelines(results)
+        with open(
+            reportID + os.sep + "_pcc_report.csv", "w", encoding="utf-8"
+        ) as handle:
+            handle.write(results)
 
     def pearsons_score(self, channel_1, channel_2, mask):
         """Compute Pearson correlation within a masked region.
@@ -71,13 +74,13 @@ class ColocManager:
         """
 
         filtered_1 = (channel_1 * mask).flatten()
-        filtered_1 = filtered_1[
-            filtered_1 > 0.0
-        ]  # removes 0s from entering pcc calculation
         filtered_2 = (channel_2 * mask).flatten()
-        filtered_2 = filtered_2[
-            filtered_2 > 0.0
-        ]  # removes 0s from entering pcc calculation
+
+        # Keep pixel pairs aligned: drop positions where either channel has
+        # no signal, instead of filtering each channel independently.
+        valid_pixels = (filtered_1 > 0.0) & (filtered_2 > 0.0)
+        filtered_1 = filtered_1[valid_pixels]
+        filtered_2 = filtered_2[valid_pixels]
 
         return pearsonr(filtered_1, filtered_2)
 

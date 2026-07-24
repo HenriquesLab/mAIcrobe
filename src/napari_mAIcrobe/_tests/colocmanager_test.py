@@ -29,6 +29,18 @@ def test_pearsons_score_calculates_masked_correlation():
     assert score > 0.99
 
 
+def test_pearsons_score_filters_nonzero_pixels_in_pairs():
+    manager = ColocManager()
+    channel_1 = np.array([[1.0, 2.0, 0.0], [0.0, 3.0, 0.0], [0.0, 0.0, 0.0]])
+    channel_2 = np.array([[0.0, 4.0, 5.0], [0.0, 6.0, 0.0], [0.0, 0.0, 0.0]])
+
+    score, _pvalue = manager.pearsons_score(
+        channel_1, channel_2, np.ones((3, 3))
+    )
+
+    assert score > 0.99
+
+
 def test_computes_cell_pcc_records_whole_cell_regions():
     manager = ColocManager()
     fluor = np.arange(25, dtype=float).reshape(5, 5) + 1

@@ -5,7 +5,7 @@ Module responsible for preparing arrays for processing by the mAIcrobe plugin. T
 - Creating new layers in the viewer for the processed arrays without overwriting the originals.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
 import numpy as np
 from magicgui import magic_factory
@@ -15,11 +15,8 @@ if TYPE_CHECKING:
     import napari
 
 
-def squeeze_all_layers(viewer, suffix=" squeezed NumPy"):
-    """
-    Creates new squeezed NumPy versions of all Image layers in the viewer.
-    Does not overwrite the original layers.
-    """
+def squeeze_all_layers(viewer, suffix=" squeezed NumPy", hide_original=True):
+
     new_layers = []
 
     for layer in list(viewer.layers):
@@ -45,7 +42,8 @@ def squeeze_all_layers(viewer, suffix=" squeezed NumPy"):
                 visible=layer.visible,
             )
 
-            layer.visible = False  # Hide the original layer
+            if hide_original:
+                layer.visible = False  # Hide the original layer
 
         else:
             print(f"Skipping {layer.name}: not an Image layer")
@@ -58,17 +56,28 @@ def squeeze_all_layers(viewer, suffix=" squeezed NumPy"):
 
 @magic_factory(
     call_button="Prepare layers",
+    layout="vertical",
 )
 def prepare_layers_before_cell_detection(
     Viewer: "napari.Viewer",
+    suffix: Annotated[
+        str, {"tooltip": "Suffix appended to new layer names"}
+    ] = " squeezed NumPy",
+    hide_original: Annotated[
+        bool,
+        {
+            "label": "Hide originals",
+            "tooltip": "Hide the original layers after creating squeezed copies",
+        },
+    ] = True,
 ):
     """
-    Prepare currently open napari layers before running Compute Cells.
-    Creates squeezed NumPy copies of Image and Labels layers.
+    Prepare layers for downstream processing by squeezing singleton dimensions
+    and converting xarray DataArray objects to NumPy arrays.
+
+    Parameters
+    - Viewer: the active napari Viewer
+    - suffix: suffix appended to newly created layer names
+    - hide_original: whether to hide the original layers after creating copies
     """
-    squeeze_all_layers(Viewer)
-
-
-def _init_compute_cells_widget(widget):
-    widget.Shape_Fit_Type.visible = False
-    widget.Phase_Contrast_Image.visible = False
+    squeeze_all_layers(Viewer, suffix=suffix, hide_original=hide_original)

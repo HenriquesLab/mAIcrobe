@@ -339,7 +339,6 @@ class Cell:
             raise ValueError(
                 "No positive values in inner fluor mask for isodata thresholding."
             )
-
         threshold = threshold_isodata(positive_value)
         interest_matrix = inner_mask * (inner_fluor > threshold)
 
@@ -787,26 +786,17 @@ class Cell:
             else:
                 self.septum_status = "detected"
 
-        except ValueError as e:
-            print(
-                f"Warning: failed to compute septum mask for cell {getattr(self, 'label', 'unknown')}: {e}."
-            )
-            self.septum_status = "detection_failed"
-            self.sept_mask = np.zeros_like(self.cell_mask, dtype=float)
-
-        except (IndexError) as e:
+        except (IndexError, ValueError) as e:
             print(
                 f"Warning: failed to compute septum mask for cell {getattr(self, 'label', 'unknown')}: {e}. Trying reduced thickness."
             )
-            try:
-                self.recursive_compute_sept(
-                    inner_mask_thickness - 1, algorithm
-                )
-            except RuntimeError as e:
-                print(
-                    f"Warning: failed to compute septum mask for cell {getattr(self, 'label', 'unknown')} with reduced thickness: {e}. Trying 'Box' algorithm."
-                )
-                self.recursive_compute_sept(inner_mask_thickness - 1, "Box")
+            self.recursive_compute_sept(inner_mask_thickness - 1, algorithm)
+
+        except RuntimeError as e:
+            print(
+                f"Warning: failed to compute septum mask for cell {getattr(self, 'label', 'unknown')} with reduced thickness: {e}. Trying 'Box' algorithm."
+            )
+            self.recursive_compute_sept(inner_mask_thickness - 1, "Box")
 
     def recursive_compute_opensept(self, inner_mask_thickness, algorithm):
         """Compute open-septum mask, reducing thickness on failure.
@@ -840,26 +830,18 @@ class Cell:
             else:
                 self.septum_status = "detected"
 
-        except ValueError as e:
-            print(
-                f"Warning: failed to compute septum mask for cell {getattr(self, 'label', 'unknown')}: {e}."
-            )
-            self.septum_status = "detection_failed"
-            self.sept_mask = np.zeros_like(self.cell_mask, dtype=float)
-
-        except (IndexError) as e:
+        except (IndexError, ValueError) as e:
             print(
                 f"Warning: failed to compute open septum for cell {getattr(self, 'label', 'unknown')}: {e}"
             )
-            try:
-                self.recursive_compute_opensept(
-                    inner_mask_thickness - 1, algorithm
-                )
-            except RuntimeError:
-                print(
-                    f"Warning: failed to compute septum mask for cell {getattr(self, 'label', 'unknown')} with reduced thickness: {e}"
-                )
-                self.recursive_compute_sept(inner_mask_thickness - 1, "Box")
+            self.recursive_compute_opensept(
+                inner_mask_thickness - 1, algorithm
+            )
+        except RuntimeError as e:
+            print(
+                f"Warning: failed to compute open septum for cell {getattr(self, 'label', 'unknown')} with reduced thickness: {e}. Trying 'Box' algorithm."
+            )
+            self.recursive_compute_opensept(inner_mask_thickness - 1, "Box")
 
     def compute_regions(self, params):
         """Compute masks for whole cell, membrane, septum (optional),

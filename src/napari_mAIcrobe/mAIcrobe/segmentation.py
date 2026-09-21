@@ -8,7 +8,8 @@ import os
 
 import numpy as np
 import tensorflow as tf
-from cellpose import models
+from cellpose import models as cellpose_models
+from cellpose_omni import models as omnipose_models
 from stardist.models import StarDist2D
 
 from .mask import mask_computation
@@ -191,8 +192,8 @@ def cellpose_segmentation(img: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     if len(img.shape) == 3:
         img = img[0, :, :]
 
-    model = models.Cellpose(gpu=True, model_type="cyto3")
-    labels, flows, styles, diams = model.eval(img, diameter=None)
+    cellpose_model = cellpose_models.Cellpose(gpu=True, model_type="cyto3")
+    labels, flows, styles, diams = cellpose_model.eval(img, diameter=None)
     mask = labels > 0
     mask = mask.astype("uint16")
 
@@ -275,6 +276,101 @@ def batch_classical_segmentation(
         if i == 0:
             masks = np.zeros((img.shape[0], *mask.shape), dtype=mask.dtype)
             labels = np.zeros((img.shape[0], *label.shape), dtype=label.dtype)
+        masks[i] = mask
+        labels[i] = label
+
+    return masks, labels
+
+
+def omnipose_segmentation(
+    img: np.ndarray, pretrained: str, pretrained_name: str, path2model: str
+) -> tuple[np.ndarray, np.ndarray]:
+
+    # Load local Omnipose --> Load from checkpoint in local folder
+    # Take input array and preprocess it properly --> dimensions, normalization, etc.
+    # Return mask and labels
+
+    if len(img.shape) == 3:
+        img = img[0, :, :]
+
+    # Determine which model path/type to use
+    model_path_to_use: str | None = None
+    model_type: str = "bact_fluor_omni"
+
+    if pretrained == "Pretrained":
+        if pretrained_name in [
+            "bact_phase_omni",
+            "bact_fluor_omni",
+        ]:
+            model = omnipose_models.CellposeModel(
+                gpu=False,
+                model_type=pretrained_name,
+            )
+
+        else:
+            raise ValueError(
+                f"Unknown Omnipose pretrained model: {pretrained_name}"
+            )
+
+    else:
+        if not path2model:
+            raise ValueError("No custom Omnipose model path was provided.")
+
+        _path2omnipose = os.path.expanduser(path2model)
+
+        if not os.path.isfile(_path2omnipose):
+            raise FileNotFoundError(
+                "The selected Omnipose model could not be found at "
+                f"{_path2omnipose}."
+            )
+
+        model = omnipose_models.CellposeModel(
+            gpu=False,
+            pretrained_model=_path2omnipose,
+            model_type=None,
+        )
+
+    result = model.eval(
+        img,
+        diameter=None,
+        channels=[0, 0],
+        normalize=True,
+        omni=True,
+        net_avg=False,
+        tile=True,
+        resample=True,
+    )
+
+    labels = result[0]
+    mask = labels > 0
+    mask = mask.astype("uint16")
+
+    return mask, labels
+
+
+def batch_omnipose_segmentation(
+    img: np.ndarray, pretrained: str, pretrained_name: str, path2model: str
+) -> tuple[np.ndarray, np.ndarray]:
+
+    for i in range(img.shape[0]):
+
+        mask, label = omnipose_segmentation(
+            img[i, :, :],
+            pretrained,
+            pretrained_name,
+            path2model,
+        )
+
+        if i == 0:
+            masks = np.zeros(
+                (img.shape[0], *mask.shape),
+                dtype=mask.dtype,
+            )
+            labels = np.zeros(
+                (img.shape[0], *label.shape),
+                dtype=label.dtype,
+            )
+
         masks[i] = mask
         labels[i] = label
 

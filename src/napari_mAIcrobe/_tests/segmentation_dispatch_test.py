@@ -97,7 +97,7 @@ def test_cellpose_segmentation_uses_first_frame_for_3d_input(monkeypatch):
             seen["image"] = image
             return np.array([[0, 4], [0, 5]]), None, None, None
 
-    monkeypatch.setattr(segmentation.models, "Cellpose", FakeCellpose)
+    monkeypatch.setattr(segmentation.cellpose_models, "Cellpose", FakeCellpose)
     stack = np.stack([np.ones((2, 2)), np.full((2, 2), 2)])
 
     mask, labels = segmentation.cellpose_segmentation(stack)

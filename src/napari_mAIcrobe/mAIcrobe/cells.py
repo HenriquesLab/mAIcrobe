@@ -207,6 +207,7 @@ class Cell:
             ]
         )
 
+        self.septum_status = "not_attempted"  # can be "not_attempted", "detected", or "detection_failed"
         self.selection_state = 1
         self.compute_regions(self.params)
         self.compute_fluor_stats(self.params, regionmask, intensity)
@@ -282,7 +283,7 @@ class Cell:
             return self.compute_sept_isodata(thick)
 
         elif algorithm == "Box":
-            return self.compute_sept_box(mask, thick)
+            return self.compute_sept_box(thick)
 
         else:
             print("Not a a valid algorithm")
@@ -333,7 +334,12 @@ class Cell:
         inner_mask = cell_mask - perim_mask
         inner_fluor = (inner_mask > 0) * fluor_box
 
-        threshold = threshold_isodata(inner_fluor[inner_fluor > 0])
+        positive_value = inner_fluor[inner_fluor > 0]
+        if positive_value.size == 0:
+            raise ValueError(
+                "No positive values in inner fluor mask for isodata thresholding."
+            )
+        threshold = threshold_isodata(positive_value)
         interest_matrix = inner_mask * (inner_fluor > threshold)
 
         label_matrix = label(interest_matrix, connectivity=2)
@@ -371,7 +377,13 @@ class Cell:
         inner_mask = cell_mask - perim_mask
         inner_fluor = (inner_mask > 0) * fluor_box
 
-        threshold = threshold_isodata(inner_fluor[inner_fluor > 0])
+        positive_value = inner_fluor[inner_fluor > 0]
+        if positive_value.size == 0:
+            raise ValueError(
+                "No positive values in inner fluor mask for isodata thresholding."
+            )
+
+        threshold = threshold_isodata(positive_value)
         interest_matrix = inner_mask * (inner_fluor > threshold)
 
         label_matrix = label(interest_matrix, connectivity=2)
@@ -652,7 +664,14 @@ class Cell:
 
         if bx1 - bx0 == 0:
             x, y = line(bx0, 0, bx0, w)
-            linmask[x, y] = 1
+            valid = (
+                (x >= 0)
+                & (x < linmask.shape[0])
+                & (y >= 0)
+                & (y < linmask.shape[1])
+            )
+            if np.any(valid):
+                linmask[x[valid], y[valid]] = 1
             try:
                 linmask = morphology.binary_dilation(
                     linmask, np.ones((bin_factor, bin_factor))
@@ -716,7 +735,14 @@ class Cell:
                     l_y1 = int(b)
 
             x, y = line(l_x0, l_y0, l_x1, l_y1)
-            linmask[x, y] = 1
+            valid = (
+                (x >= 0)
+                & (x < linmask.shape[0])
+                & (y >= 0)
+                & (y < linmask.shape[1])
+            )
+            if np.any(valid):
+                linmask[x[valid], y[valid]] = 1
             try:
                 linmask = morphology.binary_dilation(
                     linmask, np.ones((bin_factor, bin_factor))
@@ -738,17 +764,39 @@ class Cell:
         algorithm : {"Isodata", "Box"}
             Septum detection algorithm.
         """
+        if inner_mask_thickness <= 1:
+            self.septum_status = "detection_failed"
+            self.sept_mask = np.zeros_like(self.cell_mask, dtype=float)
+            print(
+                f"Warning: septum detection failed for cell {getattr(self, 'label', 'unknown')}: inner_mask_thickness <= 1. Using empty septum mask."
+            )
+            return
+
         try:
             self.sept_mask = self.compute_sept_mask(
                 inner_mask_thickness, algorithm
             )
-        except IndexError:
-            try:
-                self.recursive_compute_sept(
-                    inner_mask_thickness - 1, algorithm
+            if self.sept_mask is None or not np.any(self.sept_mask):
+                self.septum_status = "detection_failed"
+                self.sept_mask = np.zeros_like(self.cell_mask, dtype=float)
+                print(
+                    f"Warning: septum detection failed for cell {getattr(self, 'label', 'unknown')}: computed septum mask is empty. Using empty septum mask."
                 )
-            except RuntimeError:
-                self.recursive_compute_sept(inner_mask_thickness - 1, "Box")
+                return
+            else:
+                self.septum_status = "detected"
+
+        except (IndexError, ValueError) as e:
+            print(
+                f"Warning: failed to compute septum mask for cell {getattr(self, 'label', 'unknown')}: {e}. Trying reduced thickness."
+            )
+            self.recursive_compute_sept(inner_mask_thickness - 1, algorithm)
+
+        except RuntimeError as e:
+            print(
+                f"Warning: failed to compute septum mask for cell {getattr(self, 'label', 'unknown')} with reduced thickness: {e}. Trying 'Box' algorithm."
+            )
+            self.recursive_compute_sept(inner_mask_thickness - 1, "Box")
 
     def recursive_compute_opensept(self, inner_mask_thickness, algorithm):
         """Compute open-septum mask, reducing thickness on failure.
@@ -760,19 +808,40 @@ class Cell:
         algorithm : {"Isodata", "Box"}
             Open-septum detection algorithm.
         """
+        if inner_mask_thickness <= 1:
+            self.septum_status = "detection_failed"
+            self.sept_mask = np.zeros_like(self.cell_mask, dtype=float)
+            print(
+                f"Warning: septum detection failed for cell {getattr(self, 'label', 'unknown')}: inner_mask_thickness <= 1. Using empty septum mask."
+            )
+            return
+
         try:
             self.sept_mask = self.compute_opensept_mask(
                 inner_mask_thickness, algorithm
             )
-        except IndexError:
-            try:
-                self.recursive_compute_opensept(
-                    inner_mask_thickness - 1, algorithm
+            if self.sept_mask is None or not np.any(self.sept_mask):
+                self.septum_status = "detection_failed"
+                self.sept_mask = np.zeros_like(self.cell_mask, dtype=float)
+                print(
+                    f"Warning: open-septum detection failed for cell {getattr(self, 'label', 'unknown')}: computed open-septum mask is empty. Using empty septum mask."
                 )
-            except RuntimeError:
-                self.recursive_compute_opensept(
-                    inner_mask_thickness - 1, "Box"
-                )
+                return
+            else:
+                self.septum_status = "detected"
+
+        except (IndexError, ValueError) as e:
+            print(
+                f"Warning: failed to compute open septum for cell {getattr(self, 'label', 'unknown')}: {e}"
+            )
+            self.recursive_compute_opensept(
+                inner_mask_thickness - 1, algorithm
+            )
+        except RuntimeError as e:
+            print(
+                f"Warning: failed to compute open septum for cell {getattr(self, 'label', 'unknown')} with reduced thickness: {e}. Trying 'Box' algorithm."
+            )
+            self.recursive_compute_opensept(inner_mask_thickness - 1, "Box")
 
     def compute_regions(self, params):
         """Compute masks for whole cell, membrane, septum (optional),
@@ -789,13 +858,28 @@ class Cell:
             self.recursive_compute_sept(
                 params["inner_mask_thickness"], params["septum_algorithm"]
             )
+            if self.septum_status == "detection_failed":
+                self.perim_mask = self.compute_perim_mask(
+                    params["inner_mask_thickness"]
+                )
+                self.membsept_mask = self.perim_mask.copy()
+                self.cyto_mask = (self.cell_mask - self.perim_mask) > 0
+                return
 
             if params["septum_algorithm"] == "Isodata":
                 self.perim_mask = self.compute_perim_mask(
                     params["inner_mask_thickness"]
                 )
                 self.membsept_mask = (self.perim_mask + self.sept_mask) > 0
-                linmask = self.remove_sept_from_membrane(self.img_shape)
+                try:
+                    linmask = self.remove_sept_from_membrane(self.img_shape)
+                except IndexError as e:
+                    print(
+                        f"Warning: failed to remove septum from membrane "
+                        f"for cell {self.label}: {e}"
+                    )
+                    linmask = None
+                    self.septum_status = "detection_failed"
                 self.cyto_mask = (
                     self.cell_mask - self.perim_mask - self.sept_mask
                 ) > 0
@@ -822,7 +906,15 @@ class Cell:
                 )
 
                 self.membsept_mask = (self.perim_mask + self.sept_mask) > 0
-                linmask = self.remove_sept_from_membrane(self.img_shape)
+                try:
+                    linmask = self.remove_sept_from_membrane(self.img_shape)
+                except IndexError as e:
+                    print(
+                        f"Warning: failed to remove septum from membrane "
+                        f"for cell {self.label}: {e}"
+                    )
+                    linmask = None
+                    self.septum_status = "detection_failed"
                 self.cyto_mask = (
                     self.cell_mask - self.perim_mask - self.sept_mask
                 ) > 0
@@ -952,6 +1044,7 @@ class Cell:
         fluor : numpy.ndarray
             Full-field fluorescence image.
         """
+
         self.compute_fluor_baseline(mask, fluor, params["baseline_margin"])
 
         fluorbox = self.fluor_mask
@@ -970,6 +1063,14 @@ class Cell:
             self.measure_fluor(fluorbox, self.cyto_mask)
             - self.stats["Baseline"]
         )
+        if self.septum_status == "detection_failed":
+            self.stats["Septum Median"] = np.nan
+            self.stats["Fluor Ratio"] = np.nan
+            self.stats["Fluor Ratio 75%"] = np.nan
+            self.stats["Fluor Ratio 25%"] = np.nan
+            self.stats["Fluor Ratio 10%"] = np.nan
+            self.stats["Memb+Sept Median"] = np.nan
+            return
 
         if params["find_septum"] or params["find_openseptum"]:
             self.stats["Septum Median"] = (
@@ -1175,6 +1276,7 @@ class CellManager:
         - "Cell Median"
         - "Membrane Median"
         - "Septum Median"
+        - "Septum Status"
         - "Cytoplasm Median"
         - "Fluor Ratio"
         - "Fluor Ratio 75%"
@@ -1286,6 +1388,7 @@ class CellManager:
     def _append_cell_row(self, rows, c, frame_index, dna_img, dnathresh):
         """Append one cell row to accumulator lists.
 
+        Septum that was not detected is stored as NaN.
         DNA ratio is stored as NaN when DNA data is unavailable for the
         frame.
         """
@@ -1299,6 +1402,7 @@ class CellManager:
         rows["Cell Median"].append(c.stats["Cell Median"])
         rows["Membrane Median"].append(c.stats["Membrane Median"])
         rows["Septum Median"].append(c.stats["Septum Median"])
+        rows["Septum Status"].append(c.septum_status)
         rows["Cytoplasm Median"].append(c.stats["Cytoplasm Median"])
         rows["Fluor Ratio"].append(c.stats["Fluor Ratio"])
         rows["Fluor Ratio 75%"].append(c.stats["Fluor Ratio 75%"])
@@ -1326,6 +1430,7 @@ class CellManager:
             "Cell Median": [],
             "Membrane Median": [],
             "Septum Median": [],
+            "Septum Status": [],
             "Cytoplasm Median": [],
             "Fluor Ratio": [],
             "Fluor Ratio 75%": [],

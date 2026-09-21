@@ -26,11 +26,14 @@ def test_compute_perim_mask_returns_boundary_pixels():
     assert perim.sum() <= cell.cell_mask.sum()
 
 
-def test_compute_sept_mask_box_currently_calls_with_wrong_signature():
+def test_compute_sept_mask_box_returns_mask_within_cell():
     cell = _cell()
 
-    with pytest.raises(TypeError):
-        cell.compute_sept_mask(2, "Box")
+    sept = cell.compute_sept_mask(2, "Box")
+
+    assert sept.shape == cell.cell_mask.shape
+    assert sept.sum() > 0
+    assert np.all(sept <= cell.cell_mask)
 
 
 def test_compute_opensept_mask_isodata_currently_calls_wrong_signature():

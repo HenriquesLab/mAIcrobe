@@ -33,10 +33,12 @@ from .mAIcrobe.mask import mask_alignment
 from .mAIcrobe.segmentation import (
     batch_cellpose_segmentation,
     batch_classical_segmentation,
+    batch_omnipose_segmentation,
     batch_stardist_segmentation,
     batch_unet_segmentation,
     cellpose_segmentation,
     classical_segmentation,
+    omnipose_segmentation,
     stardist_segmentation,
     unet_segmentation,
 )
@@ -112,6 +114,7 @@ class compute_label(Container):
                         "Unet",
                         "StarDist",
                         "CellPose cyto3",
+                        "Omnipose",
                     ]
                 },
                 label="Mask algorithm",
@@ -187,6 +190,26 @@ class compute_label(Container):
         )
         self._path2stardist = FileEdit(
             mode="d", label="Path to StarDistModel", visible=False
+        )
+
+        # OMNIPOSE MODEL
+        self._omniposeradio = RadioButtons(
+            choices=["Pretrained", "Custom"],
+            label="Omnipose Model Type",
+            value="Pretrained",
+            visible=False,
+        )
+        self._omniposeradio.changed.connect(
+            self._on_pretrainedomnipose_changed
+        )
+        self._omniposepretrained = ComboBox(
+            choices=["bact_phase_omni", "bact_fluor_omni"],
+            label="Pretrained Omnipose Model",
+            value="bact_phase_omni",
+            visible=False,
+        )
+        self._path2omnipose = FileEdit(
+            mode="d", label="Path to Omnipose Model", visible=False
         )
 
         # WATERSHED ALGORITHM
@@ -271,18 +294,21 @@ class compute_label(Container):
                 self._stardistradio,  # 15
                 self._path2stardist,  # 16
                 self._stardistpretrained,  # 17
-                self._titlewatershedlabel,  # 18
-                self._peak_min_distance_from_edge,  # 19
-                self._peak_min_distance,  # 20
-                self._peak_min_height,  # 21
-                self._max_peaks,  # 22
-                self._timelapse,  # 23
-                self._imgreg,  # 24
-                self._reference,  # 25
-                self._timeaveraging,  # 26
-                self._maxexpecteddrift,  # 27
-                self._enable_tracking,  # 28
-                self._run_button,  # 29
+                self._omniposeradio,  # 19
+                self._omniposepretrained,  # 20
+                self._path2omnipose,  # 21
+                self._titlewatershedlabel,  # 22
+                self._peak_min_distance_from_edge,  # 23
+                self._peak_min_distance,  # 24
+                self._peak_min_height,  # 25
+                self._max_peaks,  # 26
+                self._timelapse,  # 27
+                self._imgreg,  # 28
+                self._reference,  # 29
+                self._timeaveraging,  # 30
+                self._maxexpecteddrift,  # 31
+                self._enable_tracking,  # 32
+                self._run_button,  # 33
             ],
             labels=True,
         )
@@ -335,7 +361,7 @@ class compute_label(Container):
         ----------
         new_algorithm : str
             One of {"Isodata", "Local Average", "Unet", "StarDist",
-            "CellPose cyto3"}.
+            "CellPose cyto3", "Omnipose"}.
         """
 
         # Mask post-processing controls
@@ -350,6 +376,7 @@ class compute_label(Container):
             "Local Average",
             "Unet",
             "StarDist",
+            "Omnipose",
         }
         self._placeholder.visible = new_algorithm == "Isodata"
         self._blocksizeinput.visible = new_algorithm == "Local Average"
@@ -378,6 +405,18 @@ class compute_label(Container):
         else:
             self._stardistpretrained.visible = False
             self._path2stardist.visible = False
+
+        # Omnipose: show radio + corresponding input
+        is_omnipose = new_algorithm == "Omnipose"
+        self._omniposeradio.visible = is_omnipose
+        if is_omnipose:
+            self._omniposepretrained.visible = (
+                self._omniposeradio.value == "Pretrained"
+            )
+            self._path2omnipose.visible = self._omniposeradio.value == "Custom"
+        else:
+            self._omniposepretrained.visible = False
+            self._path2omnipose.visible = False
 
         # Watershed params only for Isodata/Local Average
         show_ws = new_algorithm in {"Isodata", "Local Average"}
@@ -426,6 +465,25 @@ class compute_label(Container):
         else:
             self._stardistpretrained.visible = False
             self._path2stardist.visible = True
+
+    def _on_pretrainedomnipose_changed(self, new_value: str):
+        """Toggle Omnipose model path/pretrained selection.
+
+        Parameters
+        ----------
+        new_value : str
+            One of {"Pretrained", "Custom"}.
+        """
+        # make sure omnipose is selected
+        if self._algorithm_combo.value != "Omnipose":
+            return
+
+        if new_value == "Pretrained":
+            self._omniposepretrained.visible = True
+            self._path2omnipose.visible = False
+        else:
+            self._omniposepretrained.visible = False
+            self._path2omnipose.visible = True
 
     def compute(self):
         """Run mask/label computation, optional channel alignment and
@@ -595,6 +653,21 @@ class compute_label(Container):
             else:
                 mask, labels = cellpose_segmentation(_baseimg.data)
 
+        elif _algorithm == "Omnipose":
+            if _timelapse:
+                mask, labels = batch_omnipose_segmentation(
+                    _baseimg.data,
+                    self._omniposeradio.value,
+                    self._omniposepretrained.value,
+                    self._path2omnipose.value,
+                )
+            else:
+                mask, labels = omnipose_segmentation(
+                    _baseimg.data,
+                    self._omniposeradio.value,
+                    self._omniposepretrained.value,
+                    self._path2omnipose.value,
+                )
         else:
             if _timelapse:
                 mask, labels = batch_classical_segmentation(

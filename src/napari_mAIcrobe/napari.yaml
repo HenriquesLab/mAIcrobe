@@ -11,6 +11,9 @@ contributions:
     - id: napari-mAIcrobe.dna_example
       python_name: napari_mAIcrobe._sample_data:dna_example
       title: Load DNA dye S.aureus sample data
+    - id: napari-mAIcrobe.prepare_layers_before_cell_detection
+      python_name: napari_mAIcrobe._preparelayers:prepare_layers_before_cell_detection
+      title: Prepare layers
     - id: napari-mAIcrobe.compute_label
       python_name: napari_mAIcrobe._computelabel:compute_label
       title: Compute label
@@ -37,6 +40,8 @@ contributions:
       display_name: DNA dye S.aureus
       key: unique_id.3
   widgets:
+    - command: napari-mAIcrobe.prepare_layers_before_cell_detection
+      display_name: Prepare layers
     - command: napari-mAIcrobe.compute_label
       display_name: Compute label
     - command: napari-mAIcrobe.compute_cells

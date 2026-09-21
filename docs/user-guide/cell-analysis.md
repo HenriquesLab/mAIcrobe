@@ -108,8 +108,9 @@ Quantify fluorescence signals in subcellular compartments.
 - **Cell Median intensity**: Median fluorescence within the entire cell in Fluorescence 1 channel
 - **Membrane Median intensity**: Median fluorescence in the membrane region in Fluorescence 1 channel
 - **Cytoplasm Median intensity**: Median fluorescence in the cytoplasmic region in Fluorescence 1 channel
-- **Septum Median intensity**: Median fluorescence in the septum region (if detected and enabled otherwise 0) in Fluorescence 1 channel
-- **Fluorescence Ratios 100%, 75%, 25%, 10% percentiles**: Ratios between septum and membrane (if septum detected and enabled otherwise 0) in Fluorescence 1 channel
+- **Septum Median intensity**: Median fluorescence in the septum region (if detection enabled and succeeded; `NaN` otherwise) in Fluorescence 1 channel
+- **Fluorescence Ratios 100%, 75%, 25%, 10% percentiles**: Ratios between septum and membrane (if detection enabled and succeeded; `NaN` otherwise) in Fluorescence 1 channel
+- **Septum Status**: Outcome of septum detection for the cell — `not_attempted`, `detected`, or `detection_failed`. mAIcrobe no longer crashes on failed septum detection: it retries with a smaller inner mask thickness and, if detection still fails, records `detection_failed` and reports the septum-derived stats above as `NaN` instead of raising an error.
 - **DNA Ratio**: Relative DNA content compared to baseline background fluorescence (if Fluorescence 1 channel provided, otherwise 0)
 
 ### 🧠 Cell Classification

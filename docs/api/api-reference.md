@@ -11,6 +11,7 @@ and integration into custom analysis pipelines.
 - Overview
 - Module Structure
 - Widgets
+  - _preparelayers
   - _computelabel
   - _computecells
   - _batchanalysis
@@ -46,6 +47,7 @@ mAIcrobe provides:
 
 ```
 napari_mAIcrobe/
+├── _preparelayers.py      # Layer preparation widget (squeeze/convert before detection)
 ├── _computelabel.py       # Segmentation widget
 ├── _computecells.py       # Cell analysis widget
 ├── _batchanalysis.py      # Batch FoV analysis widget/utilities
@@ -73,6 +75,25 @@ napari_mAIcrobe/
 These are classes that handle user interaction and GUI elements in napari. Should not be used directly in scripts.
 
 <details>
+<summary><code>napari_mAIcrobe._preparelayers</code></summary>
+
+Source: [../../src/napari_mAIcrobe/_preparelayers.py](../../src/napari_mAIcrobe/_preparelayers.py)
+
+```python
+prepare_layers_before_cell_detection(Viewer, suffix=" squeezed NumPy", hide_original=True)
+```
+  - Squeezes singleton dimensions out of every Image layer (e.g. `(1, Y, X)` → `(Y, X)`) and converts xarray `DataArray` layer data to plain NumPy arrays, adding the result as a new layer rather than overwriting the original.
+  - Useful as a pre-processing step before segmentation for images loaded with extra singleton axes.
+  - **Parameters**:
+    - `Viewer`: napari Viewer instance.
+    - `suffix`: Text appended to the new layer's name (default: `" squeezed NumPy"`).
+    - `hide_original`: If `True`, hides the original layer once the squeezed copy is added (default: `True`).
+  - Non-Image layers are skipped (printed to console) and left untouched.
+  - Helper function: `squeeze_all_layers(viewer, suffix, hide_original) -> list[Image]`.
+
+</details>
+
+<details>
 <summary><code>napari_mAIcrobe._computelabel</code></summary>
 
 Source: [../../src/napari_mAIcrobe/_computelabel.py](../../src/napari_mAIcrobe/_computelabel.py)
@@ -81,7 +102,7 @@ Source: [../../src/napari_mAIcrobe/_computelabel.py](../../src/napari_mAIcrobe/_
 compute_label(viewer)
 ```
   - Segmentation and optional channel alignment widget.
-  - Mask algorithms: "Isodata", "Local Average", "Unet", "StarDist", "CellPose cyto3".
+  - Mask algorithms: "Isodata", "Local Average", "Unet", "StarDist", "CellPose cyto3", "Omnipose".
   - UI:
     - Inputs: Base Image, Fluor 1, Fluor 2.
     - Post-processing: Binary Closing, Binary Dilation, Fill Holes; Auto Align (aligns Fluor 1/2 to mask).
@@ -98,6 +119,9 @@ compute_label(viewer)
       - StarDist: Model Type = Pretrained | Custom.
         - Pretrained: "StarDist S. aureus". Downloads a model directory (config.json, weights_best.h5, thresholds.json) to a cache.
         - Custom: select an existing model directory.
+      - Omnipose: Model Type = Pretrained | Custom.
+        - Pretrained: "bact_phase_omni" or "bact_fluor_omni" (from `cellpose_omni`).
+        - Custom: select a model file.
   - Methods:
     - _on_algorithm_changed(new_algorithm: str)
       - Toggle parameter widgets per algorithm (e.g., watershed params only for Isodata/Local Average).
@@ -105,11 +129,14 @@ compute_label(viewer)
       - Toggle between pretrained selector and file picker.
     - _on_pretrainedstardist_changed(new_value: str)
       - Toggle between pretrained selector and directory picker.
+    - _on_pretrainedomnipose_changed(new_value: str)
+      - Toggle between pretrained selector and file picker.
     - compute()
       - Isodata/Local Average: threshold via mask_computation + watershed using SegmentsManager.
       - Unet: load pretrained/custom model, predict, build mask/labels; supports closing/dilation/fill holes.
       - StarDist: load pretrained/custom model directory, predict instances; mask = labels > 0.
       - CellPose cyto3: run CellPose model; mask = labels > 0.
+      - Omnipose: run Omnipose model (`cellpose_omni`); mask = labels > 0.
       - In timelapse mode, uses batch segmentation paths for `(T, Y, X)` arrays.
       - If tracking is enabled in timelapse mode, applies `relabel_timelapse_labels(labels)`.
       - If timelapse registration is enabled, uses `estimate_drift_alignment` and `apply_drift_alignment`.
@@ -600,6 +627,10 @@ Cell(label, regionmask, properties, intensity, params, optional)
         Union mask of membrane and septum (cropped), if computed.
     - `stats` : dict
         Per-cell fluorescence and morphology statistics.
+    - `septum_status` : str
+        Septum detection outcome: `"not_attempted"`, `"detected"`, or `"detection_failed"`.
+        On `"detection_failed"`, `sept_mask` is an empty mask and septum-derived
+        stats (`Septum Median`, `Fluor Ratio*`) are set to `NaN` instead of raising.
     - `image` : numpy.ndarray or None
         Image mosaic of fluorescence and masks for visualization. Used
         for reports.
@@ -668,10 +699,12 @@ Cell(label, regionmask, properties, intensity, params, optional)
     - Returns: Binary line mask used to subtract from membrane.
 
   - `recursive_compute_sept(inner_mask_thickness: int, algorithm: {"Isodata","Box"}) -> None`
-    - Compute septum mask, reducing thickness on failure (fallbacks to "Box" if needed).
+    - Compute septum mask, reducing thickness on failure (fallbacks to "Box" on `RuntimeError`).
+    - Catches `IndexError`/`ValueError` and retries with a smaller `inner_mask_thickness`; if thickness drops to `<= 1` or the resulting mask is empty, sets `septum_status = "detection_failed"` and uses an empty septum mask instead of raising.
+    - Sets `septum_status = "detected"` on success.
 
   - `recursive_compute_opensept(inner_mask_thickness: int, algorithm: {"Isodata","Box"}) -> None`
-    - Compute open-septum mask, reducing thickness on failure (fallbacks to "Box" if needed).
+    - Same error-handling/fallback behavior as `recursive_compute_sept`, for open-septum detection.
 
   - `compute_regions(params: dict) -> None`
     - Compute cell, membrane, septum (optional), and cytoplasm masks based on params.
@@ -764,7 +797,7 @@ CellManager(label_img, fluor, optional, params)
       - `"label"`, `"Area"`, `"Perimeter"`, `"Eccentricity"`, `"Baseline"`,
         `"Cell Median"`, `"Membrane Median"`, `"Septum Median"`,
         `"Cytoplasm Median"`, `"DNA Ratio"`
-      - If `find_septum` is True: `"Fluor Ratio"`, `"Fluor Ratio 75%"`, `"Fluor Ratio 25%"`, `"Fluor Ratio 10%"`
+      - If `find_septum` is True: `"Fluor Ratio"`, `"Fluor Ratio 75%"`, `"Fluor Ratio 25%"`, `"Fluor Ratio 10%"`, `"Septum Status"` (`"not_attempted"`, `"detected"`, or `"detection_failed"`; septum-derived stats are `NaN` when detection failed)
   - `heatmap_model`: ndarray | None
     - Heatmap model from the cell averager (if computed).
   - `all_cells`: list | None
@@ -1119,3 +1152,4 @@ Dependencies:
 - scikit-image: https://scikit-image.org/
 - StarDist: https://github.com/stardist/stardist
 - Cellpose: https://github.com/MouseLand/cellpose
+- Omnipose: https://github.com/kevinjohncutler/omnipose

@@ -5,6 +5,28 @@ All notable changes to mAIcrobe will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - New release
+
+### Added
+- Omnipose segmentation algorithm in the `compute_label` widget, with pretrained ("bact_phase_omni", "bact_fluor_omni") and custom model options
+- "Prepare layers" widget to squeeze singleton dimensions and convert xarray layers to NumPy before segmentation, without overwriting original layers
+- `Septum Status` per-cell property (`not_attempted` / `detected` / `detection_failed`) reporting the outcome of septum detection
+
+### Changed
+- Septum detection no longer crashes analysis on failure: `recursive_compute_sept`/`recursive_compute_opensept` retry with a smaller inner mask thickness and fall back to the "Box" algorithm, consolidating error handling into single `IndexError`/`ValueError` and `RuntimeError` handlers
+- On failed septum detection, septum-derived statistics (`Septum Median`, `Fluor Ratio*`) are now recorded as `NaN` instead of raising an exception
+- Added `omnipose` (>=1.1.4,<2) as a project dependency
+
+### Fixed
+- Guarded against empty Isodata threshold inputs and out-of-bounds line-mask indexing during septum detection
+
+### Documentation
+- Documented the "Prepare layers" widget and Omnipose segmentation in the API reference and segmentation guide
+- Documented the new `Septum Status` property and updated septum-related stats description in the cell analysis guide
+
+### Tests
+- Updated automated tests to match the fixed septum detection signature, the new Omnipose widgets, and the renamed `cellpose_models` import in `segmentation.py`
+
 ## [0.1.0] - New release
 
 ### Added

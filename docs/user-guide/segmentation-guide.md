@@ -4,12 +4,13 @@ This guide helps you choose the optimal segmentation method for your bacterial i
 
 ## 🎯 Overview
 
-mAIcrobe offers four main segmentation approaches:
+mAIcrobe offers five main segmentation approaches:
 
 | Method | Type | Training Required | Speed | Accuracy |
 |--------|------|-------------------|-------|----------|
 | **🌟 StarDist** | Deep Learning | ✅ Custom model | Medium | High |
 | **🔬 Cellpose** | Deep Learning | ❌ Pre-trained | Medium | High |
+| **🧬 Omnipose** | Deep Learning | ❌ Pre-trained | Medium | High |
 | **🧠 U-Net** | Deep Learning | ✅ Custom model | Medium | High |
 | **⚡ Thresholding** | Classical | ❌ None | Fast | Medium |
 
@@ -51,6 +52,24 @@ Although StarDist and U-Net models require custom training, mAIcrobe includes a 
 3. **Usage**: Select "CellPose cyto3" in the segmentation widget
 
 > **Tip**: Cellpose is great for getting started quickly without training custom models.
+
+---
+
+## 🧬 Omnipose Models
+
+**Best for:** Elongated or irregularly shaped bacteria, where Cellpose's convex-shape assumption struggles
+
+### Key Features
+- 🎯 **Purpose**: Deep learning segmentation built on Cellpose, optimized for bacterial morphology (including long/curved rods)
+- 🚀 **Ready to use**: Pre-trained "bact_phase_omni" and "bact_fluor_omni" models included
+- 🔧 **Custom models**: Also supports a custom Omnipose model file
+
+### Getting Started
+1. **Learn more**: Check the [Omnipose paper](https://www.nature.com/articles/s41592-022-01639-4) and [repository](https://github.com/kevinjohncutler/omnipose)
+2. **First run**: Model weights download automatically on first use (can take several minutes depending on your internet connection)
+3. **Usage**: Select "Omnipose" in the segmentation widget, then choose a pretrained model ("bact_phase_omni" for phase contrast, "bact_fluor_omni" for fluorescence) or provide a custom model file
+
+> **Tip**: Try Omnipose if Cellpose over- or under-segments long, thin, or touching bacteria.
 
 ---
 
@@ -145,6 +164,7 @@ Always validate segmentation results:
 ### 📖 Scientific References
 - **StarDist**: [Schmidt et al., MICCAI 2018](https://arxiv.org/abs/1806.03535)
 - **Cellpose**: [Stringer et al., Nature Methods 2021](https://doi.org/10.1038/s41592-020-01018-x)
+- **Omnipose**: [Cutler et al., Nature Methods 2022](https://www.nature.com/articles/s41592-022-01639-4)
 - **U-Net**: [Ronneberger et al., MICCAI 2015](https://arxiv.org/abs/1505.04597)
 
 ### 🛠️ Technical Documentation

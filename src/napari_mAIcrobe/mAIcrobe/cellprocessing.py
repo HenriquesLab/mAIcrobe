@@ -147,6 +147,19 @@ def stats_format(params):
         result.append(("Fluor Ratio 10%", 3))
         # result.append(("Memb+Sept Median", 3))
 
+    if params.get("measure_dna", False):
+        result.append(("DNA Baseline", 3))
+        result.append(("DNA Cell Median", 3))
+        result.append(("DNA Membrane Median", 3))
+        result.append(("DNA Cytoplasm Median", 3))
+
+        if params["find_septum"] or params["find_openseptum"]:
+            result.append(("DNA Septum Median", 3))
+            result.append(("DNA Fluor Ratio", 3))
+            result.append(("DNA Fluor Ratio 75%", 3))
+            result.append(("DNA Fluor Ratio 25%", 3))
+            result.append(("DNA Fluor Ratio 10%", 3))
+
     if params["classify_cell_cycle"]:
         result.append(("Cell Cycle Phase", 1))
 

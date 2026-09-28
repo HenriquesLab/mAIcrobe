@@ -36,6 +36,7 @@ def compute_cells(
     Label_Image: "napari.layers.Labels",
     Membrane_Image: "napari.layers.Image",
     DNA_Image: "napari.layers.Image" = None,
+    Measure_DNA_Signal: bool = False,
     Pixel_size: float = 1,
     Inner_mask_thickness: int = 4,
     Septum_algorithm="Isodata",
@@ -71,6 +72,12 @@ def compute_cells(
         Optional secondary fluorescence image (e.g., DNA). If omitted,
         DNA-dependent metrics are NaN, colocalization is
         skipped and classification is limited to one channel.
+    Measure_DNA_Signal : bool, optional
+        If True, additionally measures fluorescence intensity on
+        `DNA_Image` using the same cell/membrane/septum/cytoplasm
+        masks derived from the membrane channel segmentation, and adds
+        the results as extra "DNA ..." columns to the report. Requires
+        `DNA_Image` to be provided, by default False.
     Pixel_size : float, optional
         Pixel size passed to analysis (if used downstream), by default 1.
     Inner_mask_thickness : int, optional
@@ -134,11 +141,17 @@ def compute_cells(
         "report_path": str(Report_path),
         "cell_averager": Compute_Heatmap,
         "coloc": Compute_Colocalization,
+        "measure_dna": Measure_DNA_Signal,
     }
 
     label_data = Label_Image.data
     membrane_data = Membrane_Image.data
     dna_data = DNA_Image.data if DNA_Image is not None else None
+
+    if Measure_DNA_Signal and DNA_Image is None:
+        raise ValueError(
+            "Measure_DNA_Signal is enabled but no DNA_Image was provided."
+        )
 
     if label_data.ndim not in (2, 3):
         raise ValueError("Label image must be 2D or 3D (T, Y, X).")

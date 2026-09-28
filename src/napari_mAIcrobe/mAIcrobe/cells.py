@@ -200,6 +200,15 @@ class Cell:
                 ("Fluor Ratio 75%", 0),
                 ("Fluor Ratio 25%", 0),
                 ("Fluor Ratio 10%", 0),
+                ("DNA Baseline", 0),
+                ("DNA Cell Median", 0),
+                ("DNA Membrane Median", 0),
+                ("DNA Septum Median", 0),
+                ("DNA Cytoplasm Median", 0),
+                ("DNA Fluor Ratio", 0),
+                ("DNA Fluor Ratio 75%", 0),
+                ("DNA Fluor Ratio 25%", 0),
+                ("DNA Fluor Ratio 10%", 0),
                 ("Cell Cycle Phase", 0),
                 ("Area", properties["area"].item()),
                 ("Perimeter", properties["perimeter"].item()),
@@ -211,6 +220,9 @@ class Cell:
         self.selection_state = 1
         self.compute_regions(self.params)
         self.compute_fluor_stats(self.params, regionmask, intensity)
+
+        if optional is not None and self.params.get("measure_dna", False):
+            self.compute_dna_stats(self.params, regionmask, optional)
 
         self.image = None
         if self.params.get("generate_report", False):
@@ -937,7 +949,7 @@ class Cell:
             )
             self.cyto_mask = (self.cell_mask - self.perim_mask) > 0
 
-    def compute_fluor_baseline(self, mask, fluor, margin):
+    def compute_fluor_baseline(self, mask, fluor, margin, stat_key="Baseline"):
         """Compute baseline fluorescence around the cell. Mask and fluor
         are the global images.
 
@@ -950,11 +962,14 @@ class Cell:
             Full-field fluorescence image.
         margin : int
             Margin to expand the bounding box for baseline calculation.
+        stat_key : str, optional
+            Key under which to store the computed baseline in
+            `self.stats`, by default "Baseline".
 
         Notes
         -----
         Mask is 0 (black) at cells and 1 (white) outside
-        Updates self.stats["Baseline"] with the computed median baseline
+        Updates self.stats[stat_key] with the computed median baseline
         fluorescence.
         """
         # compatibility
@@ -981,7 +996,7 @@ class Cell:
         mask_box = 1 - inverted_mask_box
 
         fluor_box = fluor[x0:x1, y0:y1]
-        self.stats["Baseline"] = np.median(
+        self.stats[stat_key] = np.median(
             mask_box[mask_box > 0] * fluor_box[mask_box > 0]
         )
 
@@ -1126,6 +1141,99 @@ class Cell:
             self.stats["Fluor Ratio 10%"] = 0
 
             self.stats["Memb+Sept Median"] = 0
+
+    def compute_dna_stats(self, params, mask, dna_img):
+        """Compute per-region DNA channel statistics, reusing the
+        regions (cell/membrane/septum/cytoplasm masks) already derived
+        from the membrane channel segmentation.
+
+        Parameters
+        ----------
+        params : dict
+            Analysis parameters including `find_septum` and
+            `baseline_margin`.
+        mask : numpy.ndarray
+            Global mask image used for baseline.
+        dna_img : numpy.ndarray
+            Full-field DNA fluorescence image.
+        """
+
+        self.compute_fluor_baseline(
+            mask, dna_img, params["baseline_margin"], stat_key="DNA Baseline"
+        )
+
+        fluorbox = self.optional_mask
+
+        self.stats["DNA Cell Median"] = (
+            self.measure_fluor(fluorbox, self.cell_mask)
+            - self.stats["DNA Baseline"]
+        )
+
+        self.stats["DNA Membrane Median"] = (
+            self.measure_fluor(fluorbox, self.perim_mask)
+            - self.stats["DNA Baseline"]
+        )
+
+        self.stats["DNA Cytoplasm Median"] = (
+            self.measure_fluor(fluorbox, self.cyto_mask)
+            - self.stats["DNA Baseline"]
+        )
+        if self.septum_status == "detection_failed":
+            self.stats["DNA Septum Median"] = np.nan
+            self.stats["DNA Fluor Ratio"] = np.nan
+            self.stats["DNA Fluor Ratio 75%"] = np.nan
+            self.stats["DNA Fluor Ratio 25%"] = np.nan
+            self.stats["DNA Fluor Ratio 10%"] = np.nan
+            return
+
+        if params["find_septum"] or params["find_openseptum"]:
+            self.stats["DNA Septum Median"] = (
+                self.measure_fluor(fluorbox, self.sept_mask)
+                - self.stats["DNA Baseline"]
+            )
+
+            self.stats["DNA Fluor Ratio"] = (
+                self.measure_fluor(fluorbox, self.sept_mask)
+                - self.stats["DNA Baseline"]
+            ) / (
+                self.measure_fluor(fluorbox, self.perim_mask)
+                - self.stats["DNA Baseline"]
+            )
+
+            self.stats["DNA Fluor Ratio 75%"] = (
+                self.measure_fluor(fluorbox, self.sept_mask, 0.75)
+                - self.stats["DNA Baseline"]
+            ) / (
+                self.measure_fluor(fluorbox, self.perim_mask)
+                - self.stats["DNA Baseline"]
+            )
+
+            self.stats["DNA Fluor Ratio 25%"] = (
+                self.measure_fluor(fluorbox, self.sept_mask, 0.25)
+                - self.stats["DNA Baseline"]
+            ) / (
+                self.measure_fluor(fluorbox, self.perim_mask)
+                - self.stats["DNA Baseline"]
+            )
+
+            self.stats["DNA Fluor Ratio 10%"] = (
+                self.measure_fluor(fluorbox, self.sept_mask, 0.10)
+                - self.stats["DNA Baseline"]
+            ) / (
+                self.measure_fluor(fluorbox, self.perim_mask)
+                - self.stats["DNA Baseline"]
+            )
+
+        else:
+            self.stats["DNA Septum Median"] = 0
+
+            self.stats["DNA Fluor Ratio"] = 0
+
+            self.stats["DNA Fluor Ratio 75%"] = 0
+
+            self.stats["DNA Fluor Ratio 25%"] = 0
+
+            self.stats["DNA Fluor Ratio 10%"] = 0
 
     def set_image(self, fluor, optional):
         """Compose a 7-panel per-cell visualization image.
@@ -1417,6 +1525,37 @@ class CellManager:
                 self.calculate_DNARatio(c, dna_img, dnathresh)
             )
 
+        if self.params.get("measure_dna", False) and dna_img is not None:
+            rows["DNA Baseline"].append(c.stats["DNA Baseline"])
+            rows["DNA Cell Median"].append(c.stats["DNA Cell Median"])
+            rows["DNA Membrane Median"].append(
+                c.stats["DNA Membrane Median"]
+            )
+            rows["DNA Septum Median"].append(c.stats["DNA Septum Median"])
+            rows["DNA Cytoplasm Median"].append(
+                c.stats["DNA Cytoplasm Median"]
+            )
+            rows["DNA Fluor Ratio"].append(c.stats["DNA Fluor Ratio"])
+            rows["DNA Fluor Ratio 75%"].append(
+                c.stats["DNA Fluor Ratio 75%"]
+            )
+            rows["DNA Fluor Ratio 25%"].append(
+                c.stats["DNA Fluor Ratio 25%"]
+            )
+            rows["DNA Fluor Ratio 10%"].append(
+                c.stats["DNA Fluor Ratio 10%"]
+            )
+        else:
+            rows["DNA Baseline"].append(np.nan)
+            rows["DNA Cell Median"].append(np.nan)
+            rows["DNA Membrane Median"].append(np.nan)
+            rows["DNA Septum Median"].append(np.nan)
+            rows["DNA Cytoplasm Median"].append(np.nan)
+            rows["DNA Fluor Ratio"].append(np.nan)
+            rows["DNA Fluor Ratio 75%"].append(np.nan)
+            rows["DNA Fluor Ratio 25%"].append(np.nan)
+            rows["DNA Fluor Ratio 10%"].append(np.nan)
+
     @staticmethod
     def _init_rows_dict():
         """Create property accumulators for output rows."""
@@ -1438,6 +1577,15 @@ class CellManager:
             "Fluor Ratio 10%": [],
             "Cell Cycle Phase": [],
             "DNA Ratio": [],
+            "DNA Baseline": [],
+            "DNA Cell Median": [],
+            "DNA Membrane Median": [],
+            "DNA Septum Median": [],
+            "DNA Cytoplasm Median": [],
+            "DNA Fluor Ratio": [],
+            "DNA Fluor Ratio 75%": [],
+            "DNA Fluor Ratio 25%": [],
+            "DNA Fluor Ratio 10%": [],
         }
 
     @staticmethod
@@ -1509,6 +1657,12 @@ class CellManager:
                     "Selected cell cycle model requires DNA image, "
                     "but DNA image is missing."
                 )
+
+        if self.params.get("measure_dna", False) and self.optional_img is None:
+            raise ValueError(
+                "DNA signal measurement was requested, but no DNA image "
+                "was provided."
+            )
 
         timelapse = self.label_img.ndim == 3
         self.params["include_frame"] = timelapse

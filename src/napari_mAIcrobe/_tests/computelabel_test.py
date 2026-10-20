@@ -71,6 +71,15 @@ def _instance(algorithm="Isodata", timelapse=False, autoalign=False):
     obj._reference = DummyWidget(0)
     obj._timeaveraging = DummyWidget(1)
     obj._maxexpecteddrift = DummyWidget(0)
+    obj._gaussian = DummyWidget(False)
+    obj._gaussian_sigma = DummyWidget(1.5)
+    obj._merge = DummyWidget(False)
+    obj._merge_pixel_um = DummyWidget(0.065)
+    obj._merge_min_solidity = DummyWidget(0.91)
+    obj._merge_max_aspect = DummyWidget(1.55)
+    obj._merge_contact_min = DummyWidget(0.6)
+    obj._merge_contact_max = DummyWidget(1.2)
+    obj._merge_max_union = DummyWidget(3.0)
     return obj
 
 
@@ -203,3 +212,49 @@ def test_tracking_disabled_skips_relabeling(monkeypatch):
     assert result.shape == (2, 4, 4)
     assert set(np.unique(result[0]).tolist()) == {0, 1}
     assert set(np.unique(result[1]).tolist()) == {0, 9}
+
+
+def test_gaussian_and_merge_options_are_applied(monkeypatch):
+    obj = _instance("Isodata")
+    obj._gaussian.value = True
+    obj._gaussian_sigma.value = 2.0
+    obj._merge.value = True
+    obj._merge_pixel_um.value = 0.1
+
+    mask = np.ones((4, 4), dtype=np.uint16)
+    labels = np.full((4, 4), 2, dtype=np.uint16)
+    seen = {}
+
+    def fake_segmentation(img, *args):
+        seen["img"] = img
+        return mask, labels
+
+    def fake_smooth(img, sigma):
+        seen["sigma"] = sigma
+        return img * 0
+
+    def fake_merge(lab, **kwargs):
+        seen["merge"] = kwargs
+        return np.full_like(lab, 7), []
+
+    monkeypatch.setattr(_computelabel, "classical_segmentation", fake_segmentation)
+    monkeypatch.setattr(_computelabel, "gaussian_smooth", fake_smooth)
+    monkeypatch.setattr(_computelabel, "merge_septated_cells", fake_merge)
+
+    obj.compute()
+
+    assert seen["sigma"] == 2.0
+    assert not seen["img"].any()
+    assert seen["merge"]["pixel_um"] == 0.1
+    assert seen["merge"]["contact_width_ratio"] == (0.6, 1.2)
+    assert (obj._viewer.layers["Labels"].data == 7).all()
+
+
+def test_gaussian_and_merge_visibility_toggles():
+    obj = _instance()
+    obj._on_gaussian_changed(True)
+    assert obj._gaussian_sigma.visible is True
+    obj._on_merge_changed(True)
+    assert obj._merge_pixel_um.visible is True
+    obj._on_merge_changed(False)
+    assert obj._merge_max_union.visible is False

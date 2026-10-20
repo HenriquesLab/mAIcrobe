@@ -10,11 +10,14 @@ if TYPE_CHECKING:
 import os
 import tempfile
 
+import numpy as np
+
 from magicgui.widgets import (
     CheckBox,
     ComboBox,
     Container,
     FileEdit,
+    FloatSpinBox,
     Label,
     PushButton,
     RadioButtons,
@@ -30,6 +33,7 @@ from .mAIcrobe.drift_alignment import (
 )
 from .mAIcrobe.label_assignment import relabel_timelapse_labels
 from .mAIcrobe.mask import mask_alignment
+from .mAIcrobe.merge import gaussian_smooth, merge_septated_cells
 from .mAIcrobe.segmentation import (
     batch_cellpose_segmentation,
     batch_classical_segmentation,
@@ -241,6 +245,74 @@ class compute_label(Container):
             min=0, max=100000, step=100, value=100000, label="Max Peaks"
         )
 
+        # GAUSSIAN FILTER (optional)
+        self._gaussian = CheckBox(
+            label="Gaussian filter before segmentation", value=False
+        )
+        self._gaussian.changed.connect(self._on_gaussian_changed)
+        self._gaussian_sigma = FloatSpinBox(
+            min=0.1,
+            max=20,
+            step=0.1,
+            value=1.5,
+            label="Gaussian sigma (px)",
+            visible=False,
+        )
+
+        # MERGE SEPTATED CELLS (optional)
+        self._merge = CheckBox(
+            label="Merge septated cells after segmentation", value=False
+        )
+        self._merge.changed.connect(self._on_merge_changed)
+        self._merge_pixel_um = FloatSpinBox(
+            min=0.0001,
+            max=100,
+            step=0.001,
+            value=0.065,
+            label="Pixel size (um)",
+            visible=False,
+        )
+        self._merge_min_solidity = FloatSpinBox(
+            min=0,
+            max=1,
+            step=0.01,
+            value=0.91,
+            label="Merge min solidity",
+            visible=False,
+        )
+        self._merge_max_aspect = FloatSpinBox(
+            min=1,
+            max=10,
+            step=0.05,
+            value=1.55,
+            label="Merge max aspect ratio",
+            visible=False,
+        )
+        self._merge_contact_min = FloatSpinBox(
+            min=0,
+            max=5,
+            step=0.05,
+            value=0.6,
+            label="Merge min contact/width",
+            visible=False,
+        )
+        self._merge_contact_max = FloatSpinBox(
+            min=0,
+            max=5,
+            step=0.05,
+            value=1.2,
+            label="Merge max contact/width",
+            visible=False,
+        )
+        self._merge_max_union = FloatSpinBox(
+            min=0,
+            max=1000,
+            step=0.1,
+            value=3.0,
+            label="Merge max union area (um²)",
+            visible=False,
+        )
+
         # TIME LAPSE
         self._timelapse = CheckBox(label="Run analysis for all time points")
         self._enable_tracking = CheckBox(
@@ -302,6 +374,15 @@ class compute_label(Container):
                 self._peak_min_distance,  # 24
                 self._peak_min_height,  # 25
                 self._max_peaks,  # 26
+                self._gaussian,
+                self._gaussian_sigma,
+                self._merge,
+                self._merge_pixel_um,
+                self._merge_min_solidity,
+                self._merge_max_aspect,
+                self._merge_contact_min,
+                self._merge_contact_max,
+                self._merge_max_union,
                 self._timelapse,  # 27
                 self._imgreg,  # 28
                 self._reference,  # 29
@@ -318,6 +399,8 @@ class compute_label(Container):
         # Initialize visibility of timelapse checkbox according to number of time points in base image (only show if more than 1 time point)
         self._on_baseimg_changed(self._baseimg_combo.value)
         self._on_imgreg_changed(self._imgreg.value)
+        self._on_gaussian_changed(self._gaussian.value)
+        self._on_merge_changed(self._merge.value)
 
     def _on_baseimg_changed(self, new_baseimg):
         """Toggle timelapse checkbox visibility according to number of time points in base image.
@@ -341,6 +424,22 @@ class compute_label(Container):
             self._timelapse.visible = False
             self._imgreg.visible = False
             self._enable_tracking.visible = False
+
+    def _on_gaussian_changed(self, new_value: bool):
+        """Show the Gaussian sigma input only when the filter is enabled."""
+        self._gaussian_sigma.visible = new_value
+
+    def _on_merge_changed(self, new_value: bool):
+        """Show the merge parameters only when merging is enabled."""
+        for w in (
+            self._merge_pixel_um,
+            self._merge_min_solidity,
+            self._merge_max_aspect,
+            self._merge_contact_min,
+            self._merge_contact_max,
+            self._merge_max_union,
+        ):
+            w.visible = new_value
 
     def _on_imgreg_changed(self, new_value: bool):
         """Toggle image registration parameters visibility according to imgreg checkbox.
@@ -609,10 +708,18 @@ class compute_label(Container):
                 _baseimg.data = _registered_base_img
                 self._viewer.layers[_baseimg.name].data = _registered_base_img
 
+        # Optional Gaussian smoothing, used for segmentation input only
+        if self._gaussian.value:
+            _seg_img = gaussian_smooth(
+                _baseimg.data, self._gaussian_sigma.value
+            )
+        else:
+            _seg_img = _baseimg.data
+
         if _algorithm == "Unet":
             if _timelapse:
                 mask, labels = batch_unet_segmentation(
-                    _baseimg.data,
+                    _seg_img,
                     self._unetradio.value,
                     self._unetpretrained.value,
                     self._path2unet.value,
@@ -622,7 +729,7 @@ class compute_label(Container):
                 )
             else:
                 mask, labels = unet_segmentation(
-                    _baseimg.data,
+                    _seg_img,
                     self._unetradio.value,
                     self._unetpretrained.value,
                     self._path2unet.value,
@@ -634,14 +741,14 @@ class compute_label(Container):
         elif _algorithm == "StarDist":
             if _timelapse:
                 mask, labels = batch_stardist_segmentation(
-                    _baseimg.data,
+                    _seg_img,
                     self._stardistradio.value,
                     self._stardistpretrained.value,
                     self._path2stardist.value,
                 )
             else:
                 mask, labels = stardist_segmentation(
-                    _baseimg.data,
+                    _seg_img,
                     self._stardistradio.value,
                     self._stardistpretrained.value,
                     self._path2stardist.value,
@@ -649,21 +756,21 @@ class compute_label(Container):
 
         elif _algorithm == "CellPose cyto3":
             if _timelapse:
-                mask, labels = batch_cellpose_segmentation(_baseimg.data)
+                mask, labels = batch_cellpose_segmentation(_seg_img)
             else:
-                mask, labels = cellpose_segmentation(_baseimg.data)
+                mask, labels = cellpose_segmentation(_seg_img)
 
         elif _algorithm == "Omnipose":
             if _timelapse:
                 mask, labels = batch_omnipose_segmentation(
-                    _baseimg.data,
+                    _seg_img,
                     self._omniposeradio.value,
                     self._omniposepretrained.value,
                     self._path2omnipose.value,
                 )
             else:
                 mask, labels = omnipose_segmentation(
-                    _baseimg.data,
+                    _seg_img,
                     self._omniposeradio.value,
                     self._omniposepretrained.value,
                     self._path2omnipose.value,
@@ -671,7 +778,7 @@ class compute_label(Container):
         else:
             if _timelapse:
                 mask, labels = batch_classical_segmentation(
-                    _baseimg.data,
+                    _seg_img,
                     _algorithm,
                     _LAblocksize,
                     _LAoffset,
@@ -682,7 +789,7 @@ class compute_label(Container):
                 )
             else:
                 mask, labels = classical_segmentation(
-                    _baseimg.data,
+                    _seg_img,
                     _algorithm,
                     _LAblocksize,
                     _LAoffset,
@@ -691,6 +798,28 @@ class compute_label(Container):
                     _binary_fillholes,
                     _pars,
                 )
+
+        if self._merge.value:
+            _merge_kwargs = dict(
+                pixel_um=self._merge_pixel_um.value,
+                min_solidity=self._merge_min_solidity.value,
+                max_aspect=self._merge_max_aspect.value,
+                contact_width_ratio=(
+                    self._merge_contact_min.value,
+                    self._merge_contact_max.value,
+                ),
+                max_union_um2=self._merge_max_union.value,
+            )
+            if labels.ndim == 3:
+                labels = np.stack(
+                    [
+                        merge_septated_cells(frame, **_merge_kwargs)[0]
+                        for frame in labels
+                    ]
+                )
+            else:
+                labels = merge_septated_cells(labels, **_merge_kwargs)[0]
+            mask = (labels > 0).astype(mask.dtype)
 
         if _enable_tracking:
             labels = relabel_timelapse_labels(labels)

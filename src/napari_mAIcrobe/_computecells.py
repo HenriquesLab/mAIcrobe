@@ -37,6 +37,7 @@ def compute_cells(
     Membrane_Image: "napari.layers.Image",
     DNA_Image: "napari.layers.Image" = None,
     Measure_DNA_Signal: bool = False,
+    DNA_Percentile: float = 0.10,
     Pixel_size: float = 1,
     Inner_mask_thickness: int = 4,
     Septum_algorithm="Isodata",
@@ -78,6 +79,20 @@ def compute_cells(
         masks derived from the membrane channel segmentation, and adds
         the results as extra "DNA ..." columns to the report. Requires
         `DNA_Image` to be provided, by default False.
+
+        Also adds a "DNA Population" column that automatically splits
+        cells into two groups (DNA-positive / DNA-negative) by
+        Isodata-thresholding "DNA Percentile Median" across all cells
+        in the image.
+    DNA_Percentile : float, optional
+        Fraction (0, 1] of the brightest pixels in each cell (on
+        `DNA_Image`) used to compute "DNA Percentile Median", by
+        default 0.10 (top 10%). Using a brightest-pixel percentile
+        instead of the whole-cell average keeps cells with a small but
+        bright, concentrated DNA focus (e.g. a condensed nucleoid) in
+        the DNA-positive population even when dye leakiness raises the
+        apparent background throughout the cell. Only used when
+        `Measure_DNA_Signal` is True.
     Pixel_size : float, optional
         Pixel size passed to analysis (if used downstream), by default 1.
     Inner_mask_thickness : int, optional
@@ -142,6 +157,7 @@ def compute_cells(
         "cell_averager": Compute_Heatmap,
         "coloc": Compute_Colocalization,
         "measure_dna": Measure_DNA_Signal,
+        "dna_percentile": DNA_Percentile,
     }
 
     label_data = Label_Image.data
@@ -152,6 +168,9 @@ def compute_cells(
         raise ValueError(
             "Measure_DNA_Signal is enabled but no DNA_Image was provided."
         )
+
+    if Measure_DNA_Signal and not (0 < DNA_Percentile <= 1):
+        raise ValueError("DNA_Percentile must be in the range (0, 1].")
 
     if label_data.ndim not in (2, 3):
         raise ValueError("Label image must be 2D or 3D (T, Y, X).")

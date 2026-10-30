@@ -150,8 +150,10 @@ def stats_format(params):
     if params.get("measure_dna", False):
         result.append(("DNA Baseline", 3))
         result.append(("DNA Cell Median", 3))
+        result.append(("DNA Percentile Median", 3))
         result.append(("DNA Membrane Median", 3))
         result.append(("DNA Cytoplasm Median", 3))
+        result.append(("DNA Population", 0))
 
         if params["find_septum"] or params["find_openseptum"]:
             result.append(("DNA Septum Median", 3))

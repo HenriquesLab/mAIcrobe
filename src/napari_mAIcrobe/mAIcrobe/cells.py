@@ -202,6 +202,7 @@ class Cell:
                 ("Fluor Ratio 10%", 0),
                 ("DNA Baseline", 0),
                 ("DNA Cell Median", 0),
+                ("DNA Percentile Median", 0),
                 ("DNA Membrane Median", 0),
                 ("DNA Septum Median", 0),
                 ("DNA Cytoplasm Median", 0),
@@ -1169,6 +1170,15 @@ class Cell:
             - self.stats["DNA Baseline"]
         )
 
+        self.stats["DNA Percentile Median"] = (
+            self.measure_fluor(
+                fluorbox,
+                self.cell_mask,
+                params.get("dna_percentile", 0.10),
+            )
+            - self.stats["DNA Baseline"]
+        )
+
         self.stats["DNA Membrane Median"] = (
             self.measure_fluor(fluorbox, self.perim_mask)
             - self.stats["DNA Baseline"]
@@ -1528,6 +1538,9 @@ class CellManager:
         if self.params.get("measure_dna", False) and dna_img is not None:
             rows["DNA Baseline"].append(c.stats["DNA Baseline"])
             rows["DNA Cell Median"].append(c.stats["DNA Cell Median"])
+            rows["DNA Percentile Median"].append(
+                c.stats["DNA Percentile Median"]
+            )
             rows["DNA Membrane Median"].append(
                 c.stats["DNA Membrane Median"]
             )
@@ -1548,6 +1561,7 @@ class CellManager:
         else:
             rows["DNA Baseline"].append(np.nan)
             rows["DNA Cell Median"].append(np.nan)
+            rows["DNA Percentile Median"].append(np.nan)
             rows["DNA Membrane Median"].append(np.nan)
             rows["DNA Septum Median"].append(np.nan)
             rows["DNA Cytoplasm Median"].append(np.nan)
@@ -1579,6 +1593,7 @@ class CellManager:
             "DNA Ratio": [],
             "DNA Baseline": [],
             "DNA Cell Median": [],
+            "DNA Percentile Median": [],
             "DNA Membrane Median": [],
             "DNA Septum Median": [],
             "DNA Cytoplasm Median": [],
@@ -1814,6 +1829,9 @@ class CellManager:
 
         self.properties = self._rows_to_properties(rows)
 
+        if self.params.get("measure_dna", False) and self.optional_img is not None:
+            self._classify_dna_population()
+
         if self.params["cell_averager"] and len(ca.aligned_fluor_masks) > 0:
             ca.average()
             self.heatmap_model = ca.model
@@ -1849,6 +1867,47 @@ class CellManager:
                 coloc.save_report(
                     rm.cell_data_filename, self.params["find_septum"]
                 )
+
+    def _classify_dna_population(self):
+        """Automatically split cells into two DNA-signal populations.
+
+        Thresholds the per-cell `DNA Percentile Median` (the median of
+        the brightest `dna_percentile` fraction of pixels in the cell,
+        rather than the whole-cell average) using Isodata. Using the
+        brightest-pixel percentile instead of the whole-cell average
+        keeps cells with a small but bright, concentrated DNA focus in
+        the DNA-positive population even when dye leakiness raises the
+        apparent background in every cell.
+
+        Adds a `DNA Population` property: 1 for cells above the
+        threshold, 0 otherwise. If there are not enough distinct
+        values to find a threshold, the column is filled with NaN and
+        classification is skipped.
+        """
+
+        values = self.properties["DNA Percentile Median"]
+        finite = values[np.isfinite(values)]
+
+        if np.unique(finite).size < 2:
+            print(
+                "DNA population classification skipped: not enough "
+                "distinct DNA Percentile Median values."
+            )
+            self.properties["DNA Population"] = np.full(
+                values.shape, np.nan
+            )
+            return
+
+        try:
+            thresh = threshold_isodata(finite)
+        except Exception as e:
+            print(f"DNA population classification failed: {e}")
+            self.properties["DNA Population"] = np.full(
+                values.shape, np.nan
+            )
+            return
+
+        self.properties["DNA Population"] = (values > thresh).astype(float)
 
     @staticmethod
     def calculate_DNARatio(cell_object, dna_fov, thresh):

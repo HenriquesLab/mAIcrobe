@@ -199,18 +199,13 @@ class unit_filter(QWidget):
         self._prop_combo = ComboBox(choices=self._properties, label="Property")
         self._prop_combo.changed.connect(self._on_prop_changed)
 
+        prop_min, prop_max = self._safe_bounds(self.current_prop_arr)
         self._slider_range = FloatRangeSlider(
-            min=np.min(self.current_prop_arr),
-            max=np.max(self.current_prop_arr),
-            value=(
-                np.min(self.current_prop_arr),
-                np.max(self.current_prop_arr),
-            ),
+            min=prop_min,
+            max=prop_max,
+            value=(prop_min, prop_max),
             tracking=True,
-            step=(
-                np.max(self.current_prop_arr) - np.min(self.current_prop_arr)
-            )
-            / 100,
+            step=(prop_max - prop_min) / 100,
         )
         self._slider_range.changed.connect(self._slider_change)
 
@@ -227,6 +222,37 @@ class unit_filter(QWidget):
         self.options = {"enabled": True, "visible": True}
 
         self._parent.changed.emit(self._parent)
+
+    @staticmethod
+    def _safe_bounds(arr):
+        """Return (min, max) for a property array, tolerating all-NaN
+        or empty arrays.
+
+        `FloatRangeSlider` requires finite, non-NaN bounds with
+        min <= max, which `np.min`/`np.max` cannot guarantee when the
+        array contains NaNs (e.g. a stat that was not computed for any
+        cell, such as DNA stats when DNA measurement was not enabled).
+
+        Parameters
+        ----------
+        arr : numpy.ndarray
+            Property values, possibly containing NaNs.
+
+        Returns
+        -------
+        tuple[float, float]
+            A finite (min, max) pair with min <= max, defaulting to
+            (0.0, 1.0) when no finite values are present.
+        """
+
+        finite = arr[np.isfinite(arr)]
+        if finite.size == 0:
+            return 0.0, 1.0
+
+        lo, hi = float(np.min(finite)), float(np.max(finite))
+        if lo == hi:
+            hi = lo + 1.0
+        return lo, hi
 
     def _on_prop_changed(self, new_prop):
         """Update slider bounds and reset filtered labels on property change.
@@ -249,15 +275,11 @@ class unit_filter(QWidget):
         # to avoid divisions by zero because the slider does not update instantly
         self._slider_range.max = 1e12
 
-        self._slider_range.min = np.min(self.current_prop_arr)
-        self._slider_range.max = np.max(self.current_prop_arr)
-        self._slider_range.value = (
-            self._slider_range.min,
-            self._slider_range.max,
-        )
-        self._slider_range.step = (
-            self._slider_range.max - self._slider_range.min
-        ) / 100
+        prop_min, prop_max = self._safe_bounds(self.current_prop_arr)
+        self._slider_range.min = prop_min
+        self._slider_range.max = prop_max
+        self._slider_range.value = (prop_min, prop_max)
+        self._slider_range.step = (prop_max - prop_min) / 100
 
         self._parent.changed.emit(self._parent)
 

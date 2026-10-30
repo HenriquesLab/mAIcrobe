@@ -5,6 +5,24 @@ All notable changes to mAIcrobe will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - New release
+
+### Added
+- Optional DNA channel intensity measurement in `compute_cells` (`Measure_DNA_Signal`): computes a full set of membrane-style statistics (`DNA Baseline`, `DNA Cell/Membrane/Cytoplasm/Septum Median`, `DNA Fluor Ratio*`) on the DNA channel, reusing the cell/membrane/septum/cytoplasm masks already derived from the membrane channel segmentation
+- `DNA Percentile Median` per-cell statistic (`DNA_Percentile`, default top 10%): median of the brightest fraction of DNA-channel pixels in each cell, so a small but bright, concentrated DNA focus (e.g. a condensed nucleoid) is not diluted out by an otherwise dim or leaky cell
+- Automatic `DNA Population` classification: Isodata-thresholds `DNA Percentile Median` across all cells in the image to split them into DNA-positive/DNA-negative groups without manual threshold selection
+- Optional Gaussian smoothing of the segmentation input image in `compute_label`, to prevent a septum from being read as a cell boundary
+- Optional post-segmentation merging of septated cell masks in `compute_label` (`merge_septated_cells`), based on solidity, aspect ratio, and contact-width heuristics
+
+### Changed
+- Pinned `ncolor<2` as a project dependency to avoid an Omnipose import failure (ncolor 2.0+ removed `unique_nonzero`, used by `cellpose_omni` at import time)
+
+### Fixed
+- `filter_cells` widget no longer crashes when a selected property column contains only `NaN` or a single repeated value (e.g. DNA stats before DNA measurement is enabled); slider bounds now fall back to a safe default range instead of erroring
+
+### Tests
+- Added automated tests for the `compute_label` widget
+
 ## [1.1.0] - New release
 
 ### Added
